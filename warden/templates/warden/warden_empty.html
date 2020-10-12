@@ -1,0 +1,242 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+<style>
+  body {
+    background-color: #333333;
+    background-size: cover;
+  }
+
+  .section-center__full {
+    height: 45vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
+
+<div class='container-fluid'>
+
+  <div class="row">
+    <div class='col-lg-12'>
+      <h1 class="text-white">Welcome to the WARden</h1>
+      <span class='text-white' style='font-size: 20px;'>Private Portfolio Tracker (Specter Server Edition)
+      </span>
+    </div>
+  </div>
+
+  <div class="row" style='padding-top: 30px;'>
+    <div class='col-lg-12'>
+      <h4 class="text-white">Status Check</h4>
+    </div>
+  </div>
+
+  {%if messages['tor']['status']%}
+  <div class="row" style='padding-top: 30px;'>
+    <div class='col-lg-12 d-flex align-items-stretch'>
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>
+            Tor Running
+            <span class='text-success float-right'><i class="fas fa-check"></i></span>
+          </span>
+        </div>
+        <div class="card-body text-white">
+          IP Address: {{messages['tor']['post_proxy']['origin']}} </br>
+          Ping Time: {{messages['tor']['post_proxy_ping']}}
+        </div>
+
+      </div>
+    </div>
+  </div>
+  </br></br>
+  {%else%}
+  <div class="row">
+    <div class='col-lg-12 d-flex align-items-stretch'>
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>
+            Tor&nbsp;&nbsp;</span><strong>[Required]&nbsp;&nbsp;</strong>
+          <span class='text-warning float-right'><i class="fas fa-exclamation-triangle"></i></span>
+        </div>
+        <div class="card-body text-white">
+          <p>
+            When using Tor, traffic is routed through multiple servers and encypted in each step.</p>
+          <p>Download a Tor browser and launch it. But you can still use Chrome or other browser for the WARden.</p>
+          <div class="text-left text-white">
+            <a class="btn btn-outline-secondary text-white btn-block" target="new_page"
+              href="https://www.torproject.org/download/" role="button">Download
+              Tor</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {%endif%}
+
+
+  {%if messages['services']['specter']['running']%}
+  <div class="row">
+    <div class='col-lg-12 d-flex align-items-stretch'>
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>
+            Specter Server Running
+            <span class='text-success float-right'><i class="fas fa-check"></i></span>
+          </span>
+        </div>
+        <div class="card-body text-white">
+
+          <div class="text-left text-white">
+            <a class="btn btn-outline-secondary text-success btn-block" target="new_page"
+              href="https://{{messages['services']['specter']['connection'][0]}}:{{messages['services']['specter']['connection'][1]}}/""
+              role=" button">Open Server (
+              https://{{messages['services']['specter']['connection'][0]}}:{{messages['services']['specter']['connection'][1]}}/)
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  </br></br>
+  {%else%}
+  <div class="row">
+    <div class='col-lg-12 d-flex align-items-stretch'>
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>Specter Server not
+            running&nbsp;&nbsp;</span><strong>[Required]&nbsp;&nbsp;</strong>
+          <span class='text-warning float-right'><i class="fas fa-exclamation-triangle"></i></span>
+        </div>
+        <div class="card-body text-white">
+          <p>
+            Specter is required for this edition. WARden will sync to wallet activity and bitcoin transactions
+            automatically.</p>
+          <p>If you haven't installed Specter:</p>
+          <div class="text-left text-white">
+            <a class="btn btn-outline-secondary text-white btn-block" target="new_page"
+              href="https://github.com/cryptoadvance/specter-desktop#how-to-run" role="button">Install Specter</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </br></br>
+  {%endif%}
+
+  {%if messages['services']['specter']['running']%}
+  {%if messages['specter_wallets']%}
+  <div class="row">
+    <div class='col-lg-12 d-flex align-items-stretch'>
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>
+            Specter Wallets Found
+            <span class='text-success float-right'><i class="fas fa-check"></i></span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </br></br>
+  {%else%}
+  <div class="row">
+    <div class='col-lg-12 d-flex align-items-stretch'>
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>No Specter Wallets Found
+            <span class='text-warning float-right'><i class="fas fa-exclamation-triangle"></i></span>
+        </div>
+        <div class="card-body text-white">
+          <p>
+            Make sure there are wallets imported into Specter Server</p>
+          <div class="text-left text-white">
+            <a class="btn btn-outline-secondary text-warning btn-block" target="new_page"
+              href="https://{{messages['services']['specter']['connection'][0]}}:{{messages['services']['specter']['connection'][1]}}/new_wallet"
+              role=" button"> Add New Wallet
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </br></br>
+  {%endif%}
+  {%endif%}
+
+
+  {%if messages['services']['specter']['running']%}
+  {%if messages['specter_wallets']%}
+  {%if messages['txs']%}
+  <div class="row">
+    <div class='col-lg-12 d-flex align-items-stretch'>
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>
+            Specter Transactions Found
+            <span class='text-success float-right'><i class="fas fa-check"></i></span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </br></br>
+  {%else%}
+  <div class="row">
+    <div class='col-lg-12 d-flex align-items-stretch'>
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>Not Specter Transactions Found
+            <span class='text-warning float-right'><i class="fas fa-exclamation-triangle"></i></span>
+        </div>
+        <div class="card-body text-white">
+          <p>
+            Make sure there are wallets and transactions imported into Specter Server</p>
+          <div class="text-left text-white">
+            <a class="btn btn-outline-secondary text-warning btn-block" target="new_page"
+              href="https://{{messages['services']['specter']['connection'][0]}}:{{messages['services']['specter']['connection'][1]}}/new_wallet"
+              role=" button"> Add New Wallet
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </br></br>
+  {%endif%}
+  {%endif%}
+  {%endif%}
+
+
+  {%if messages['services']['mynode']['running']%}
+  <div class="row">
+    <div class='col-lg-12 d-flex align-items-stretch'>
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>
+            MyNode Running
+            <span class='text-success float-right'><i class="fas fa-check"></i></span>
+          </span>
+        </div>
+        <div class="card-body text-white">
+
+          <div class="text-left text-white">
+            <a class="btn btn-outline-secondary text-success btn-block" target="new_page"
+              href="{{messages['services']['mynode']['connection'][0]}}:{{messages['services']['mynode']['connection'][1]}}/""
+              role=" button">Open MyNode
+              ({{messages['services']['mynode']['connection'][0]}}:{{messages['services']['mynode']['connection'][1]}}/)
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  </br></br>
+  {%endif%}
+
+</div>
+
+
+{% endblock content %}
