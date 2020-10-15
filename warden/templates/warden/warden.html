@@ -801,7 +801,7 @@
                     <span class="lead">Bitcoin Node Status</span>
                     <span class="float-right">
                         {% if services['mynode']['running']%}
-                        <a href="{{services['mynode']['connection'][0]}}:{{services['mynode']['connection'][1]}}"
+                        <a href="http://{{services['mynode']['connection'][0]}}:{{services['mynode']['connection'][1]}}"
                             style="text-decoration: none; color:gray;">
                             <i class="fas fa-external-link-square-alt fa-lg"></i>
                         </a>
@@ -881,48 +881,46 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
 
-            <div class='col-6'>
-                <div class="content-section" id="bitcoin_addresses_section">
-                    <span class="lead">Specter Server Status</span>
-                    <span class="float-right">
-                        {% if services['specter']['running']%}
-                        <a href="{{services['specter']['connection'][0]}}:{{services['specter']['connection'][1]}}"
-                            style="text-decoration: none; color:gray;">
-                            <i class="fas fa-external-link-square-alt fa-lg"></i>
-                        </a>
-                        {%endif%}
-                    </span>
-                    </br>
-                    <table id="btctable" class="table table-sm small-text">
-                        <tbody>
-                            <tr>
-                                <td>Specter Status</td>
-                                <td id='specter_status' class="text-right"> <img
-                                        src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
-                                        width="30" height="30"></img> </td>
-                            </tr>
-                            <tr>
-                                <td>Last Data Refresh</td>
-                                <td id='specter_refresh' class="text-right"> <img
-                                        src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
-                                        width="30" height="30"></img> </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class='col-6'>
+                    <div class="content-section" id="bitcoin_addresses_section">
+                        <span class="lead">Specter Server Status</span>
+                        <span class="float-right">
+                            {% if services['specter']['running']%}
+                            <a href="http://{{services['specter']['connection'][0]}}:{{services['specter']['connection'][1]}}"
+                                style="text-decoration: none; color:gray;">
+                                <i class="fas fa-external-link-square-alt fa-lg"></i>
+                            </a>
+                            {%endif%}
+                        </span>
+                        </br>
+                        <table id="btctable" class="table table-sm small-text">
+                            <tbody>
+                                <tr>
+                                    <td>Specter Status</td>
+                                    <td id='specter_status' class="text-right"> <img
+                                            src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                            width="30" height="30"></img> </td>
+                                </tr>
+                                <tr>
+                                    <td>Last Data Refresh</td>
+                                    <td id='specter_refresh' class="text-right"> <img
+                                            src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                            width="30" height="30"></img> </td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                    <span id='bitcoin_check'>
+                        <span id='bitcoin_check'>
 
-                    </span>
+                        </span>
 
+                    </div>
                 </div>
             </div>
+            <!-- END Bitcoin Address Summary -->
         </div>
-        <!-- END Bitcoin Address Summary -->
     </div>
-
-
     <div class="col-sm-4">
 
         <!-- START Portfolio Statistics section -->
