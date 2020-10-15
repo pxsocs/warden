@@ -233,8 +233,8 @@
           $("#alertsection_df").html(html)
           $("#save_folder").html("Save")
         },
-        error: function (resultData) {
-          html = "<div id='messagealert' class='alert alert-warning'>" + resultData.message + "</div>"
+        error: function (xhr, status, error) {
+          html = "<div id='messagealert' class='alert alert-warning'> Error: Ajax Status: " + status + " Error: " + error + "</div>"
           $("#alertsection_df").html(html)
           $("#save_folder").html("Save")
         },
