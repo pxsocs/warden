@@ -239,7 +239,7 @@ def data_folder():
             ok_save = False
             message += "Specter does not seem to be running in this folder. "
 
-        if wallets = {}:
+        if wallets == {}:
             ok_save = False
             message += "No wallets found - check folder."
 
