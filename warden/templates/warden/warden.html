@@ -417,10 +417,11 @@
                         <td>
                             {{(warden_metadata['txs'][alias].time.max() | epoch) | time_ago}}
                         </td>
-
+                        {{alias}}
                         {%if specter['wallets']['wallets'][alias]['info']['scanning']%}
                         <td>
-                            {{specter['wallets']['wallets'][alias]['info']['scanning']['progress']}}%
+                            {{alias}}
+                            {{specter['wallets']['wallets'][alias_tgt]['info']['scanning']['progress']}}%
                             {{specter['wallets']['wallets'][alias]['info']}}
                         </td>
                         {%else%}
