@@ -220,9 +220,8 @@ def data_folder():
         try:
             data_folder = results['data_folder']
             # Test if can get specter data
-            specter = specter_update(load=True, data_folder=data_folder)
+            specter = specter_update(load=False, data_folder=data_folder)
             print (specter)
-
         except Exception as e:
             return json.dumps("Error: " + str(e))
         with open(data_file, 'w') as fp:
