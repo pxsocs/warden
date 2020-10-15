@@ -526,13 +526,15 @@ function getNodeInfo() {
                 bitcoin_color = 'orange'
             }
 
-            ver_progress = "<span class='text-right td-part-fill' style='background-size: " + data['info']['verificationprogress'] * 100 + "% 100%' data-toggle='tooltip' data-placement='bottom' title='{{perc | jformat(0)}}% used'>" + (formatNumber(data['info']['verificationprogress'] * 100, 2, '', '%')) + "</span>"
+            // Add Background color fill to progress
+            $('#verificationprogress').addClass('td-part-fill')
+            $('#verificationprogress').css('background-size', data['info']['verificationprogress'] * 100 + "% 100%")
+            $('#verificationprogress').html(formatNumber(data['info']['verificationprogress'] * 100, 2, '', '%'))
 
             $('#bitcoind_status').html("<span style='color:" + bitcoin_color + "'>" + bitcoin + "</span>");
             $('#specter_status').html("<span style='color:" + specter_color + "'>" + specter + "</span>");
             $('#latest_btc_block').html(data['info']['blocks'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 0, minimumFractionDigits: 0 }));
             $('#current_block').html(data['info']['blocks'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 0, minimumFractionDigits: 0 }));
-            $('#verificationprogress').html(ver_progress);
             $('#size_on_disk').html(formatNumber(data['info']['size_on_disk'] / 1000000000, 2, '', ' GB'));
             $('#difficulty').html(formatNumber(data['info']['difficulty'] / 1000000000000, 2, '', ' x 10^12'));
             $('#specter_refresh').html(data['services']['last_update']);
