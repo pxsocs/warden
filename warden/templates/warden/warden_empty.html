@@ -196,7 +196,7 @@
             <div class="input-group-prepend">
               <span class="input-group-text" id="basic-addon1">Specter Data Folder: </span>
             </div>
-            <input type="text" id="data_folder" class="form-control" placeholder="{{specter['data_folder']}}">
+            <input type="text" id="data_folder" class="form-control" value="{{specter['data_folder']}}">
             <div class="input-group-append">
               <button class="btn btn-outline-secondary" id="save_folder" type="button">Save</button>
             </div>
@@ -208,7 +208,7 @@
             data. If not, change it to the correct path.
           </small>
           <div class='row'>
-            <div id='alertsection' class='col-12'>
+            <div id='alertsection_df' class='col-12'>
             </div>
           </div>
         </div>
@@ -228,12 +228,12 @@
         dataType: "json",
         success: function (resultData) {
           html = "<div id='messagealert' class='alert alert-success'>" + resultData.message + "</div>"
-          $("#alertsection").html(html)
+          $("#alertsection_df").html(html)
         }
       });
       saveData.error(function () {
-        html = "<div id='messagealert' class='alert alert-waring'>" + resultData.message + "</div>"
-        $("#alertsection").html(html)
+        html = "<div id='messagealert' class='alert alert-warning'>" + resultData.message + "</div>"
+        $("#alertsection_df").html(html)
       });
     });
   </script>
