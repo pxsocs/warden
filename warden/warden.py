@@ -77,7 +77,6 @@ def specter_update(load=False, data_folder=None):
     except Exception:
         pass
 
-
     if data_folder:
         DATA_FOLDER = data_folder
     specter_data = Specter(data_folder=DATA_FOLDER)
@@ -130,6 +129,7 @@ def specter_update(load=False, data_folder=None):
     # Parse Wallets
     for wallet in specter_data.wallet_manager.wallets:
         tx_data = specter_data.wallet_manager.wallets[wallet].txlist(0)
+        scan = specter_data.wallet_manager.wallets[wallet].get_wallet_rescan_progress(0
         # Clear public keys - no need to store in additional file
         specter_data.wallet_manager.wallets[wallet].__dict__['keys'] = ''
         #  Expand list of devices used to sign this wallet, store only alias
@@ -148,6 +148,8 @@ def specter_update(load=False, data_folder=None):
         return_dict['wallets']['wallets'][wallet] = (
             specter_data.wallet_manager.wallets[wallet].__dict__)
         return_dict['wallets']['wallets'][wallet]['txlist'] = tx_data
+        return_dict['wallets']['wallets'][wallet]['scan'] = scan
+
 
     with open(specter_json, 'w') as fp:
         json.dump(return_dict, fp)
@@ -223,8 +225,6 @@ def check_services(load=True, expiry=60):
             '/usr/local/lib/python3.8/dist-packages',
             '/usr/lib/python3/dist-packages',
             '/usr/lib/python3.8/dist-packages']
-
-
 
         sys.path = sys.path + included_paths
 
@@ -322,7 +322,6 @@ def fxsymbol(fx, output='symbol'):
     return (out)
 
 
-@MWT(timeout=60)
 def list_specter_wallets(load=True):
     specter_data = specter_update(load)
     if specter_data:
@@ -332,7 +331,6 @@ def list_specter_wallets(load=True):
     return (wallets)
 
 
-@MWT(timeout=60)
 def get_specter_wallets(load=True):
     specter_data = specter_update(load)
     wallets = specter_data['wallets']['wallets']
