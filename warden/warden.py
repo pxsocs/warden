@@ -231,8 +231,6 @@ def check_services(load=True, expiry=60):
         None,
         'pip_installed':
         pip_installed,
-        'data_folder':
-        data_folder,
         'specter_config':
         specter_config
     }

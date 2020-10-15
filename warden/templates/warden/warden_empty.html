@@ -217,8 +217,8 @@
     $("#save_folder").click(function () {
       var saveData = $.ajax({
         type: 'POST',
-        url: "/data_dolder",
-        data: $("#data_folder").value(),
+        url: "/data_folder",
+        data: $('#data_folder').val(),
         dataType: "json",
         success: function (resultData) { alert("Folder Updated") }
       });
