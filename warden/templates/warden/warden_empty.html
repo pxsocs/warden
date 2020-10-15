@@ -228,12 +228,12 @@
         dataType: "json",
         success: function (resultData) {
           html = "<div id='messagealert' class='alert alert-success'>" + resultData.message + "</div>"
-          $("#save_folder").html(html)
+          $("#alertsection").html(html)
         }
       });
       saveData.error(function () {
-        html = "<div id='messagealert' class='alert alert-warning'>" + resultData.message + "</div>"
-        $("#save_folder").html(html)
+        html = "<div id='messagealert' class='alert alert-waring'>" + resultData.message + "</div>"
+        $("#alertsection").html(html)
       });
     });
   </script>
