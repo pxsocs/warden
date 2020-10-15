@@ -352,7 +352,7 @@ def node_info():
 
 # API end point to return service status
 @warden.route("/services", methods=["GET"])
-def services():
+def checkservices():
     services = check_services()
     return simplejson.dumps(services, ignore_nan=True)
 
