@@ -1,5 +1,5 @@
 from flask import (Blueprint, redirect, render_template, flash, session,
-                   url_for, request)
+                   url_for, request, abort)
 from warden.warden import (list_specter_wallets, warden_metadata, positions,
                            positions_dynamic, FX, get_price_ondate,
                            generatenav, specter_df, check_services,
@@ -149,6 +149,8 @@ def warden_page():
 
     alerts = False
     meta = warden_metadata()
+    if not meta['warden_enabled']:
+        abort(500, 'WARden is not Enabled. Check your Connections.')
     if isinstance(meta['old_new_df_old'], pd.DataFrame):
         if not meta['old_new_df_old'].empty:
             alerts = True
