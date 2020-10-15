@@ -612,7 +612,7 @@ a {
 }
 
 .td-part-fill {
-  background-image: linear-gradient(to right, #d69355 0%, #ffe1c8 100%);
+  background-image: linear-gradient(to right, #009c41 0%, #c8ffc8 100%);
   /* your gradient */
   background-repeat: no-repeat;
   /* don't remove */
