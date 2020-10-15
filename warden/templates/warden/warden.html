@@ -793,22 +793,133 @@
             </table>
         </div>
         <!-- END Market Data Section -->
-        <!-- START charts -->
-        <div class="row">
-            <div class='col-sm-12'>
-                <div>
-                    <!-- NAV Chart -->
-                    <div id="navchart" style="height: 350px; margin: 0 auto">
-                        <span class="loadanim">&nbsp;Loading NAV Chart</span>
-                    </div>
+
+        <!-- START Bitcoin Address Summary -->
+        <div class="content-section" id="bitcoin_addresses_section">
+            <div class='row'>
+                <div class='col-6'>
+                    <span class="lead">Bitcoin Node Status</span>
+                    <span class="float-right">
+                        {% if services['mynode']['running']%}
+                        <a href="{{services['mynode']['connection'][0]}}:{{services['mynode']['connection'][1]}}"
+                            style="text-decoration: none; color:gray;">
+                            <i class="fas fa-external-link-square-alt fa-lg"></i>
+                        </a>
+                        {%endif%}
+                    </span>
+                    </br>
+
+                    <table id="btctable" class="table table-sm small-text">
+                        <tbody>
+                            <tr>
+                                <td>Node Status</td>
+                                <td class="text-right">
+                                    <span id='bitcoind_status'> <img
+                                            src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                            width="30" height="30"></img> </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Latest Block</td>
+                                <td id='current_block' class="text-right"> <img
+                                        src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                        width="30" height="30"></img> </td>
+                            </tr>
+                            <tr>
+                                <td>Verification Progress</td>
+                                <td id='verificationprogress' class="text-right"> <img
+                                        src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                        width="30" height="30"></img> </td>
+                            </tr>
+
+                            <tr>
+                                <td>Size on Disk</td>
+                                <td id='size_on_disk' class="text-right">
+                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                        width="30" height="30"></img></td>
+                            </tr>
+                            <tr>
+                                <td>Difficulty</td>
+                                <td id='difficulty' class="text-right">
+                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                        width="30" height="30"></img></td>
+                            </tr>
+                            <tr>
+                                <td>Bitcoin Core Version</td>
+                                <td id='core_version' class="text-right">
+                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                        width="30" height="30"></img>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Connection Count</td>
+                                <td id='connection_count' class="text-right">
+                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                        width="30" height="30"></img>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Mempool Size</td>
+                                <td id='mempool_size' class="text-right">
+                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                        width="30" height="30"></img>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Node Uptime</td>
+                                <td id='uptime' class="text-right">
+                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                        width="30" height="30"></img>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                </td>
+                                <td>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class='col-6'>
+                <div class="content-section" id="bitcoin_addresses_section">
+                    <span class="lead">Specter Server Status</span>
+                    <span class="float-right">
+                        {% if services['specter']['running']%}
+                        <a href="{{services['specter']['connection'][0]}}:{{services['specter']['connection'][1]}}"
+                            style="text-decoration: none; color:gray;">
+                            <i class="fas fa-external-link-square-alt fa-lg"></i>
+                        </a>
+                        {%endif%}
+                    </span>
+                    </br>
+                    <table id="btctable" class="table table-sm small-text">
+                        <tbody>
+                            <tr>
+                                <td>Specter Status</td>
+                                <td id='specter_status' class="text-right"> <img
+                                        src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                        width="30" height="30"></img> </td>
+                            </tr>
+                            <tr>
+                                <td>Last Data Refresh</td>
+                                <td id='specter_refresh' class="text-right"> <img
+                                        src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
+                                        width="30" height="30"></img> </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <span id='bitcoin_check'>
+
+                    </span>
+
                 </div>
             </div>
         </div>
-        <!-- END Charts -->
-
-        </br>
-
-
+        <!-- END Bitcoin Address Summary -->
     </div>
 
 
@@ -928,7 +1039,7 @@
             <div class='col-sm-12'>
                 <div>
                     <!-- NAV Chart -->
-                    <div id="stackchart" style="height: 400px; margin: 0 auto">
+                    <div id="stackchart" style="height: 350px; margin: 0 auto">
                         <span class="loadanim">&nbsp;Loading Stack Chart</span>
                     </div>
                 </div>
@@ -936,124 +1047,19 @@
         </div>
         <!-- END Charts -->
 
-        <!-- START Bitcoin Address Summary -->
-
-        <div class="content-section" id="bitcoin_addresses_section">
-
-            <span class="lead">Bitcoin Node Status</span>
-            <span class="float-right">
-                <a href="/bitcoind" style="text-decoration: none; color:gray;">
-                    <i class="fas fa-external-link-square-alt fa-lg"></i>
-                </a>
-            </span>
-            </br>
-
-            <table id="btctable" class="table table-sm small-text">
-                <tbody>
-                    <tr>
-                        <td>Node Status</td>
-                        <td class="text-right">
-                            <span id='bitcoind_status'> <img
-                                    src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                    height="30"></img> </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Latest Block</td>
-                        <td id='current_block' class="text-right"> <img
-                                src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                height="30"></img> </td>
-                    </tr>
-                    <tr>
-                        <td>Verification Progress</td>
-                        <td id='verificationprogress' class="text-right"> <img
-                                src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                height="30"></img> </td>
-                    </tr>
-
-                    <tr>
-                        <td>Size on Disk</td>
-                        <td id='size_on_disk' class="text-right">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                height="30"></img></td>
-                    </tr>
-                    <tr>
-                        <td>Difficulty</td>
-                        <td id='difficulty' class="text-right">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                height="30"></img></td>
-                    </tr>
-                    <tr>
-                        <td>Bitcoin Core Version</td>
-                        <td id='core_version' class="text-right">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                height="30"></img>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Connection Count</td>
-                        <td id='connection_count' class="text-right">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                height="30"></img>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Mempool Size</td>
-                        <td id='mempool_size' class="text-right">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                height="30"></img>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Node Uptime</td>
-                        <td id='uptime' class="text-right">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                height="30"></img>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                        </td>
-                        <td>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <span class="lead">Specter Server Status</span>
-            <span class="float-right">
-                <a href="https://mynode.local:25441/" style="text-decoration: none; color:gray;">
-                    <i class="fas fa-external-link-square-alt fa-lg"></i>
-                </a>
-            </span>
-            </br>
-            <table id="btctable" class="table table-sm small-text">
-                <tbody>
-                    <tr>
-                        <td>Specter Status</td>
-                        <td id='specter_status' class="text-right"> <img
-                                src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                height="30"></img> </td>
-                    </tr>
-                    <tr>
-                        <td>Last Data Refresh</td>
-                        <td id='specter_refresh' class="text-right"> <img
-                                src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                height="30"></img> </td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <span id='bitcoin_check'>
-
-            </span>
-
-
+        <!-- START charts -->
+        <div class="row">
+            <div class='col-sm-12'>
+                <div>
+                    <!-- NAV Chart -->
+                    <div id="navchart" style="height: 350px; margin: 0 auto">
+                        <span class="loadanim">&nbsp;Loading NAV Chart</span>
+                    </div>
+                </div>
+            </div>
         </div>
+        <!-- END Charts -->
 
-
-
-        <!-- END Bitcoin Address Summary -->
 
 
 

@@ -562,33 +562,26 @@ function getNodeInfo() {
 function navChart(data) {
     var myChart = Highcharts.stockChart('navchart', {
         credits: {
-            text: "<a href='/navchart'>Click here for detailed view<i class='fas fa-external-link-alt'></i></a>",
-            style: {
-                fontSize: '13px',
-                color: '#363636'
-            },
-            position: {
-                align: 'right',
-                y: 0
-            },
-            href: "/navchart"
+            text: ""
         },
         navigator: {
             enabled: false
         },
         rangeSelector: {
-            selected: 1
+            selected: 5
         },
         chart: {
             zoomType: 'xy',
             backgroundColor: "#FAFAFA",
         },
         title: {
-            text: 'Portfolio NAV over time'
+            text: 'Portfolio NAV over time',
+            style: {
+                fontSize: '12px'
+            }
         },
         subtitle: {
-            text: document.ontouchstart === undefined ?
-                'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+            text: ''
         },
         xAxis: {
             type: 'datetime'
