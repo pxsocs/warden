@@ -421,13 +421,13 @@
                         {%if specter['wallets']['wallets'][alias]['scan'] != None%}
                         <td class='td-part-fill'
                             style="background-size: {{(specter['wallets']['wallets'][alias]['scan'] * 100)}}% 100%">
-                            {{(specter['wallets']['wallets'][alias]['scan'] * 100) | jformat(2)}}%
+                            {{(specter['wallets']['wallets'][alias])}}
                         </td>
                         {%else%}
                         <td>
+                            Not Scanning
                         </td>
                         {%endif%}
-
                     </tr>
                     <tr data-toggle="collapse" data-target="#txs_{{alias_tgt}}" class="accordion-toggle">
                         <td colspan="10" class="hiddenRow">
