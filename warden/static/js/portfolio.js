@@ -649,7 +649,7 @@ function navChart(data) {
 
 // Stack CHART
 function stackChart(data) {
-    var myChart = Highcharts.stockChart('navchart', {
+    var myChart = Highcharts.stockChart('stackchart', {
         credits: {
             text: ""
         },
@@ -657,7 +657,7 @@ function stackChart(data) {
             enabled: false
         },
         rangeSelector: {
-            selected: 3
+            selected: 5
         },
         chart: {
             zoomType: 'xy',
@@ -711,7 +711,7 @@ function stackChart(data) {
         },
 
         series: [{
-            type: 'column',
+            type: 'area',
             name: 'Stack',
             // The line below maps the dictionary coming from Python into
             // the data needed for highcharts. It's weird but the *1 is
