@@ -419,8 +419,7 @@
                         </td>
 
                         {%if specter['wallets']['wallets'][alias]['info']['scanning']%}
-                        <td class='td-part-fill'
-                            style="background-size: {{(specter['wallets']['wallets'][alias]['info']['scanning'] * 100)}}% 100%">
+                        <td>
                             {{(specter['wallets']['wallets'][alias]['info']['scanning'])}}
                         </td>
                         {%else%}
@@ -429,7 +428,6 @@
                         </td>
                         {%endif%}
                     </tr>
-                    {{(specter['wallets']['wallets'][alias])}}
                     <tr data-toggle="collapse" data-target="#txs_{{alias_tgt}}" class="accordion-toggle">
                         <td colspan="10" class="hiddenRow">
                             <div id="txs_{{alias_tgt}}" class="accordian-body collapse" style='padding-top: 15px;'>
