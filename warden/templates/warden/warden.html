@@ -418,7 +418,9 @@
                             {{(warden_metadata['txs'][alias].time.max() | epoch) | time_ago}}
                         </td>
                         <td>
+                            {%if warden_metadata['wallet_info'][wallet]['scan'] != None%}
                             {{warden_metadata['wallet_info'][wallet]['scan']}}
+                            {%endif%}
                         </td>
                     </tr>
                     <tr data-toggle="collapse" data-target="#txs_{{alias_tgt}}" class="accordion-toggle">
