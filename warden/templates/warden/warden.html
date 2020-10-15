@@ -419,9 +419,9 @@
                         </td>
 
                         {%if specter['wallets']['wallets'][alias]['info']['scanning']%}
-                        <td class='td-part-fill'
-                            style="background-size: {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100)}}% 100%">
-                            {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100) | jformat(2)}}%
+                        <td>
+                            {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress']}}%
+                            {{(specter['wallets']['wallets'][alias]['info']}}
                         </td>
                         {%else%}
                         <td>
