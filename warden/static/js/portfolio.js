@@ -515,7 +515,7 @@ function getNodeInfo() {
                 specter_color = 'green'
             } else {
                 specter = '✗ Stopped'
-                specter_color = 'yellow'
+                specter_color = 'orange'
             }
 
             if (data['bitcoin']['networkactive'] == true) {
@@ -523,7 +523,7 @@ function getNodeInfo() {
                 bitcoin_color = 'green'
             } else {
                 bitcoin = '✗ Stopped'
-                bitcoin_color = 'yellow'
+                bitcoin_color = 'orange'
             }
 
             $('#bitcoind_status').html("<span style='color:" + bitcoin_color + "'>" + bitcoin + "</span>");

@@ -192,9 +192,11 @@ pre {
   -moz-user-select: none;
   -ms-user-select: none;
 }
+
 .onoffswitch-checkbox {
   display: none;
 }
+
 .onoffswitch-label {
   display: block;
   overflow: hidden;
@@ -202,12 +204,14 @@ pre {
   border: 2px solid #999999;
   border-radius: 50px;
 }
+
 .onoffswitch-inner {
   display: block;
   width: 200%;
   margin-left: -100%;
   transition: margin 0.1s ease-in 0s;
 }
+
 .onoffswitch-inner:before,
 .onoffswitch-inner:after {
   display: block;
@@ -222,12 +226,14 @@ pre {
   font-weight: bold;
   box-sizing: border-box;
 }
+
 .onoffswitch-inner:before {
   content: "ON";
   padding-left: 8px;
   background-color: #f2f2f2;
   color: #000000;
 }
+
 .onoffswitch-inner:after {
   content: "OFF";
   padding-right: 8px;
@@ -235,6 +241,7 @@ pre {
   color: #c4c4c4;
   text-align: right;
 }
+
 .onoffswitch-switch {
   display: block;
   width: 14px;
@@ -248,11 +255,12 @@ pre {
   border-radius: 50px;
   transition: all 0.1s ease-in 0s;
 }
-.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+
+.onoffswitch-checkbox:checked+.onoffswitch-label .onoffswitch-inner {
   margin-left: 0;
 }
 
-.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+.onoffswitch-checkbox:checked+.onoffswitch-label .onoffswitch-switch {
   right: 0px;
 }
 
@@ -328,13 +336,11 @@ pre {
   transition: all 0.3s ease-in 0s;
 }
 
-.fifolifoswitch-checkbox:checked + .fifolifoswitch-label .fifolifoswitch-inner {
+.fifolifoswitch-checkbox:checked+.fifolifoswitch-label .fifolifoswitch-inner {
   margin-left: 0;
 }
 
-.fifolifoswitch-checkbox:checked
-  + .fifolifoswitch-label
-  .fifolifoswitch-switch {
+.fifolifoswitch-checkbox:checked+.fifolifoswitch-label .fifolifoswitch-switch {
   right: 0px;
 }
 
@@ -430,6 +436,7 @@ a {
   animation-timing-function: ease-in;
   cursor: pointer;
 }
+
 .shaker:hover {
   animation-name: shakeAnim;
 }
@@ -438,24 +445,31 @@ a {
   0% {
     left: 0;
   }
+
   1% {
     left: -3px;
   }
+
   2% {
     left: 5px;
   }
+
   3% {
     left: -8px;
   }
+
   4% {
     left: 8px;
   }
+
   5% {
     left: -5px;
   }
+
   6% {
     left: 3px;
   }
+
   7% {
     left: 0;
   }
@@ -465,24 +479,31 @@ a {
   0% {
     left: 0;
   }
+
   1% {
     left: -3px;
   }
+
   2% {
     left: 5px;
   }
+
   3% {
     left: -8px;
   }
+
   4% {
     left: 8px;
   }
+
   5% {
     left: -5px;
   }
+
   6% {
     left: 3px;
   }
+
   7% {
     left: 0;
   }
@@ -511,11 +532,13 @@ a {
   font-size: 12px;
   text-align: center;
 }
+
 /* Popover Body */
 .popover-body {
   font-size: 12px;
   text-align: left;
 }
+
 .popover {
   top: -35px !important;
   min-width: 880px !important;
@@ -540,13 +563,11 @@ a {
 
 .stripedBackground {
   color: white;
-  background: repeating-linear-gradient(
-    -55deg,
-    rgb(254, 254, 254),
-    rgb(254, 254, 254) 10px,
-    rgb(250, 250, 250) 10px,
-    rgb(250, 250, 250) 20px
-  );
+  background: repeating-linear-gradient(-55deg,
+      rgb(254, 254, 254),
+      rgb(254, 254, 254) 10px,
+      rgb(250, 250, 250) 10px,
+      rgb(250, 250, 250) 20px);
 }
 
 .statusbox {
@@ -588,4 +609,11 @@ a {
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   grid-template-rows: repeat(auto-fill, minmax(30px, 80px));
   margin-inline-start: -10px;
+}
+
+.td-part-fill {
+  background-image: linear-gradient(to right, #d69355 0%, #ffe1c8 100%);
+  /* your gradient */
+  background-repeat: no-repeat;
+  /* don't remove */
 }

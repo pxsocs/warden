@@ -118,6 +118,7 @@ function test_tor() {
                 html_tor = "<span class='text-warning'><i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled</span>"
             }
             $('#tor_span').html(html_tor);
+            $('btc_usd').html("<span class='text-warning'>Tor Disabled</span>")
         },
         error: function (xhr, status, error) {
             html_tor = "<span class='text-warning'><i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled</span>"
