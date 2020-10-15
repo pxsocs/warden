@@ -552,19 +552,21 @@ def stackchartdatajson():
     data = generatenav()
     # Generate data for Stack chart
     # Filter to Only BTC Positions
-    data = data.loc[data['trade_asset_ticker'] == 'BTC']
-    data['trade_quantity_cum'] = data['trade_quantity'].sumcum()
-    stackchart = data[["trade_quantity_cum"]]
-    # dates need to be in Epoch time for Highcharts
-    stackchart.index = (stackchart.index - datetime(1970, 1, 1)).total_seconds()
-    stackchart.index = stackchart.index * 1000
-    stackchart.index = stackchart.index.astype(np.int64)
-    stackchart = stackchart.to_dict()
-    stackchart = stackchart["trade_quantity_cum"]
-    # Sort for HighCharts
-    import collections
-    stackchart = collections.OrderedDict(sorted(stackchart.items()))
-    stackchart = json.dumps(stackchart)
+    try:
+        data['BTC_cum'] = data['BTC_quant'].cumsum()
+        stackchart = data[["BTC_cum"]]
+        # dates need to be in Epoch time for Highcharts
+        stackchart.index = (stackchart.index - datetime(1970, 1, 1)).total_seconds()
+        stackchart.index = stackchart.index * 1000
+        stackchart.index = stackchart.index.astype(np.int64)
+        stackchart = stackchart.to_dict()
+        stackchart = stackchart["BTC_cum"]
+        # Sort for HighCharts
+        import collections
+        stackchart = collections.OrderedDict(sorted(stackchart.items()))
+        stackchart = json.dumps(stackchart)
+    except Exception as e:
+        return (json.dumps({"Error": str(e)}))
     return stackchart
 
 
