@@ -422,10 +422,12 @@
                         <td class='td-part-fill'
                             style="background-size: {{(warden_metadata['wallet_info'][wallet]['scan'] * 100)}}% 100%">
                             {{(warden_metadata['wallet_info'][wallet]['scan'] * 100) | jformat(2)}}%
-                            {%else%}
-                        <td>
-                            {%endif%}
                         </td>
+                        {%else%}
+                        <td>
+                        </td>
+                        {%endif%}
+
                     </tr>
                     <tr data-toggle="collapse" data-target="#txs_{{alias_tgt}}" class="accordion-toggle">
                         <td colspan="10" class="hiddenRow">
