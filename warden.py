@@ -43,13 +43,6 @@ if __name__ == "__main__":
         print(">> Developer Mode: Debug is On")
         flask_debug = True
 
-    app.run(debug=flask_debug,
-            threaded=True,
-            host='0.0.0.0',
-            port=25442,
-            use_reloader=False)
-
-    from warden import scheduler
     import atexit
 
     def close_running_threads():
@@ -66,6 +59,14 @@ if __name__ == "__main__":
             """)
     # Register the def above to run at close
     atexit.register(close_running_threads)
+
+    app.run(debug=flask_debug,
+            threaded=True,
+            host='0.0.0.0',
+            port=25442,
+            use_reloader=False)
+
+    from warden import scheduler
     # Start Scheduler to grab service data
     if not scheduler.running:
         scheduler.start()
