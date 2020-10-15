@@ -51,6 +51,19 @@ def specter_update(load=False, data_folder=None):
     # Find the data folder
     typical_folders = ['~/.specter', '/mnt/hdd/mynode/specter', '/home/admin/.specter']
 
+    # Load json
+    data_file = os.path.join(current_path(),
+                             'static/json_files/specter_data_folder.json')
+
+    try:
+        with open(data_file) as data_file:
+            load_data = json.loads(data_file.read())
+        typical_folders.appendleft(load_data['data_folder'])
+    except Exception as e:
+        print (f"Could not load saved data folder: " + load_data['data_folder'])
+        print (e)
+
+
     if data_folder:
         DATA_FOLDER = data_folder
     specter_data = Specter(data_folder=DATA_FOLDER)
