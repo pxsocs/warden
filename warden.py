@@ -53,7 +53,7 @@ if __name__ == "__main__":
             """)
         print(f"""
             \033[1;32;40m-----------------------------------------------------------------
-            \033[1;37;40m                           Done
+            \033[1;37;40m             Keep Stacking. Keep Verifying.
             \033[1;32;40m-----------------------------------------------------------------
             """)
     # Register the def above to run at close
@@ -64,8 +64,3 @@ if __name__ == "__main__":
             host='0.0.0.0',
             port=25442,
             use_reloader=False)
-
-    from warden import scheduler
-    # Start Scheduler to grab service data
-    if not scheduler.running:
-        scheduler.start()
