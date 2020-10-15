@@ -38,9 +38,9 @@ if __name__ == "__main__":
     flask_debug = False
     WARDEN_STATUS = os.environ.get("WARDEN_STATUS")
     if 'debug' in sys.argv:
-       flask_debug = True
+        flask_debug = True
     if WARDEN_STATUS == "developer":
-        print (">> Developer Mode: Debug is On")
+        print(">> Developer Mode: Debug is On")
         flask_debug = True
 
     app.run(debug=flask_debug,
@@ -50,6 +50,22 @@ if __name__ == "__main__":
             use_reloader=False)
 
     from warden import scheduler
+    import atexit
+
+    def close_running_threads():
+        print(f"""
+            \033[1;32;40m-----------------------------------------------------------------
+            \033[1;37;40m              Shutting Down.... Please Wait.
+            \033[1;32;40m-----------------------------------------------------------------
+            """)
+        scheduler.stop()
+        print(f"""
+            \033[1;32;40m-----------------------------------------------------------------
+            \033[1;37;40m                           Done
+            \033[1;32;40m-----------------------------------------------------------------
+            """)
+    # Register the def above to run at close
+    atexit.register(close_running_threads)
     # Start Scheduler to grab service data
     if not scheduler.running:
         scheduler.start()
