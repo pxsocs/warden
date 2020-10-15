@@ -418,10 +418,10 @@
                             {{(warden_metadata['txs'][alias].time.max() | epoch) | time_ago}}
                         </td>
 
-                        {%if specter['wallets']['wallets'][alias]['scan'] != None%}
+                        {%if specter['wallets']['wallets'][alias]['info']['scanning']%}
                         <td class='td-part-fill'
-                            style="background-size: {{(specter['wallets']['wallets'][alias]['scan'] * 100)}}% 100%">
-                            {{(specter['wallets']['wallets'][alias])}}
+                            style="background-size: {{(specter['wallets']['wallets'][alias]['info']['scanning'] * 100)}}% 100%">
+                            {{(specter['wallets']['wallets'][alias]['info']['scanning'])}}
                         </td>
                         {%else%}
                         <td>
