@@ -417,9 +417,13 @@
                         <td>
                             {{(warden_metadata['txs'][alias].time.max() | epoch) | time_ago}}
                         </td>
+
+                        {%if warden_metadata['wallet_info'][wallet]['scan'] != None%}
+                        <td class='td-part-fill'
+                            style="background-size: {{(warden_metadata['wallet_info'][wallet]['scan'] * 100)}}% 100%">
+                            {{(warden_metadata['wallet_info'][wallet]['scan'] * 100) | jformat(2)}}%
+                            {%else%}
                         <td>
-                            {%if warden_metadata['wallet_info'][wallet]['scan'] != None%}
-                            {{warden_metadata['wallet_info'][wallet]['scan']}}
                             {%endif%}
                         </td>
                     </tr>
