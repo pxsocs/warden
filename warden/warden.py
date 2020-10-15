@@ -44,7 +44,23 @@ def specter_update(load=False, data_folder=None):
     except Exception:
         # MyNode stores these libraries at different path
         import sys
-        sys.path.insert(1, '/opt/mynode/specter/env/lib/python3.7/site-packages')
+        included_paths = [
+            '/opt/mynode/specter/env/lib/python3.7/site-packages',
+            '/usr/lib/python3/site-packages',
+            '/usr/lib/python3.7/site-packages'
+            '/usr/lib/python3.8/site-packages'
+            '/home/user/.local/lib/python3.8/site-packages',
+            '/home/user/.local/lib/python3.7/site-packages',
+            '/usr/lib/python38.zip',
+            '/usr/lib/python3.8',
+            '/usr/lib/python3.8/lib-dynload',
+            '/home/user/.local/lib/python3.8/site-packages',
+            '/usr/local/lib/python3.8/dist-packages',
+            '/usr/lib/python3/dist-packages',
+            '/usr/lib/python3.8/dist-packages']
+
+        sys.path = sys.path + included_paths
+
         from cryptoadvance.specter.specter import Specter
         from cryptoadvance.specter.config import DATA_FOLDER
 
