@@ -221,12 +221,34 @@ def data_folder():
             data_folder = results['data_folder']
             # Test if can get specter data
             specter = specter_update(load=False, data_folder=data_folder)
-            print (specter)
+            # Check Status
+            is_configured = specter['is_configured']
+            is_running = specter['is_running']
+            wallets = specter['wallets']['wallets']
+
         except Exception as e:
-            return json.dumps("Error: " + str(e))
-        with open(data_file, 'w') as fp:
-            json.dump(results, fp)
-        return json.dumps("Saved")
+            return json.dumps({"message": "Error: " + str(e)})
+
+        message = ""
+        ok_save = True
+        if not is_configured:
+            ok_save = False
+            message += "Specter does not seem to be configured in this folder. "
+
+        if not is_running:
+            ok_save = False
+            message += "Specter does not seem to be running in this folder. "
+
+        if wallets = {}:
+            ok_save = False
+            message += "No wallets found - check folder."
+
+        if ok_save:
+            with open(data_file, 'w') as fp:
+                json.dump(results, fp)
+            message += "Specter Data folder found. Saved Successfully."
+
+        return json.dumps({"message": message})
 
 
 # API End Point checks for wallet activity

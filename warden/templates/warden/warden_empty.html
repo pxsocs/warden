@@ -207,6 +207,10 @@
             If Specter seems to be running but no txs or wallets are found, make sure that the folder above contains the
             data. If not, change it to the correct path.
           </small>
+          <div class='row'>
+            <div id='alertsection' class='col-12'>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -222,10 +226,14 @@
           'data_folder': $('#data_folder').val()
         },
         dataType: "json",
-        success: function (resultData) { alert("Folder Updated " + resultData) }
+        success: function (resultData) {
+          html = "<div id='messagealert' class='alert alert-success'>" + resultData.message + "</div>"
+          $("#save_folder").html(html)
+        }
       });
       saveData.error(function () {
-        alert("Something went wrong " + resultData);
+        html = "<div id='messagealert' class='alert alert-warning'>" + resultData.message + "</div>"
+        $("#save_folder").html(html)
       });
     });
   </script>
