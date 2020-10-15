@@ -30,10 +30,6 @@ $(document).ready(function () {
         });
     });
 
-
-
-
-
     // Function to get the max value in an Array
     Array.max = function (array) {
         return Math.max.apply(Math, array);
@@ -309,8 +305,6 @@ $(document).ready(function () {
             },
         })
 
-
-
     }
 
 
@@ -362,8 +356,17 @@ $(document).ready(function () {
         url: '/navchartdatajson',
         dataType: 'json',
         success: function (data) {
-            console.log(data);
             navChart(data);
+        }
+    });
+
+    // Get stack Data for chart
+    $.ajax({
+        type: 'GET',
+        url: '/stackchartdatajson',
+        dataType: 'json',
+        success: function (data) {
+            stackChart(data);
         }
     });
 });
@@ -642,6 +645,87 @@ function navChart(data) {
     });
 
 };
+
+
+// Stack CHART
+function stackChart(data) {
+    var myChart = Highcharts.stockChart('navchart', {
+        credits: {
+            text: ""
+        },
+        navigator: {
+            enabled: false
+        },
+        rangeSelector: {
+            selected: 3
+        },
+        chart: {
+            zoomType: 'xy',
+            backgroundColor: "#FAFAFA",
+        },
+        title: {
+            text: '₿ Stacking over time'
+        },
+        subtitle: {
+            text: document.ontouchstart === undefined ?
+                'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+        },
+        xAxis: {
+            type: 'datetime'
+        },
+        yAxis: {
+            title: {
+                text: 'Stack Size'
+            },
+            startOnTick: false,
+            endOnTick: false
+        },
+        legend: {
+            enabled: false
+        },
+        plotOptions: {
+            area: {
+                fillColor: {
+                    linearGradient: {
+                        x1: 0,
+                        y1: 0,
+                        x2: 0,
+                        y2: 1
+                    },
+                    stops: [
+                        [0, Highcharts.getOptions().colors[0]],
+                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                    ]
+                },
+                marker: {
+                    radius: 2
+                },
+                lineWidth: 1,
+                states: {
+                    hover: {
+                        lineWidth: 1
+                    }
+                },
+                threshold: null
+            }
+        },
+
+        series: [{
+            type: 'column',
+            name: 'Stack',
+            // The line below maps the dictionary coming from Python into
+            // the data needed for highcharts. It's weird but the *1 is
+            // needed, otherwise the date does not show on chart.
+            data: Object.keys(data).map((key) => [((key * 1)), data[key]]),
+            turboThreshold: 0,
+            tooltip: {
+                pointFormat: "Stack Size: {point.y:,.0f} ₿"
+            }
+        }]
+    });
+
+};
+
 
 
 
