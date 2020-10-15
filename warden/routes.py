@@ -163,7 +163,8 @@ def warden_page():
         "portfolio_data": df,
         "FX": FX,
         "donated": donated,
-        "alerts": alerts
+        "alerts": alerts,
+        "specter": specter_update(load=False)
     }
     return (render_template('warden/warden.html', **templateData))
 
