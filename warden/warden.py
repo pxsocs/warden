@@ -129,7 +129,7 @@ def specter_update(load=False, data_folder=None):
     # Parse Wallets
     for wallet in specter_data.wallet_manager.wallets:
         tx_data = specter_data.wallet_manager.wallets[wallet].txlist(0)
-        scan = specter_data.wallet_manager.wallets[wallet].get_wallet_rescan_progress(0
+        scan = specter_data.wallet_manager.wallets[wallet].rescan_progress
         # Clear public keys - no need to store in additional file
         specter_data.wallet_manager.wallets[wallet].__dict__['keys'] = ''
         #  Expand list of devices used to sign this wallet, store only alias
@@ -149,7 +149,6 @@ def specter_update(load=False, data_folder=None):
             specter_data.wallet_manager.wallets[wallet].__dict__)
         return_dict['wallets']['wallets'][wallet]['txlist'] = tx_data
         return_dict['wallets']['wallets'][wallet]['scan'] = scan
-
 
     with open(specter_json, 'w') as fp:
         json.dump(return_dict, fp)
@@ -338,7 +337,7 @@ def get_specter_wallets(load=True):
 
 
 # Get all transactions of specific wallet by using alias
-@MWT(timeout=60)
+@ MWT(timeout=60)
 def get_specter_tx(wallet_name, sort_by='time'):
     specter_data = specter_update(load=True)
     df = pd.DataFrame()
@@ -446,7 +445,7 @@ class Trades():
         return (vars(self))
 
 
-@MWT(timeout=60)
+@ MWT(timeout=60)
 def specter_df(save_files=False, sort_by='trade_date'):
     wallet_info = get_specter_wallets()
     df = pd.DataFrame()
@@ -691,7 +690,7 @@ def cleandate(text):  # Function to clean Date fields
 # PORTFOLIO UTILITIES
 
 
-@MWT(timeout=10)
+@ MWT(timeout=10)
 def positions():
     # Method to create a user's position table
     # Returns a df with the following information
@@ -735,7 +734,7 @@ def single_price(ticker):
     return (price_data_rt(ticker), datetime.now())
 
 
-@MWT(timeout=200)
+@ MWT(timeout=200)
 def list_tickers():
     df = transactions_fx()
     # Now let's create our main dataframe with information for each ticker
@@ -743,7 +742,7 @@ def list_tickers():
     return (list_of_tickers)
 
 
-@MWT(timeout=2)
+@ MWT(timeout=2)
 def positions_dynamic():
     # This method is the realtime updater for the front page. It gets the
     # position information from positions above and returns a dataframe
@@ -903,7 +902,7 @@ def positions_dynamic():
     return (df, pie_data)
 
 
-@MWT(timeout=10)
+@ MWT(timeout=10)
 def generatenav(user='mynode', force=False, filter=None):
     PORTFOLIO_MIN_SIZE_NAV = 5
     RENEW_NAV = 10
@@ -1076,10 +1075,9 @@ def generatenav(user='mynode', force=False, filter=None):
     # There is one caveat here. If end value is zero (i.e. portfolio fully
     # redeemed, the formula needs to be adjusted)
     dailynav.loc[dailynav.PORT_fx_pos > min_size_for_calc,
-                 'port_dietz_ret_fx'] =\
-        ((dailynav['PORT_fx_pos'] -
-          dailynav['PORT_fx_pos'].shift(1)) -
-         dailynav['PORT_cash_value_fx']) /\
+                 'port_dietz_ret_fx'] = ((dailynav['PORT_fx_pos'] -
+                                          dailynav['PORT_fx_pos'].shift(1)) -
+                                         dailynav['PORT_cash_value_fx']) /\
         (dailynav['PORT_fx_pos'].shift(1) +
          abs(dailynav['PORT_cash_value_fx']))
 
@@ -1144,7 +1142,7 @@ def regenerate_nav():
         return
 
 
-@MWT(timeout=60)
+@ MWT(timeout=60)
 def cost_calculation(ticker, html_table=None):
     # This function calculates the cost basis assuming 3 different methods
     # FIFO, LIFO and avg. cost
@@ -1238,8 +1236,8 @@ def cost_calculation(ticker, html_table=None):
         fx = FX
         # Include a link to edit this transaction
         html["trade_reference_id"] = "<a href='/edittransaction?reference_id=" +\
-                                     html['trade_reference_id'] +\
-                                     "'><i class='fas fa-edit'></i></a>"
+            html['trade_reference_id'] +\
+            "'><i class='fas fa-edit'></i></a>"
 
         html.index = pd.to_datetime(html.index).strftime('%Y-%m-%d')
         # Include TOTAL row

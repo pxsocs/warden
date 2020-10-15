@@ -370,6 +370,7 @@
                         <th> Address Type </th>
                         <th> Pending PBSTs </th>
                         <th> Last Activity </th>
+                        <th> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -415,6 +416,9 @@
                         </td>
                         <td>
                             {{(warden_metadata['txs'][alias].time.max() | epoch) | time_ago}}
+                        </td>
+                        <td>
+                            {{warden_metadata['wallet_info'][wallet]['address_type']}}
                         </td>
                     </tr>
                     <tr data-toggle="collapse" data-target="#txs_{{alias_tgt}}" class="accordion-toggle">
