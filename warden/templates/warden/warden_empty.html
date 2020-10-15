@@ -231,14 +231,14 @@
           html = "<div id='messagealert' class='alert alert-success'>" + resultData.message + "</div>"
           $("#alertsection_df").html(html)
           $("#save_folder").html("Save")
+        },
+        error: function (resultData) {
+          html = "<div id='messagealert' class='alert alert-warning'>" + resultData.message + "</div>"
+          $("#alertsection_df").html(html)
+          $("#save_folder").html("Save")
         }
       });
-      saveData.error(function () {
-        html = "<div id='messagealert' class='alert alert-warning'>" + resultData.message + "</div>"
-        $("#alertsection_df").html(html)
-        $("#save_folder").html("Save")
-      });
-    });
+
   </script>
 
 
