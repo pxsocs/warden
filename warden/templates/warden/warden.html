@@ -545,8 +545,8 @@
                         {%if specter['wallets']['wallets'][alias]['info']['scanning']%}
                         <td class='td-part-fill'
                             style="background-size: {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100)}}% 100%">
-                            Scanning:
-                            {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100) | jformat(2)}}%
+                            Scanning... (
+                            {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100) | jformat(2)}}%)
                         </td>
                         {%else%}
                         <td>
@@ -915,6 +915,24 @@
                                 <td id='specter_status' class="text-right"> <img
                                         src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
                                         width="30" height="30"></img> </td>
+                            </tr>
+                            <tr>
+                                <td>Data Folder</td>
+                                <td class="text-right">
+                                    {{specter['data_folder']}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Wallets Folder</td>
+                                <td class="text-right">
+                                    {{specter['wallets']['data_folder']}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Configured?</td>
+                                <td class="text-right">
+                                    {{specter['is_configured']}}
+                                </td>
                             </tr>
                             <tr>
                                 <td>Last Data Refresh</td>
