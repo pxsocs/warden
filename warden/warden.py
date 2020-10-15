@@ -60,7 +60,7 @@ def specter_update(load=False, data_folder=None):
             load_data = json.loads(data_file.read())
         typical_folders.insert(0, load_data['data_folder'])
     except Exception as e:
-        print (f"Could not load saved data folder: " + load_data['data_folder'])
+        print (f"Could not load saved data folder")
         print (e)
 
 
