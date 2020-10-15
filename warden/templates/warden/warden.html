@@ -417,18 +417,8 @@
                         <td>
                             {{(warden_metadata['txs'][alias].time.max() | epoch) | time_ago}}
                         </td>
-                        {{alias}}
-                        {%if specter['wallets']['wallets'][alias]['info']['scanning']%}
                         <td>
-                            {{alias}}
-                            {{specter['wallets']['wallets'][alias_tgt]['info']['scanning']['progress']}}%
-                            {{specter['wallets']['wallets'][alias]['info']}}
                         </td>
-                        {%else%}
-                        <td>
-
-                        </td>
-                        {%endif%}
                     </tr>
 
                     <tr data-toggle="collapse" data-target="#txs_{{alias_tgt}}" class="accordion-toggle">
@@ -552,6 +542,16 @@
                         <td>
                             N/A
                         </td>
+                        {%if specter['wallets']['wallets'][alias]['info']['scanning']%}
+                        <td class='td-part-fill'
+                            style="background-size: {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100)}}% 100%">
+                            {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100) | jformat(2)}}%
+                        </td>
+                        {%else%}
+                        <td>
+
+                        </td>
+                        {%endif%}
                     </tr>
                     {%endif%}
                     {%endif%}
