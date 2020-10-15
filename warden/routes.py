@@ -548,7 +548,7 @@ def navchartdatajson():
 # API end point - returns a json with NAV Chartdata
 @warden.route("/stackchartdatajson", methods=["GET", "POST"])
 #  Creates a table with dates and NAV values
-def navchartdatajson():
+def stackchartdatajson():
     data = generatenav()
     # Generate data for Stack chart
     # Filter to Only BTC Positions
