@@ -657,18 +657,23 @@ function stackChart(data) {
             enabled: false
         },
         rangeSelector: {
-            selected: 5
+            selected: 5,
+            style: {
+                fontSize: '10px'
+            }
         },
         chart: {
             zoomType: 'xy',
             backgroundColor: "#FAFAFA",
         },
         title: {
-            text: '₿ Stacking over time'
+            text: '₿ Stacking over time',
+            style: {
+                fontSize: '12px'
+            }
         },
         subtitle: {
-            text: document.ontouchstart === undefined ?
-                'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+            text: ''
         },
         xAxis: {
             type: 'datetime'
