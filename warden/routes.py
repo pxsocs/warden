@@ -216,6 +216,15 @@ def data_folder():
 
     if request.method == 'POST':
         results = request.form
+        # Test this data folder
+        try:
+            data_folder = results['data_folder']
+            # Test if can get specter data
+            specter = specter_update(load=True, data_folder=data_folder)
+            print (specter)
+
+        except Exception as e:
+            return json.dumps("Error: " + str(e))
         with open(data_file, 'w') as fp:
             json.dump(results, fp)
         return json.dumps("Saved")

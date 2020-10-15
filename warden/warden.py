@@ -28,7 +28,7 @@ def current_path():
 # Start background threads
 # Get Specter tx data and updates every x seconds
 # Parse data and dump result to json file
-def specter_update(load=False):
+def specter_update(load=False, data_folder=None):
     specter_json = os.path.join(current_path(),
                                 'static/json_files/specter.json')
     if load:
@@ -51,19 +51,22 @@ def specter_update(load=False):
     # Find the data folder
     typical_folders = ['~/.specter', '/mnt/hdd/mynode/specter', '/home/admin/.specter']
 
+    if data_folder:
+        DATA_FOLDER = data_folder
     specter_data = Specter(data_folder=DATA_FOLDER)
     specter_config = True
     # If the original data folder does not work, try others
-    if len(specter_data.wallet_manager.wallets) == 0:
-        specter_config = False
-        for folder in typical_folders:
-            try:
-                specter_data = Specter(folder)
-            except Exception:
-                pass
-            if len(specter_data.wallet_manager.wallets) > 0:
-                specter_config = True
-                break
+    if not data_folder:
+        if len(specter_data.wallet_manager.wallets) == 0:
+            specter_config = False
+            for folder in typical_folders:
+                try:
+                    specter_data = Specter(folder)
+                except Exception:
+                    pass
+                if len(specter_data.wallet_manager.wallets) > 0:
+                    specter_config = True
+                    break
 
     return_dict = {
         'specter_config': specter_config,
