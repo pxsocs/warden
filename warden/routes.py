@@ -37,7 +37,9 @@ def before_request():
     # to run even in setup mode
     exclude_list = [
         "warden.setup", "warden.testtor", "warden.gitreleases",
-        "warden.realtime_btc"
+        "warden.realtime_btc", "warden.datafolder", "warden.testtor",
+        "warden.checkservices", "warden.check_activity", "warden.warden_metadata",
+        "warden.node_info"
     ]
     if request.endpoint in exclude_list:
         return
