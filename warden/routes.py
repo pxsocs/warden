@@ -3,7 +3,7 @@ from flask import (Blueprint, redirect, render_template, flash, session,
 from warden.warden import (list_specter_wallets, warden_metadata, positions,
                            positions_dynamic, FX, get_price_ondate,
                            generatenav, specter_df, check_services,
-                           current_path, specter_update)
+                           current_path, specter_update, regenerate_nav)
 
 from warden.warden_pricing_engine import (test_tor, tor_request, price_data_rt,
                                           fx_rate)
@@ -265,9 +265,11 @@ def check_activity():
         if isinstance(meta['old_new_df_old'], pd.DataFrame):
             if not meta['old_new_df_old'].empty:
                 alerts = True
+                regenerate_nav()
         if isinstance(meta['old_new_df_new'], pd.DataFrame):
             if not meta['old_new_df_new'].empty:
                 alerts = True
+                regenerate_nav()
     return (json.dumps(alerts))
 
 

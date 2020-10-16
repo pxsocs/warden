@@ -65,7 +65,8 @@ def specter_update(load=False, data_folder=None):
         from cryptoadvance.specter.config import DATA_FOLDER
 
     # Find the data folder
-    typical_folders = ['~/.specter', '/mnt/hdd/mynode/specter', '/home/admin/.specter']
+    typical_folders = ['~/.specter',
+                       '/mnt/hdd/mynode/specter', '/home/admin/.specter']
 
     # Load json if exists
     data_file = os.path.join(current_path(),
@@ -128,7 +129,13 @@ def specter_update(load=False, data_folder=None):
     }
     # Parse Wallets
     for wallet in specter_data.wallet_manager.wallets:
-        tx_data = specter_data.wallet_manager.wallets[wallet].txlist(0)
+        # Get full list of idx from specter
+        address_index = specter_data.wallet_manager.wallets[wallet].address_index
+        tx_data = [
+            specter_data.wallet_manager.wallets[wallet].txlist(idx)
+            for idx in range(0, address_index + 1)
+        ]
+        # Check why zero below
         scan = specter_data.wallet_manager.wallets[wallet].rescan_progress
         # Clear public keys - no need to store in additional file
         specter_data.wallet_manager.wallets[wallet].__dict__['keys'] = ''
@@ -149,6 +156,7 @@ def specter_update(load=False, data_folder=None):
             specter_data.wallet_manager.wallets[wallet].__dict__)
         return_dict['wallets']['wallets'][wallet]['txlist'] = tx_data
         return_dict['wallets']['wallets'][wallet]['scan'] = scan
+        return_dict['wallets']['wallets'][wallet]['address_index'] = address_index
 
     with open(specter_json, 'w') as fp:
         json.dump(return_dict, fp)
@@ -232,7 +240,8 @@ def check_services(load=True, expiry=60):
         pip_installed = True
 
     # Find the data folder
-    typical_folders = ['~/.specter', '/mnt/hdd/mynode/specter', '/home/admin/.specter']
+    typical_folders = ['~/.specter',
+                       '/mnt/hdd/mynode/specter', '/home/admin/.specter']
     data_folder = DATA_FOLDER
 
     specter_data = Specter(DATA_FOLDER)
@@ -276,11 +285,13 @@ def check_services(load=True, expiry=60):
     # Test if specter is running in this machine or remote
     if services['specter']['running']:
         connection = (get_local_ip(), 25441)
-        services['specter']['running_on_same_machine'] = check_server(*connection)
+        services['specter']['running_on_same_machine'] = check_server(
+            *connection)
         # Try again on localhost
         if not services['specter']['running_on_same_machine']:
             connection = ('localhost', 25441)
-            services['specter']['running_on_same_machine'] = check_server(*connection)
+            services['specter']['running_on_same_machine'] = check_server(
+                *connection)
 
     services['last_update'] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     with open(services_json, 'w') as fp:
@@ -904,7 +915,7 @@ def positions_dynamic():
 
 @ MWT(timeout=10)
 def generatenav(user='mynode', force=False, filter=None):
-    PORTFOLIO_MIN_SIZE_NAV = 5
+    PORTFOLIO_MIN_SIZE_NAV = 1
     RENEW_NAV = 10
     # Portfolios smaller than this size do not account for NAV calculations
     # Otherwise, there's an impact of dust left in the portfolio (in USD)
