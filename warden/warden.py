@@ -135,6 +135,8 @@ def specter_update(load=False, data_folder=None):
             specter_data.wallet_manager.wallets[wallet].txlist(idx)
             for idx in range(0, address_index + 1)
         ]
+        # Merge list of lists into one single list
+        tx_data = [j for i in tx_data for j in i]
         # Check why zero below
         scan = specter_data.wallet_manager.wallets[wallet].rescan_progress
         # Clear public keys - no need to store in additional file
