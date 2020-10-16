@@ -157,7 +157,6 @@ def specter_update(load=False, data_folder=None):
         return_dict['wallets']['wallets'][wallet]['txlist'] = tx_data
         return_dict['wallets']['wallets'][wallet]['scan'] = scan
         return_dict['wallets']['wallets'][wallet]['address_index'] = address_index
-
     with open(specter_json, 'w') as fp:
         json.dump(return_dict, fp)
 
