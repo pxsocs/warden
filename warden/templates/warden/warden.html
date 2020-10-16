@@ -417,6 +417,13 @@
                         <td>
                             {{(warden_metadata['txs'][alias].time.max() | epoch) | time_ago}}
                         </td>
+                        {%if specter['wallets']['wallets'][alias]['info']['scanning']%}
+                        <td class='td-part-fill'
+                            style="background-size: {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100)}}% 100%">
+                            Scanning... (
+                            {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100) | jformat(2)}}%)
+                        </td>
+                        {%else%}
                         <td>
                         </td>
                     </tr>
