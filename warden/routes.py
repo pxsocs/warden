@@ -407,6 +407,11 @@ def services():
 # Latest Traceback message
 @warden.route("/traceback_error", methods=["GET"])
 def traceback_error():
+    try:
+        a=1/0
+    except Exception:
+        pass
+
     traceback = {
         "traceback": sys.last_traceback,
          "type": sys.last_type,
