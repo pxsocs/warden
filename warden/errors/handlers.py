@@ -21,8 +21,5 @@ def page_not_found_403(error):
 def page_not_found_500(error):
     # get latest traceback info
     import traceback
-    import sys
-    traceback = traceback.print_exception(etype=sys.last_type,
-        value=sys.last_value,
-        tb=sys.last_traceback)
-    return render_template('errors/500.html', error=error, traceback=traceback), 500
+    trace = traceback.format_exc()
+    return render_template('errors/500.html', error=error, traceback=trace), 500

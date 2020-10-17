@@ -408,11 +408,8 @@ def services():
 @warden.route("/traceback_error", methods=["GET"])
 def traceback_error():
     import traceback
-    import sys
-    traceback = traceback.print_exception(etype=sys.last_type,
-        value=sys.last_value,
-        tb=sys.last_traceback)
-    return simplejson.dumps(traceback, ignore_nan=True)
+    trace = traceback.format_exc()
+    return simplejson.dumps(trace, ignore_nan=True)
 
 
 
