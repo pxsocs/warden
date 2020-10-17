@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template
+import sys
 
 errors = Blueprint('errors', __name__)
 
@@ -18,4 +19,10 @@ def page_not_found_403(error):
 @errors.app_errorhandler(500)
 # abort(500) will call this function
 def page_not_found_500(error):
-    return render_template('errors/500.html', error=error), 500
+    # get latest traceback info
+    traceback = {
+        "traceback": sys.last_traceback,
+         "type": sys.last_type,
+         "value": sys.last_value
+    }
+    return render_template('errors/500.html', error=error, traceback=traceback), 500
