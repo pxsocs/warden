@@ -20,9 +20,9 @@ def page_not_found_403(error):
 # abort(500) will call this function
 def page_not_found_500(error):
     # get latest traceback info
-    traceback = {
-        "traceback": sys.last_traceback,
-         "type": sys.last_type,
-         "value": sys.last_value
-    }
+    import traceback
+    import sys
+    traceback = traceback.print_exception(etype=sys.last_type,
+        value=sys.last_value,
+        tb=sys.last_traceback)
     return render_template('errors/500.html', error=error, traceback=traceback), 500
