@@ -1,6 +1,5 @@
 # Welcome to WARden implementation for Specter Server
 
-[![Version](https://img.shields.io/badge/Version-Alpha%20pre%20release-yellow.svg)](https://github.com/pxsocs/specter_warden)
 [![GitHub release](https://img.shields.io/github/release/pxsocs/specter_warden.svg)](https://GitHub.com/pxsocs/specter_warden/releases/)
 [![Open Source? Yes!](https://badgen.net/badge/Open%20Source%20%3F/Yes%21/blue?icon=github)](https://GitHub.com/pxsocs/specter_warden/releases/)
 [![Powered by NGU](https://img.shields.io/badge/Powered%20by-NGU%20Technology-orange.svg)](https://bitcoin.org)

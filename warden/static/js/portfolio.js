@@ -13,7 +13,7 @@ $(document).ready(function () {
     $('.lifo_costtable').toggle();
 
     $('#dismiss_balances').click(function () {
-        $('#dismiss_balances').html('Please Wait...');
+        $('#dismiss_balances').html('Please wait...');
         $('#dismiss_balances').prop('disabled', true);
         $.ajax({
             type: "POST",
