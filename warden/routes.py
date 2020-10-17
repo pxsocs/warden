@@ -404,6 +404,18 @@ def services():
     return simplejson.dumps(specter, ignore_nan=True)
 
 
+# Latest Traceback message
+@warden.route("/traceback_error", methods=["GET"])
+def traceback_error():
+    traceback = {
+        "traceback": sys.last_traceback,
+         "type": sys.last_type,
+         "value": sys.last_value
+    }
+    return simplejson.dumps(traceback, ignore_nan=True)
+
+
+
 # API end point
 # Function returns summary statistics for portfolio NAV and values
 # Main function for portfolio page
