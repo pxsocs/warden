@@ -48,8 +48,8 @@
             </a>
 
             <div class="rightfloater">
-                {%if services['mynode']['running']%}
-                <a href="{{services['mynode']['connection'][0]}}:{{services['mynode']['connection'][1]}}""
+                {%if current_app.services['mynode']['running']%}
+                <a href="{{current_app.services['mynode']['connection'][0]}}:{{current_app.services['mynode']['connection'][1]}}""
                     target='_blank'>
                     <span class=" statusbox text-white">
                     Powered by
@@ -58,8 +58,8 @@
                 </a>
                 {%endif%}
 
-                {%if services['specter']['running']%}
-                <a href="http://{{services['specter']['connection'][0]}}:{{services['specter']['connection'][1]}}""
+                {%if current_app.services['specter']['running']%}
+                <a href="http://{{current_app.services['specter']['connection'][0]}}:{{current_app.services['specter']['connection'][1]}}""
                     target='_blank'>
                 <span class=" statusbox text-white">
                     Connected to Specter Wallet

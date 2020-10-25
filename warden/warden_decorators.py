@@ -127,3 +127,24 @@ class MWT(object):
         func.func_name = f.__name__
 
         return func
+
+
+def timing(method):
+    def timed(*args, **kw):
+        try:
+            print('\033[1;37;40m[TIMING STARTED] \033[92mFunction ',
+                  method.__name__)
+            print('                 Args: ', *args)
+            ts = time.time()
+            result = method(*args, **kw)
+            te = time.time()
+            print('\033[1;37;40m[TIME RESULT] \033[92mFunction ',
+                  method.__name__, '\033[95mtime:', round((te - ts) * 1000,
+                                                          1), 'ms')
+
+            print("\033[1;37;40m")
+            return result
+        except Exception:
+            pass
+
+    return timed

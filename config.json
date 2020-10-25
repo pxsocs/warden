@@ -1,0 +1,22 @@
+{
+    "rpc": {
+        "autodetect": true,
+        "datadir": "/Users/zagury/Library/Application Support/Bitcoin/",
+        "user": "",
+        "password": "",
+        "port": "",
+        "host": "localhost",
+        "protocol": "http"
+    },
+    "auth": "none",
+    "explorers": {
+        "main": "",
+        "test": "",
+        "regtest": "",
+        "signet": ""
+    },
+    "hwi_bridge_url": "/hwi/api/",
+    "uid": "98305e47cc313f62",
+    "unit": "btc",
+    "validate_merkle_proofs": false
+}

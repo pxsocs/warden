@@ -823,8 +823,8 @@
                 <div class='col-6'>
                     <span class="lead">Bitcoin Node Status</span>
                     <span class="float-right">
-                        {% if services['mynode']['running']%}
-                        <a href="http://{{services['mynode']['connection'][0]}}:{{services['mynode']['connection'][1]}}"
+                        {% if current_app.services['mynode']['running']%}
+                        <a href="http://{{current_app.services['mynode']['connection'][0]}}:{{current_app.services['mynode']['connection'][1]}}"
                             style="text-decoration: none; color:gray;">
                             <i class="fas fa-external-link-square-alt fa-lg"></i>
                         </a>
@@ -908,8 +908,8 @@
                 <div class='col-6'>
                     <span class="lead">Specter Server Status</span>
                     <span class="float-right">
-                        {% if services['specter']['running']%}
-                        <a href="http://{{services['specter']['connection'][0]}}:{{services['specter']['connection'][1]}}"
+                        {% if current_app.services['specter']['running']%}
+                        <a href="http://{{current_app.services['specter']['connection'][0]}}:{{current_app.services['specter']['connection'][1]}}"
                             style="text-decoration: none; color:gray;">
                             <i class="fas fa-external-link-square-alt fa-lg"></i>
                         </a>

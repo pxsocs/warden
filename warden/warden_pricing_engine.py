@@ -570,7 +570,7 @@ def price_data(ticker):
 
 
 # Returns price data in current user's currency
-def price_data_fx(ticker):  #BTC
+def price_data_fx(ticker):  # BTC
     FX = fx_rate()['base']
     GBTC_PROVIDER_PRIORITY = [
         'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock', 'bitmex'
@@ -743,8 +743,16 @@ def fxsymbol(fx, output='symbol'):
 @MWT(timeout=600)
 def fx_rate():
     fx_file = os.path.join(current_path(), 'static/json_files/fx_default.json')
-    with open(fx_file) as data_file:
-        fx = json.loads(data_file.read())
+    try:
+        with open(fx_file) as data_file:
+            fx = json.loads(data_file.read())
+    except Exception:
+        # If file not found, create a default one
+        fx = {
+            "FX": "USD"
+        }
+        with open(fx_file, 'w') as fp:
+            json.dump(fx, fp)
 
     FX = fx['FX']
 
@@ -851,8 +859,7 @@ PROVIDER_LIST = {
     'fmp_stock':
     PriceProvider(
         name='financialmodelingprep',
-        base_url=
-        'https://financialmodelingprep.com/api/v3/historical-price-full',
+        base_url='https://financialmodelingprep.com/api/v3/historical-price-full',
         ticker_field='',
         field_dict={
             'from': '2001-01-01',
@@ -884,8 +891,7 @@ PROVIDER_LIST = {
             'api_key':
             '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
         },
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
+        doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
     'cc_fx':
     PriceProvider(
@@ -900,8 +906,7 @@ PROVIDER_LIST = {
             'api_key':
             '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
         },
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
+        doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
     'bitmex':
     PriceProvider(name='bitmex',
@@ -936,8 +941,7 @@ PROVIDER_LIST = {
             'api_key':
             '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
         },
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'
+        doc_link='https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'
     ),
     'aa_realtime_digital':
     PriceProvider(name='aarealtime',
@@ -961,8 +965,7 @@ PROVIDER_LIST = {
     'fp_realtime_stock':
     PriceProvider(
         name='fprealtimestock',
-        base_url=
-        'https://financialmodelingprep.com/api/v3/stock/real-time-price',
+        base_url='https://financialmodelingprep.com/api/v3/stock/real-time-price',
         ticker_field='',
         field_dict='',
         doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'

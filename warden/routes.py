@@ -1,5 +1,5 @@
 from flask import (Blueprint, redirect, render_template, flash, session,
-                   url_for, request, abort)
+                   url_for, request, abort, current_app)
 from warden.warden import (list_specter_wallets, warden_metadata, positions,
                            positions_dynamic, FX, get_price_ondate,
                            generatenav, specter_df, check_services,
@@ -39,16 +39,16 @@ def before_request():
         "warden.setup", "warden.testtor", "warden.gitreleases",
         "warden.realtime_btc", "warden.data_folder", "warden.testtor",
         "warden.checkservices", "warden.check_activity", "warden.warden_metadata",
-        "warden.node_info"
+        "warden.node_info", "warden.specter_json"
     ]
     if request.endpoint in exclude_list:
         return
     need_setup = False
     # Check Tor
-    tor = test_tor()
+    tor = current_app.tor
     need_setup = not tor['status']
     # Get Services
-    services = check_services()
+    services = current_app.services
     need_setup = not services['specter']['running']
     # Are Wallets Found?
     specter_wallets = have_specter_wallets(load=False)
@@ -166,7 +166,7 @@ def warden_page():
         "FX": FX,
         "donated": donated,
         "alerts": alerts,
-        "specter": specter_update(load=False)
+        "specter": specter_update()
     }
     return (render_template('warden/warden.html', **templateData))
 
@@ -200,7 +200,8 @@ def setup():
         "title": "System Status",
         "donated": donate_check(),
         "messages": json.loads(session['messages']),
-        "specter": specter_update()
+        "specter": specter_update(),
+        "current_app": current_app,
     }
     return (render_template('warden/warden_empty.html', **templateData))
 
@@ -397,7 +398,7 @@ def checkservices():
 # API end point to return Specter data
 # args: ?load=True (True = loads saved json, False = refresh data)
 @warden.route("/specter", methods=["GET"])
-def services():
+def specter_json():
     load = request.args.get("load")
     load = True if not load else load
     specter = specter_update(load=load)
@@ -410,7 +411,6 @@ def traceback_error():
     import traceback
     trace = traceback.format_exc()
     return simplejson.dumps(trace, ignore_nan=True)
-
 
 
 # API end point

@@ -5,15 +5,17 @@ import socket
 import pandas as pd
 import numpy as np
 import glob
+import logging
 
 from datetime import datetime, timedelta
-from flask import flash
+from flask import flash, current_app, has_request_context
+from pathlib import Path
 
 from warden.warden_pricing_engine import (get_price_ondate, fx_price_ondate,
                                           multiple_price_grab, price_data_rt,
                                           price_data_fx, price_data_rt_full,
                                           price_data, fx_rate)
-from warden.warden_decorators import MWT
+from warden.warden_decorators import MWT, timing
 
 FX = fx_rate()['base']
 FX_RATE = fx_rate()['fx_rate']
@@ -28,72 +30,32 @@ def current_path():
 # Start background threads
 # Get Specter tx data and updates every x seconds
 # Parse data and dump result to json file
-def specter_update(load=False, data_folder=None):
-    specter_json = os.path.join(current_path(),
-                                'static/json_files/specter.json')
+
+def background_jobs():
+    from . import create_app
+    app = create_app()
+    app_ctx = app.app_context()
+    app_ctx.push()
+    app.specter = specter_update(load=False)
+    app.services = check_services(load=False)
+    return (app)
+
+
+def specter_update(load=True, data_folder=None):
     if load:
-        try:
-            with open(specter_json) as f:
-                return (json.load(f))
-        except Exception:
-            return None
+        with current_app.app_context():
+            data = current_app.specter
+        return (data)
 
-    try:
-        from cryptoadvance.specter.specter import Specter
-        from cryptoadvance.specter.config import DATA_FOLDER
-    except Exception:
-        # MyNode stores these libraries at different path
-        import sys
-        included_paths = [
-            '/opt/mynode/specter/env/lib/python3.7/site-packages',
-            '/usr/lib/python3/site-packages',
-            '/usr/lib/python3.7/site-packages'
-            '/usr/lib/python3.8/site-packages'
-            '/home/user/.local/lib/python3.8/site-packages',
-            '/home/user/.local/lib/python3.7/site-packages',
-            '/usr/lib/python38.zip',
-            '/usr/lib/python3.8',
-            '/usr/lib/python3.8/lib-dynload',
-            '/home/user/.local/lib/python3.8/site-packages',
-            '/usr/local/lib/python3.8/dist-packages',
-            '/usr/lib/python3/dist-packages',
-            '/usr/lib/python3.8/dist-packages']
-
-        sys.path = sys.path + included_paths
-
-        from cryptoadvance.specter.specter import Specter
-        from cryptoadvance.specter.config import DATA_FOLDER
-
-    # Find the data folder
-    typical_folders = ['~/.specter',
-                       '/mnt/hdd/mynode/specter', '/home/admin/.specter']
+    from cryptoadvance.specter.specter import Specter
+    from cryptoadvance.specter.config import DATA_FOLDER
 
     # Load json if exists
-    data_file = os.path.join(current_path(),
-                             'static/json_files/specter_data_folder.json')
-    try:
-        with open(data_file) as data_file:
-            load_data = json.loads(data_file.read())
-        typical_folders.insert(0, load_data['data_folder'])
-    except Exception:
-        pass
-
-    if data_folder:
-        DATA_FOLDER = data_folder
+    data_folder = current_app.settings['SPECTER']['specter_datafolder']
     specter_data = Specter(data_folder=DATA_FOLDER)
-    specter_config = True
-    # If the original data folder does not work, try others
-    if not data_folder:
-        if len(specter_data.wallet_manager.wallets) == 0:
-            specter_config = False
-            for folder in typical_folders:
-                try:
-                    specter_data = Specter(folder)
-                except Exception:
-                    pass
-                if len(specter_data.wallet_manager.wallets) > 0:
-                    specter_config = True
-                    break
+    specter_config = specter_data.is_running
+    logging.info(f"Finished Building Specter Class from data_folder: {data_folder}")
+    logging.info(f"Specter Running: {specter_config}")
 
     return_dict = {
         'specter_config': specter_config,
@@ -121,6 +83,7 @@ def specter_update(load=False, data_folder=None):
             'file':
             specter_data.device_manager.devices[device].__dict__['fullpath'],
         }
+        logging.info(f"\u001b[32mSuccess, Device {device} imported...\u001b[0m")
 
     return_dict['wallets'] = {
         'data_folder': specter_data.wallet_manager.working_folder,
@@ -129,16 +92,24 @@ def specter_update(load=False, data_folder=None):
     }
     # Parse Wallets
     for wallet in specter_data.wallet_manager.wallets:
+        # is this scanning?
+        scan = specter_data.wallet_manager.wallets[wallet].rescan_progress
         # Get full list of idx from specter
         address_index = specter_data.wallet_manager.wallets[wallet].address_index
-        tx_data = [
-            specter_data.wallet_manager.wallets[wallet].txlist(idx)
-            for idx in range(0, address_index + 1)
-        ]
-        # Merge list of lists into one single list
-        tx_data = [j for i in tx_data for j in i]
-        # Check why zero below
-        scan = specter_data.wallet_manager.wallets[wallet].rescan_progress
+
+        if not scan:
+            logging.info(f"Wallet {wallet} --- looking for txs")
+            tx_data = [
+                specter_data.wallet_manager.wallets[wallet].txlist(idx)
+                for idx in range(0, address_index + 1)
+            ]
+            logging.info(f"Wallet {wallet} --- Finished txs")
+            # Merge list of lists into one single list
+            tx_data = [j for i in tx_data for j in i]
+        else:
+            tx_data = []
+            logging.warn(f"\u001b[33mWallet {wallet} being scanned {scan}\u001b[0m")
+
         # Clear public keys - no need to store in additional file
         specter_data.wallet_manager.wallets[wallet].__dict__['keys'] = ''
         #  Expand list of devices used to sign this wallet, store only alias
@@ -159,9 +130,6 @@ def specter_update(load=False, data_folder=None):
         return_dict['wallets']['wallets'][wallet]['txlist'] = tx_data
         return_dict['wallets']['wallets'][wallet]['scan'] = scan
         return_dict['wallets']['wallets'][wallet]['address_index'] = address_index
-    with open(specter_json, 'w') as fp:
-        json.dump(return_dict, fp)
-
     return (return_dict)
 
 
@@ -185,20 +153,17 @@ def check_server(address, port, timeout=10):
 # load = True   Forcer json load
 # expiry = only loads json if data is not stale by more than n seconds
 def check_services(load=True, expiry=60):
-    services_json = os.path.join(current_path(),
-                                 'static/json_files/services.json')
     if load:
         try:
-            with open(services_json) as f:
-                data = json.load(f)
-                update_time = datetime.strptime(data['last_update'],
-                                                "%m/%d/%Y, %H:%M:%S")
-                elapsed = (datetime.now() - update_time).total_seconds()
-                if expiry:
-                    if elapsed < expiry:
-                        return (data)
-                else:
+            data = current_app.services
+            update_time = datetime.strptime(data['last_update'],
+                                            "%m/%d/%Y, %H:%M:%S")
+            elapsed = (datetime.now() - update_time).total_seconds()
+            if expiry:
+                if elapsed < expiry:
                     return (data)
+            else:
+                return (data)
         except Exception as e:
             pass
 
@@ -211,52 +176,7 @@ def check_services(load=True, expiry=60):
         'connection': None
     }
 
-    pip_installed = False
-    try:
-        from cryptoadvance.specter.specter import Specter
-        from cryptoadvance.specter.config import DATA_FOLDER
-        pip_installed = True
-    except Exception:
-        # MyNode stores these libraries at different path, add other possible paths
-        import sys
-        included_paths = [
-            '/opt/mynode/specter/env/lib/python3.7/site-packages',
-            '/usr/lib/python3/site-packages',
-            '/usr/lib/python3.7/site-packages'
-            '/usr/lib/python3.8/site-packages'
-            '/home/user/.local/lib/python3.8/site-packages',
-            '/home/user/.local/lib/python3.7/site-packages',
-            '/usr/lib/python38.zip',
-            '/usr/lib/python3.8',
-            '/usr/lib/python3.8/lib-dynload',
-            '/home/user/.local/lib/python3.8/site-packages',
-            '/usr/local/lib/python3.8/dist-packages',
-            '/usr/lib/python3/dist-packages',
-            '/usr/lib/python3.8/dist-packages']
-
-        sys.path = sys.path + included_paths
-
-        from cryptoadvance.specter.specter import Specter
-        from cryptoadvance.specter.config import DATA_FOLDER
-        pip_installed = True
-
-    # Find the data folder
-    typical_folders = ['~/.specter',
-                       '/mnt/hdd/mynode/specter', '/home/admin/.specter']
-    data_folder = DATA_FOLDER
-
-    specter_data = Specter(DATA_FOLDER)
-    specter_config = True
-    # If the original data folder does not work, try others
-    if not specter_data._is_configured:
-        data_folder = None
-        specter_config = False
-        for folder in typical_folders:
-            specter_data = Specter(DATA_FOLDER)
-            if specter_data._is_configured:
-                specter_config = True
-                data_folder = DATA_FOLDER
-                break
+    pip_installed = True
 
     services['specter'] = {
         'name':
@@ -267,11 +187,7 @@ def check_services(load=True, expiry=60):
         'running':
         False,
         'connection':
-        None,
-        'pip_installed':
-        pip_installed,
-        'specter_config':
-        specter_config
+        None
     }
     # Test Connections
     for service in services:
@@ -295,8 +211,9 @@ def check_services(load=True, expiry=60):
                 *connection)
 
     services['last_update'] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-    with open(services_json, 'w') as fp:
-        json.dump(services, fp)
+
+    if has_request_context:
+        current_app.services = services
 
     return (services)
 
@@ -382,6 +299,7 @@ def warden_metadata():
     meta['txs_count'] = {}
     for name in meta['wallet_info']:
         tmp_name = meta['wallet_info'][name]['name']
+        # Line below throws an error when specter is not loaded yet
         meta['txs_count'][tmp_name] = specter_data['wallets']['wallets'][tmp_name]
         meta['txs'][tmp_name] = get_specter_tx(
             meta['wallet_info'][name]['name'])
@@ -515,8 +433,11 @@ def specter_df(save_files=False, sort_by='trade_date'):
     df.loc[df.trade_operation == 'B', 'trade_multiplier'] = 1
     df.loc[df.trade_operation == 'S', 'trade_multiplier'] = -1
 
-    df['cash_value'] = df['trade_price'] * df['trade_quantity'] * df[
-        'trade_multiplier']
+    try:
+        df['cash_value'] = df['trade_price'] * df['trade_quantity'] * df[
+            'trade_multiplier']
+    except Exception:
+        df['cash_value'] = 0
 
     # Hash the Pandas df for quick comparison for changes
     from pandas.util import hash_pandas_object
@@ -1316,9 +1237,35 @@ def to_epoch(in_date):
     return str(int((in_date - datetime(1970, 1, 1)).total_seconds()))
 
 
+# Keep only n last lines of file
+def tail(f, lines=20):
+    total_lines_wanted = lines
+
+    BLOCK_SIZE = 1024
+    f.seek(0, 2)
+    block_end_byte = f.tell()
+    lines_to_go = total_lines_wanted
+    block_number = -1
+    blocks = []
+    while lines_to_go > 0 and block_end_byte > 0:
+        if (block_end_byte - BLOCK_SIZE > 0):
+            f.seek(block_number*BLOCK_SIZE, 2)
+            blocks.append(f.read(BLOCK_SIZE))
+        else:
+            f.seek(0, 0)
+            blocks.append(f.read(block_end_byte))
+        lines_found = blocks[-1].count(b'\n')
+        lines_to_go -= lines_found
+        block_end_byte -= BLOCK_SIZE
+        block_number -= 1
+    all_read_text = b''.join(reversed(blocks))
+    return b'\n'.join(all_read_text.splitlines()[-total_lines_wanted:])
+
 # ---------------- PANDAS HELPER FUNCTION --------------------------
 # This is a function to concatenate a function returning multiple columns into
 # a dataframe.
+
+
 def apply_and_concat(dataframe, field, func, column_names):
     return pd.concat((dataframe, dataframe[field].apply(
         lambda cell: pd.Series(func(cell), index=column_names))),
