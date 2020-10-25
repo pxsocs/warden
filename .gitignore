@@ -26,6 +26,7 @@ txs*.pkl
 *.pyc
 config.ini
 debug*.*
+config.json
 
 # Packages #
 ############
