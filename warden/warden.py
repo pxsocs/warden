@@ -17,6 +17,10 @@ from warden.warden_pricing_engine import (get_price_ondate, fx_price_ondate,
                                           price_data, fx_rate)
 from warden.warden_decorators import MWT, timing
 
+from cryptoadvance.specter.specter import Specter
+from cryptoadvance.specter.config import DATA_FOLDER
+
+
 FX = fx_rate()['base']
 FX_RATE = fx_rate()['fx_rate']
 
@@ -28,31 +32,28 @@ def current_path():
 
 
 # Start background threads
-# Get Specter tx data and updates every x seconds
-# Parse data and dump result to json file
-
+# Get Specter tx data and updates every 30 seconds (see config.py)
+@timing
 def background_jobs():
-    from . import create_app
-    app = create_app()
-    app_ctx = app.app_context()
-    app_ctx.push()
-    app.specter = specter_update(load=False)
-    app.services = check_services(load=False)
-    return (app)
+    print("Starting Background")
+    current_app.specter = specter_update(load=False)
+    print("DONE")
+    current_app.services = check_services(load=False)
+    return (current_app)
 
 
-def specter_update(load=True, data_folder=None):
+def specter_update(load=True, data_folder=None, idx=0):
     if load:
         with current_app.app_context():
             data = current_app.specter
         return (data)
 
-    from cryptoadvance.specter.specter import Specter
-    from cryptoadvance.specter.config import DATA_FOLDER
+    if not data_folder:
+        with current_app.app_context():
+            data_folder = current_app.settings['SPECTER']['specter_datafolder']
 
-    # Load json if exists
-    data_folder = current_app.settings['SPECTER']['specter_datafolder']
-    specter_data = Specter(data_folder=DATA_FOLDER)
+    specter_data = Specter(data_folder=data_folder)
+
     specter_config = specter_data.is_running
     logging.info(f"Finished Building Specter Class from data_folder: {data_folder}")
     logging.info(f"Specter Running: {specter_config}")
@@ -91,45 +92,32 @@ def specter_update(load=True, data_folder=None):
         'wallets': {}
     }
     # Parse Wallets
-    for wallet in specter_data.wallet_manager.wallets:
-        # is this scanning?
-        scan = specter_data.wallet_manager.wallets[wallet].rescan_progress
-        # Get full list of idx from specter
-        address_index = specter_data.wallet_manager.wallets[wallet].address_index
+    if hasattr(current_app, 'specter'):
+        for wallet in specter_data.wallet_manager.wallets:
+            specter_data.check()
+            wallet = specter_data.wallet_manager.wallets[wallet]
+            wallet.get_info()
+            # is this scanning?
+            scan = wallet.rescan_progress
 
-        if not scan:
-            logging.info(f"Wallet {wallet} --- looking for txs")
-            tx_data = [
-                specter_data.wallet_manager.wallets[wallet].txlist(idx)
-                for idx in range(0, address_index + 1)
-            ]
-            logging.info(f"Wallet {wallet} --- Finished txs")
-            # Merge list of lists into one single list
-            tx_data = [j for i in tx_data for j in i]
-        else:
-            tx_data = []
-            logging.warn(f"\u001b[33mWallet {wallet} being scanned {scan}\u001b[0m")
+            if not scan:
+                logging.info(f"Wallet {wallet} --- looking for txs")
+                tx_data = [
+                    wallet.txlist(idx)
+                    for idx in range(0, idx + 1)
+                ]
+                logging.info(f"Wallet {wallet} --- Finished txs")
+                # Merge list of lists into one single list
+                validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
+                tx_data = wallet.txlist(idx, validate_merkle_proofs=validate_merkle_proofs)
+            else:
+                tx_data = []
+                logging.warn(f"\u001b[33mWallet {wallet} being scanned {scan}\u001b[0m")
 
-        # Clear public keys - no need to store in additional file
-        specter_data.wallet_manager.wallets[wallet].__dict__['keys'] = ''
-        #  Expand list of devices used to sign this wallet, store only alias
-        # Create new variable
-        specter_data.wallet_manager.wallets[wallet].__dict__[
-            'device_list'] = []
-        for device in specter_data.wallet_manager.wallets[wallet].__dict__[
-                'devices']:
-            specter_data.wallet_manager.wallets[wallet].__dict__[
-                'device_list'].append(device.name)
-        # clear old device list - to not store pub keys
-        # This also makes for a leaner json file
-        specter_data.wallet_manager.wallets[wallet].__dict__['devices'] = ''
-        specter_data.wallet_manager.wallets[wallet].__dict__['manager'] = ''
-        specter_data.wallet_manager.wallets[wallet].__dict__['rpc'] = ''
-        return_dict['wallets']['wallets'][wallet] = (
-            specter_data.wallet_manager.wallets[wallet].__dict__)
-        return_dict['wallets']['wallets'][wallet]['txlist'] = tx_data
-        return_dict['wallets']['wallets'][wallet]['scan'] = scan
-        return_dict['wallets']['wallets'][wallet]['address_index'] = address_index
+            return_dict['wallets']['wallets'][wallet] = wallet
+    else:
+        logging.warn("No Specter Object found under current_app")
+
     return (return_dict)
 
 

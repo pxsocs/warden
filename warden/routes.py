@@ -1,4 +1,5 @@
-from flask import (Blueprint, redirect, render_template, flash, session,
+from flask import (Blueprint, redirect, render_template,
+                   flash, session, request, current_app, url_for)
 from warden.warden import (list_specter_wallets, warden_metadata, positions,
                            positions_dynamic, FX, get_price_ondate,
                            generatenav, specter_df, check_services,
@@ -17,7 +18,7 @@ import json
 import os
 import urllib
 
-warden=Blueprint("warden",
+warden = Blueprint("warden",
                    __name__,
                    template_folder='templates',
                    static_folder='static')
@@ -30,11 +31,11 @@ warden=Blueprint("warden",
 # 2.5 If running, is there a balance?
 # 3. Found MyNode? Not a requirement but enables added functions.
 # 4. Found Bitcoin Node? Not a requirement but enables added functions.
-@ warden.before_request
+@warden.before_request
 def before_request():
     # Ignore check for some pages - these are mostly methods that need
     # to run even in setup mode
-    exclude_list=[
+    exclude_list = [
         "warden.setup", "warden.testtor", "warden.gitreleases",
         "warden.realtime_btc", "warden.data_folder", "warden.testtor",
         "warden.checkservices", "warden.check_activity", "warden.warden_metadata",
@@ -42,49 +43,49 @@ def before_request():
     ]
     if request.endpoint in exclude_list:
         return
-    need_setup=False
+    need_setup = False
     # Check Tor
-    tor=current_app.tor
-    need_setup=not tor['status']
+    tor = current_app.tor
+    need_setup = not tor['status']
     # Get Services
-    services=current_app.services
-    need_setup=not services['specter']['running']
+    services = current_app.services
+    need_setup = not services['specter']['running']
     # Are Wallets Found?
-    specter_wallets=have_specter_wallets(load=False)
-    need_setup=not specter_wallets
+    specter_wallets = have_specter_wallets(load=False)
+    need_setup = not specter_wallets
     # Transactions found?
-    df=positions()
-    need_setup=df.empty
+    df = positions()
+    need_setup = df.empty
     if need_setup:
-        meta={
+        meta = {
             'tor': tor,
             'services': services,
             'specter_wallets': specter_wallets,
             'txs': df.empty
         }
-        messages=json.dumps(meta)
-        session['messages']=messages
+        messages = json.dumps(meta)
+        session['messages'] = messages
         return redirect(url_for("warden.setup"))
 
 
 # Support method to check if donation was acknowledged
 def donate_check():
-    counter_file=os.path.join(current_path(),
+    counter_file = os.path.join(current_path(),
                                 'static/json_files/counter.json')
-    donated=False
+    donated = False
     try:
         with open(counter_file) as data_file:
-            json_all=json.loads(data_file.read())
+            json_all = json.loads(data_file.read())
         if json_all == "donated":
-            donated=True
+            donated = True
     except Exception:
-        donated=False
+        donated = False
     return (donated)
 
 
 # Support method to check for specter wallets
 def have_specter_wallets(load=True):
-    wallets=list_specter_wallets(load)
+    wallets = list_specter_wallets(load)
     if (wallets == []) or (wallets == None):
         return False
     return True
@@ -99,23 +100,23 @@ def warden_page():
     # data through javascript after loaded. This improves load time
     # and refresh speed.
     # Get positions and prepare df for delivery
-    df=positions()
+    df = positions()
     if df.index.name != 'trade_asset_ticker':
         df.set_index('trade_asset_ticker', inplace=True)
-    df=df[df['is_currency'] == 0].sort_index(ascending=True)
-    df=df.to_dict(orient='index')
+    df = df[df['is_currency'] == 0].sort_index(ascending=True)
+    df = df.to_dict(orient='index')
 
     # Open Counter, increment, send data
-    counter_file=os.path.join(current_path(),
+    counter_file = os.path.join(current_path(),
                                 'static/json_files/counter.json')
-    donated=False
+    donated = False
     try:
         with open(counter_file) as data_file:
-            json_all=json.loads(data_file.read())
+            json_all = json.loads(data_file.read())
         if json_all == "donated":
-            donated=True
+            donated = True
         else:
-            counter=int(json_all)
+            counter = int(json_all)
             counter += 1
             if counter == 25:
                 flash(
@@ -142,22 +143,22 @@ def warden_page():
             flash(
                 "Welcome. Consider making a donation " +
                 "to support this software.", "info")
-            counter=0
+            counter = 0
             with open(counter_file, 'w') as fp:
                 json.dump(counter, fp)
 
-    alerts=False
-    meta=warden_metadata()
+    alerts = False
+    meta = warden_metadata()
     if not meta['warden_enabled']:
         abort(500, 'WARden is not Enabled. Check your Connections.')
     if isinstance(meta['old_new_df_old'], pd.DataFrame):
         if not meta['old_new_df_old'].empty:
-            alerts=True
+            alerts = True
     if isinstance(meta['old_new_df_new'], pd.DataFrame):
         if not meta['old_new_df_new'].empty:
-            alerts=True
+            alerts = True
 
-    templateData={
+    templateData = {
         "title": "Portfolio Dashboard",
         "warden_metadata": meta,
         "warden_enabled": warden_metadata()['warden_enabled'],
@@ -165,7 +166,8 @@ def warden_page():
         "FX": FX,
         "donated": donated,
         "alerts": alerts,
-        "specter": specter_update()
+        "specter": specter_update(),
+        "current_app": current_app
     }
     return (render_template('warden/warden.html', **templateData))
 
@@ -173,29 +175,29 @@ def warden_page():
 # Returns notification if no wallets were found at Specter
 @ warden.route("/setup", methods=['GET'])
 def setup():
-    need_setup=False
+    need_setup = False
     # Check Tor
-    tor=test_tor()
-    need_setup=not tor['status']
+    tor = test_tor()
+    need_setup = not tor['status']
     # Get Services
-    services=check_services()
-    need_setup=not services['specter']['running']
+    services = check_services()
+    need_setup = not services['specter']['running']
     # Are Wallets Found?
-    specter_wallets=have_specter_wallets()
-    need_setup=not specter_wallets
+    specter_wallets = have_specter_wallets()
+    need_setup = not specter_wallets
     # Transactions found?
-    df=positions()
-    need_setup=not df.empty
-    meta={
+    df = positions()
+    need_setup = not df.empty
+    meta = {
         'tor': tor,
         'services': services,
         'specter_wallets': specter_wallets,
         'txs': not df.empty,
         'need_setup': need_setup,
     }
-    messages=json.dumps(meta)
-    session['messages']=messages
-    templateData={
+    messages = json.dumps(meta)
+    session['messages'] = messages
+    templateData = {
         "title": "System Status",
         "donated": donate_check(),
         "messages": json.loads(session['messages']),
@@ -208,44 +210,44 @@ def setup():
 # Save current folder to json
 @ warden.route('/data_folder', methods=['GET', 'POST'])
 def data_folder():
-    data_file=os.path.join(current_path(),
+    data_file = os.path.join(current_path(),
                              'static/json_files/specter_data_folder.json')
 
     if request.method == 'GET':
         try:
             with open(data_file) as data_file:
-                return_data=json.loads(data_file.read())
+                return_data = json.loads(data_file.read())
         except Exception as e:
-            return_data=str(e)
+            return_data = str(e)
         return(json.dumps(return_data))
 
     if request.method == 'POST':
-        results=request.form
+        results = request.form
         # Test this data folder
         try:
-            data_folder=results['data_folder']
+            data_folder = results['data_folder']
             # Test if can get specter data
-            specter=specter_update(load=False, data_folder=data_folder)
+            specter = specter_update(load=False, data_folder=data_folder)
             # Check Status
-            is_configured=specter['is_configured']
-            is_running=specter['is_running']
-            wallets=specter['wallets']['wallets']
+            is_configured = specter['is_configured']
+            is_running = specter['is_running']
+            wallets = specter['wallets']['wallets']
 
         except Exception as e:
             return json.dumps({"message": "Error: " + str(e)})
 
-        message=""
-        ok_save=True
+        message = ""
+        ok_save = True
         if not is_configured:
-            ok_save=False
+            ok_save = False
             message += "Specter does not seem to be configured in this folder. "
 
         if not is_running:
-            ok_save=False
+            ok_save = False
             message += "Specter does not seem to be running in this folder. "
 
         if wallets == {}:
-            ok_save=False
+            ok_save = False
             message += "No wallets found - check folder."
 
         if ok_save:
@@ -259,16 +261,16 @@ def data_folder():
 # API End Point checks for wallet activity
 @ warden.route("/check_activity", methods=['GET'])
 def check_activity():
-    alerts=False
-    meta=warden_metadata()
+    alerts = False
+    meta = warden_metadata()
     if meta['warden_enabled']:
         if isinstance(meta['old_new_df_old'], pd.DataFrame):
             if not meta['old_new_df_old'].empty:
-                alerts=True
+                alerts = True
                 regenerate_nav()
         if isinstance(meta['old_new_df_new'], pd.DataFrame):
             if not meta['old_new_df_new'].empty:
-                alerts=True
+                alerts = True
                 regenerate_nav()
     return (json.dumps(alerts))
 
@@ -276,25 +278,25 @@ def check_activity():
 # API End Point with all WARden metadata
 @ warden.route("/warden_metadata", methods=['GET'])
 def metadata_json():
-    meta=warden_metadata()
+    meta = warden_metadata()
     # jsonify transactions
     for wallet in meta['txs']:
         try:
-            meta['txs'][wallet]=meta['txs'][wallet].to_dict()
+            meta['txs'][wallet] = meta['txs'][wallet].to_dict()
         except Exception:
             pass
     try:
-        meta['df_old']=meta['df_old'].to_dict()
+        meta['df_old'] = meta['df_old'].to_dict()
     except Exception:
         pass
 
     try:
-        meta['full_df']=meta['full_df'].to_dict()
+        meta['full_df'] = meta['full_df'].to_dict()
     except Exception:
         pass
 
     try:
-        meta['old_new_df_old']=meta['old_new_df_old'].to_dict()
+        meta['old_new_df_old'] = meta['old_new_df_old'].to_dict()
     except Exception:
         pass
 
@@ -304,9 +306,9 @@ def metadata_json():
 # Donation Thank you Page
 @ warden.route("/donated", methods=['GET'])
 def donated():
-    counter_file=os.path.join(current_path(),
+    counter_file = os.path.join(current_path(),
                                 'static/json_files/counter.json')
-    templateData={"title": "Thank You!", "donated": donate_check()}
+    templateData = {"title": "Thank You!", "donated": donate_check(), "current_app": current_app}
     with open(counter_file, 'w') as fp:
         json.dump("donated", fp)
     return (render_template('warden/warden_thanks.html', **templateData))
@@ -321,15 +323,15 @@ def testtor():
 # Returns a JSON with Test Response on TOR
 @ warden.route("/gitreleases", methods=["GET"])
 def gitreleases():
-    url='https://api.github.com/repos/pxsocs/specter_warden/releases'
-    request=tor_request(url)
+    url = 'https://api.github.com/repos/pxsocs/specter_warden/releases'
+    request = tor_request(url)
     try:
-        data=request.json()
+        data = request.json()
     except Exception:
         try:  # Try again - some APIs return a json already
-            data=json.loads(request)
+            data = json.loads(request)
         except Exception:
-            data=json.dumps("Error getting request")
+            data = json.dumps("Error getting request")
 
     return json.dumps(data)
 
@@ -340,10 +342,10 @@ def gitreleases():
 def positions_json():
     # Get all transactions and cost details
     # This serves the main page
-    dfdyn, piedata=positions_dynamic()
-    dfdyn=dfdyn.to_dict(orient='index')
+    dfdyn, piedata = positions_dynamic()
+    dfdyn = dfdyn.to_dict(orient='index')
 
-    json_dict={
+    json_dict = {
         'positions': dfdyn,
         'piechart': piedata,
         'user': fx_rate(),
@@ -357,10 +359,10 @@ def positions_json():
 # Please note that the default is to update every 20s (MWT(20) above)
 @ warden.route("/realtime_btc", methods=["GET"])
 def realtime_btc():
-    fx_details=fx_rate()
-    fx_r={'cross': fx_details['symbol'], 'fx_rate': fx_details['fx_rate']}
-    fx_r['btc_usd']=price_data_rt("BTC")
-    fx_r['btc_fx']=fx_r['btc_usd'] * fx_r['fx_rate']
+    fx_details = fx_rate()
+    fx_r = {'cross': fx_details['symbol'], 'fx_rate': fx_details['fx_rate']}
+    fx_r['btc_usd'] = price_data_rt("BTC")
+    fx_r['btc_fx'] = fx_r['btc_usd'] * fx_r['fx_rate']
     return json.dumps(fx_r)
 
 
@@ -377,8 +379,8 @@ def dismiss_notification():
 # MyNode Bitcoin Data for front page
 @ warden.route("/node_info", methods=["GET"])
 def node_info():
-    data=specter_update(load=True)
-    status={
+    data = specter_update(load=True)
+    status = {
         'info': data['info'],
         'bitcoin': data['network_info'],
         'services': check_services(load=True),
@@ -390,7 +392,7 @@ def node_info():
 # API end point to return service status
 @ warden.route("/services", methods=["GET"])
 def checkservices():
-    services=check_services()
+    services = check_services()
     return simplejson.dumps(services, ignore_nan=True)
 
 
@@ -398,9 +400,9 @@ def checkservices():
 # args: ?load=True (True = loads saved json, False = refresh data)
 @ warden.route("/specter", methods=["GET"])
 def specter_json():
-    load=request.args.get("load")
-    load=True if not load else load
-    specter=specter_update(load=load)
+    load = request.args.get("load")
+    load = True if not load else load
+    specter = specter_update(load=load)
     return simplejson.dumps(specter, ignore_nan=True)
 
 
@@ -408,7 +410,7 @@ def specter_json():
 @ warden.route("/traceback_error", methods=["GET"])
 def traceback_error():
     import traceback
-    trace=traceback.format_exc()
+    trace = traceback.format_exc()
     return simplejson.dumps(trace, ignore_nan=True)
 
 
@@ -417,80 +419,80 @@ def traceback_error():
 # Main function for portfolio page
 @ warden.route("/portstats", methods=["GET", "POST"])
 def portstats():
-    meta={}
+    meta = {}
     # Looking to generate the following data here and return as JSON
     # for AJAX query on front page:
     # Start date, End Date, Start NAV, End NAV, Returns (1d, 1wk, 1mo, 1yr,
     # YTD), average daily return. Best day, worse day. Std dev of daily ret,
     # Higher NAV, Lower NAV + dates. Higher Port Value (date).
-    data=generatenav()
-    meta["start_date"]=(data.index.min()).date().strftime("%B %d, %Y")
-    meta["end_date"]=data.index.max().date().strftime("%B %d, %Y")
-    meta["start_nav"]=data["NAV_fx"][0]
-    meta["end_nav"]=data["NAV_fx"][-1].astype(float)
-    meta["max_nav"]=data["NAV_fx"].max().astype(float)
-    meta["max_nav_date"]=data[
+    data = generatenav()
+    meta["start_date"] = (data.index.min()).date().strftime("%B %d, %Y")
+    meta["end_date"] = data.index.max().date().strftime("%B %d, %Y")
+    meta["start_nav"] = data["NAV_fx"][0]
+    meta["end_nav"] = data["NAV_fx"][-1].astype(float)
+    meta["max_nav"] = data["NAV_fx"].max().astype(float)
+    meta["max_nav_date"] = data[
         data["NAV_fx"] == data["NAV_fx"].max()].index.strftime("%B %d, %Y")[0]
-    meta["min_nav"]=data["NAV_fx"].min().astype(float)
-    meta["min_nav_date"]=data[
+    meta["min_nav"] = data["NAV_fx"].min().astype(float)
+    meta["min_nav_date"] = data[
         data["NAV_fx"] == data["NAV_fx"].min()].index.strftime("%B %d, %Y")[0]
-    meta["end_portvalue"]=data["PORT_fx_pos"][-1].astype(float)
-    meta["end_portvalue_usd"]=meta["end_portvalue"] / fx_rate()['fx_rate']
-    meta["max_portvalue"]=data["PORT_fx_pos"].max().astype(float)
-    meta["max_port_date"]=data[data["PORT_fx_pos"] == data["PORT_fx_pos"].
+    meta["end_portvalue"] = data["PORT_fx_pos"][-1].astype(float)
+    meta["end_portvalue_usd"] = meta["end_portvalue"] / fx_rate()['fx_rate']
+    meta["max_portvalue"] = data["PORT_fx_pos"].max().astype(float)
+    meta["max_port_date"] = data[data["PORT_fx_pos"] == data["PORT_fx_pos"].
                                  max()].index.strftime("%B %d, %Y")[0]
-    meta["min_portvalue"]=round(data["PORT_fx_pos"].min(), 0)
-    meta["min_port_date"]=data[data["PORT_fx_pos"] == data["PORT_fx_pos"].
+    meta["min_portvalue"] = round(data["PORT_fx_pos"].min(), 0)
+    meta["min_port_date"] = data[data["PORT_fx_pos"] == data["PORT_fx_pos"].
                                  min()].index.strftime("%B %d, %Y")[0]
-    meta["return_SI"]=(meta["end_nav"] / meta["start_nav"]) - 1
+    meta["return_SI"] = (meta["end_nav"] / meta["start_nav"]) - 1
     # Temporary fix for an issue with portfolios that are just too new
     # Create a function to handle this
     try:
-        meta["return_1d"]=(meta["end_nav"] / data["NAV_fx"][-2]) - 1
+        meta["return_1d"] = (meta["end_nav"] / data["NAV_fx"][-2]) - 1
     except IndexError:
-        meta["return_1d"]="-"
+        meta["return_1d"] = "-"
 
     try:
-        meta["return_1wk"]=(meta["end_nav"] / data["NAV_fx"][-7]) - 1
+        meta["return_1wk"] = (meta["end_nav"] / data["NAV_fx"][-7]) - 1
     except IndexError:
-        meta["return_1wk"]="-"
+        meta["return_1wk"] = "-"
 
     try:
-        meta["return_30d"]=(meta["end_nav"] / data["NAV_fx"][-30]) - 1
+        meta["return_30d"] = (meta["end_nav"] / data["NAV_fx"][-30]) - 1
     except IndexError:
-        meta["return_30d"]="-"
+        meta["return_30d"] = "-"
 
     try:
-        meta["return_90d"]=(meta["end_nav"] / data["NAV_fx"][-90]) - 1
+        meta["return_90d"] = (meta["end_nav"] / data["NAV_fx"][-90]) - 1
     except IndexError:
-        meta["return_90d"]="-"
+        meta["return_90d"] = "-"
 
     try:
-        meta["return_ATH"]=(meta["end_nav"] / meta["max_nav"]) - 1
+        meta["return_ATH"] = (meta["end_nav"] / meta["max_nav"]) - 1
     except IndexError:
-        meta["return_ATH"]="-"
+        meta["return_ATH"] = "-"
 
     try:
-        yr_ago=pd.to_datetime(datetime.today() - relativedelta(years=1))
-        yr_ago_NAV=data.NAV_fx[data.index.get_loc(yr_ago, method="nearest")]
-        meta["return_1yr"]=meta["end_nav"] / yr_ago_NAV - 1
+        yr_ago = pd.to_datetime(datetime.today() - relativedelta(years=1))
+        yr_ago_NAV = data.NAV_fx[data.index.get_loc(yr_ago, method="nearest")]
+        meta["return_1yr"] = meta["end_nav"] / yr_ago_NAV - 1
     except IndexError:
-        meta["return_1yr"]="-"
+        meta["return_1yr"] = "-"
 
     # Create data for summa"age
-    meta["fx"]=FX
-    meta["daily"]={}
+    meta["fx"] = FX
+    meta["daily"] = {}
     for days in range(1, 8):
-        meta["daily"][days]={}
-        meta["daily"][days]["date"]=data.index[days * -1].date().strftime(
+        meta["daily"][days] = {}
+        meta["daily"][days]["date"] = data.index[days * -1].date().strftime(
             "%A <br> %m/%d")
-        meta["daily"][days]["nav"]=data["NAV_fx"][days * -1]
-        meta["daily"][days]["nav_prev"]=data["NAV_fx"][(days + 1) * -1]
-        meta["daily"][days]["perc_chg"]=(meta["daily"][days]["nav"] /
+        meta["daily"][days]["nav"] = data["NAV_fx"][days * -1]
+        meta["daily"][days]["nav_prev"] = data["NAV_fx"][(days + 1) * -1]
+        meta["daily"][days]["perc_chg"] = (meta["daily"][days]["nav"] /
                                            meta["daily"][days]["nav_prev"]) - 1
-        meta["daily"][days]["port"]=data["PORT_fx_pos"][days * -1]
-        meta["daily"][days]["port_prev"]=data["PORT_fx_pos"][(days + 1) * -1]
-        meta["daily"][days]["port_chg"]=(meta["daily"][days]["port"] -
+        meta["daily"][days]["port"] = data["PORT_fx_pos"][days * -1]
+        meta["daily"][days]["port_prev"] = data["PORT_fx_pos"][(days + 1) * -1]
+        meta["daily"][days]["port_chg"] = (meta["daily"][days]["port"] -
                                            meta["daily"][days]["port_prev"])
 
     # Removes Numpy type from json - returns int instead
@@ -508,26 +510,26 @@ def portstats():
 # Include portfolio value as well as CF_sumcum()
 @ warden.route("/navchart")
 def navchart():
-    data=generatenav()
-    navchart=data[["NAV_fx"]]
+    data = generatenav()
+    navchart = data[["NAV_fx"]]
     # dates need to be in Epoch time for Highcharts
-    navchart.index=(navchart.index - datetime(1970, 1, 1)).total_seconds()
-    navchart.index=navchart.index * 1000
-    navchart.index=navchart.index.astype(np.int64)
-    navchart=navchart.to_dict()
-    navchart=navchart["NAV_fx"]
+    navchart.index = (navchart.index - datetime(1970, 1, 1)).total_seconds()
+    navchart.index = navchart.index * 1000
+    navchart.index = navchart.index.astype(np.int64)
+    navchart = navchart.to_dict()
+    navchart = navchart["NAV_fx"]
 
-    port_value_chart=data[[
+    port_value_chart = data[[
         "PORT_cash_value_fx", "PORT_fx_pos", "PORT_ac_CFs_fx"
     ]]
-    port_value_chart["ac_pnl_fx"]=(port_value_chart["PORT_fx_pos"] -
+    port_value_chart["ac_pnl_fx"] = (port_value_chart["PORT_fx_pos"] -
                                      port_value_chart["PORT_ac_CFs_fx"])
     # dates need to be in Epoch time for Highcharts
-    port_value_chart.index=(port_value_chart.index -
+    port_value_chart.index = (port_value_chart.index -
                               datetime(1970, 1, 1)).total_seconds()
-    port_value_chart.index=port_value_chart.index * 1000
-    port_value_chart.index=port_value_chart.index.astype(np.int64)
-    port_value_chart=port_value_chart.to_dict()
+    port_value_chart.index = port_value_chart.index * 1000
+    port_value_chart.index = port_value_chart.index.astype(np.int64)
+    port_value_chart = port_value_chart.to_dict()
 
     return render_template("warden/warden_navchart.html",
                            title="NAV Historical Chart",
@@ -535,26 +537,27 @@ def navchart():
                            port_value_chart=port_value_chart,
                            fx=FX,
                            current_user=fx_rate(),
-                           donated=donate_check())
+                           donated=donate_check(),
+                           current_app=current_app)
 
 
 # API end point - returns a json with NAV Chartdata
 @ warden.route("/navchartdatajson", methods=["GET", "POST"])
 #  Creates a table with dates and NAV values
 def navchartdatajson():
-    data=generatenav()
+    data = generatenav()
     # Generate data for NAV chart
-    navchart=data[["NAV_fx"]]
+    navchart = data[["NAV_fx"]]
     # dates need to be in Epoch time for Highcharts
-    navchart.index=(navchart.index - datetime(1970, 1, 1)).total_seconds()
-    navchart.index=navchart.index * 1000
-    navchart.index=navchart.index.astype(np.int64)
-    navchart=navchart.to_dict()
-    navchart=navchart["NAV_fx"]
+    navchart.index = (navchart.index - datetime(1970, 1, 1)).total_seconds()
+    navchart.index = navchart.index * 1000
+    navchart.index = navchart.index.astype(np.int64)
+    navchart = navchart.to_dict()
+    navchart = navchart["NAV_fx"]
     # Sort for HighCharts
     import collections
-    navchart=collections.OrderedDict(sorted(navchart.items()))
-    navchart=json.dumps(navchart)
+    navchart = collections.OrderedDict(sorted(navchart.items()))
+    navchart = json.dumps(navchart)
     return navchart
 
 
@@ -562,22 +565,22 @@ def navchartdatajson():
 @ warden.route("/stackchartdatajson", methods=["GET", "POST"])
 #  Creates a table with dates and NAV values
 def stackchartdatajson():
-    data=generatenav()
+    data = generatenav()
     # Generate data for Stack chart
     # Filter to Only BTC Positions
     try:
-        data['BTC_cum']=data['BTC_quant'].cumsum()
-        stackchart=data[["BTC_cum"]]
+        data['BTC_cum'] = data['BTC_quant'].cumsum()
+        stackchart = data[["BTC_cum"]]
         # dates need to be in Epoch time for Highcharts
-        stackchart.index=(stackchart.index - datetime(1970, 1, 1)).total_seconds()
-        stackchart.index=stackchart.index * 1000
-        stackchart.index=stackchart.index.astype(np.int64)
-        stackchart=stackchart.to_dict()
-        stackchart=stackchart["BTC_cum"]
+        stackchart.index = (stackchart.index - datetime(1970, 1, 1)).total_seconds()
+        stackchart.index = stackchart.index * 1000
+        stackchart.index = stackchart.index.astype(np.int64)
+        stackchart = stackchart.to_dict()
+        stackchart = stackchart["BTC_cum"]
         # Sort for HighCharts
         import collections
-        stackchart=collections.OrderedDict(sorted(stackchart.items()))
-        stackchart=json.dumps(stackchart)
+        stackchart = collections.OrderedDict(sorted(stackchart.items()))
+        stackchart = json.dumps(stackchart)
     except Exception as e:
         return (json.dumps({"Error": str(e)}))
     return stackchart
@@ -591,17 +594,17 @@ def stackchartdatajson():
 def getprice_ondate():
     # Get the arguments and store
     if request.method == "GET":
-        date_input=request.args.get("date")
-        ticker=request.args.get("ticker")
+        date_input = request.args.get("date")
+        ticker = request.args.get("ticker")
         if (not ticker) or (not date_input):
             return 0
-        ticker=ticker.upper()
-        get_date=datetime.strptime(date_input, "%Y-%m-%d")
+        ticker = ticker.upper()
+        get_date = datetime.strptime(date_input, "%Y-%m-%d")
         # Create price object
         try:
-            price=str(get_price_ondate(ticker, get_date).close)
+            price = str(get_price_ondate(ticker, get_date).close)
         except Exception as e:
-            price="Not Found. Error: " + str(e)
+            price = "Not Found. Error: " + str(e)
         return price
 
 
@@ -618,8 +621,8 @@ def jformat(context, n, places, divisor=1):
         return "-"
     else:
         try:
-            n=float(n)
-            n=n / divisor
+            n = float(n)
+            n = n / divisor
             if n == 0:
                 return "-"
         except ValueError:
@@ -627,7 +630,7 @@ def jformat(context, n, places, divisor=1):
         except TypeError:
             return (n)
         try:
-            form_string="{0:,.{prec}f}".format(n, prec=places)
+            form_string = "{0:,.{prec}f}".format(n, prec=places)
             return form_string
         except (ValueError, KeyError):
             return "-"
@@ -637,7 +640,7 @@ def jformat(context, n, places, divisor=1):
 @ jinja2.contextfilter
 @ warden.app_template_filter()
 def epoch(context, epoch):
-    time_r=datetime.fromtimestamp(epoch).strftime("%m-%d-%Y (%H:%M)")
+    time_r = datetime.fromtimestamp(epoch).strftime("%m-%d-%Y (%H:%M)")
     return time_r
 
 
@@ -657,13 +660,13 @@ def fxsymbol(context, fx, output='symbol'):
     # "name_plural": "euros"
     try:
         from thewarden.users.utils import current_path
-        filename=os.path.join(current_path(),
+        filename = os.path.join(current_path(),
                                 'static/json_files/currency.json')
         with open(filename) as fx_json:
-            fx_list=json.load(fx_json, encoding='utf-8')
-        out=fx_list[fx][output]
+            fx_list = json.load(fx_json, encoding='utf-8')
+        out = fx_list[fx][output]
     except Exception:
-        out=fx
+        out = fx
     return (out)
 
 
@@ -679,23 +682,23 @@ def jencode(context, url):
 def time_ago(context, time=False):
     if type(time) is str:
         try:
-            time=int(time)
+            time = int(time)
         except TypeError:
             return ""
         except ValueError:
             # Try different parser
-            time=datetime.strptime(time, '%m-%d-%Y (%H:%M)')
-    now=datetime.now()
+            time = datetime.strptime(time, '%m-%d-%Y (%H:%M)')
+    now = datetime.now()
     if type(time) is int:
-        diff=now - datetime.fromtimestamp(time)
+        diff = now - datetime.fromtimestamp(time)
     elif isinstance(time, datetime):
-        diff=now - time
+        diff = now - time
     elif not time:
-        diff=now - now
+        diff = now - now
     else:
         return ("")
-    second_diff=diff.seconds
-    day_diff=diff.days
+    second_diff = diff.seconds
+    day_diff = diff.days
 
     if day_diff < 0:
         return ""
