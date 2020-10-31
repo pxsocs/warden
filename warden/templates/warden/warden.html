@@ -376,12 +376,21 @@
                 <tbody>
                     {%for wallet in warden_metadata['wallet_list']%}
                     {%set wallet_alias = specter.wallet_manager.wallets[wallet].alias%}
-                    {%if warden_metadata['txs'][wallet]['amount'].count() == 0%}
+                    {%if warden_metadata['txs'][wallet].empty%}
+                    {%if specter.wallet_manager.wallets[wallet].info['scanning']%}
+                    <div class="alert alert-dark" role="alert"><i class="fas fa-info-circle"></i>&nbsp;&nbsp;
+                        Wallet {{wallet}} is scanning for transactions
+                        ({{(specter.wallet_manager.wallets[wallet].info['scanning']['progress'] * 100) | jformat(2)}}%
+                        complete)
+                    </div>
+
+                    {%else%}
                     <div class="alert alert-info" role="alert"><i class="fas fa-info-circle"></i>&nbsp;&nbsp;
-                        No Txs Found for Wallet {{warden_metadata['wallet_info'][wallet]['name']}}</div>
+                        No Txs Found for Wallet {{wallet}}</div>
+                    {%endif%}
                     {%else%}
                     {%if not warden_metadata['txs'][wallet].empty%}
-                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet_tgt}}"
+                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet_alias}}"
                         class="accordion-toggle">
                         <td>
                             <i class="far fa-plus-square"></i>
@@ -390,7 +399,7 @@
                             {{wallet}}
                         </td>
                         <td>
-                            {%for device in specter.wallet_manager.wallets[wallet].devicess%}
+                            {%for device in specter.wallet_manager.wallets[wallet].devices%}
                             {{specter.wallet_manager.wallets[wallet].devices[0].name}}&nbsp;&nbsp;
                             {%endfor%}
                         </td>
@@ -428,9 +437,9 @@
                         {%endif%}
                     </tr>
 
-                    <tr data-toggle="collapse" data-target="#txs_{{wallet_tgt}}" class="accordion-toggle">
+                    <tr data-toggle="collapse" data-target="#txs_{{wallet_alias}}" class="accordion-toggle">
                         <td colspan="10" class="hiddenRow">
-                            <div id="txs_{{wallet_tgt}}" class="accordian-body collapse" style='padding-top: 15px;'>
+                            <div id="txs_{{wallet_alias}}" class="accordian-body collapse" style='padding-top: 15px;'>
                                 <div class="alert alert-secondary" role="alert">Transactions&nbsp;<i
                                         class="fas fa-exchange-alt"></i></div>
 
@@ -514,7 +523,7 @@
                         </td>
                     </tr>
                     {%else%}
-                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet_tgt}}"
+                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet_alias}}"
                         class="accordion-toggle">
                         <td data-toggle="tooltip" data-placement="right"
                             title="There was an error importing UTXOs from this wallet">
@@ -910,7 +919,7 @@
                     <span class="float-right">
                         {% if current_app.services['specter']['running']%}
                         <a href="http://{{current_app.services['specter']['connection'][0]}}:{{current_app.services['specter']['connection'][1]}}"
-                            style="text-decoration: none; color:gray;">
+                            target="_blank" style="text-decoration: none; color:gray;">
                             <i class="fas fa-external-link-square-alt fa-lg"></i>
                         </a>
                         {%endif%}
@@ -919,7 +928,7 @@
                     <table id="btctable" class="table table-sm small-text">
                         <tbody>
                             <tr>
-                                <td>Specter Status</td>
+                                <td>Status</td>
                                 <td id='specter_status' class="text-right"> <img
                                         src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
                                         width="30" height="30"></img> </td>

@@ -256,31 +256,30 @@ def list_specter_wallets(load=True):
 
 # Get all transactions of specific wallet by using alias
 @ MWT(timeout=60)
-def get_specter_tx(wallet_name, sort_by='time', idx=0):
+def get_specter_tx(wallet, sort_by='time', idx=0):
     df = pd.DataFrame()
     specter_data = specter_update(load=True)
-    for wallet in specter_data.wallet_manager.wallets:
-        specter_data.check()
-        wallet = specter_data.wallet_manager.wallets[wallet]
-        wallet.get_info()
-        # is this scanning?
-        scan = wallet.rescan_progress
+    specter_data.check()
+    wallet = specter_data.wallet_manager.wallets[wallet]
+    wallet.get_info()
+    # is this scanning?
+    scan = wallet.rescan_progress
 
-        if not scan:
-            logging.info(f"Wallet {wallet} --- looking for txs")
-            tx_data = [
-                wallet.txlist(idx)
-                for idx in range(0, idx + 1)
-            ]
-            logging.info(f"Wallet {wallet} --- Finished txs")
-            # Merge list of lists into one single list
-            validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
-            tx_data = wallet.txlist(idx, validate_merkle_proofs=validate_merkle_proofs)
-        else:
-            tx_data = []
-            logging.warn(f"\u001b[33mWallet {wallet} being scanned {scan}\u001b[0m")
+    if not scan:
+        logging.info(f"Wallet {wallet} --- looking for txs")
+        tx_data = [
+            wallet.txlist(idx)
+            for idx in range(0, idx + 1)
+        ]
+        logging.info(f"Wallet {wallet} --- Finished txs")
+        # Merge list of lists into one single list
+        validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
+        tx_data = wallet.txlist(idx, validate_merkle_proofs=validate_merkle_proofs)
+    else:
+        tx_data = []
+        logging.warn(f"\u001b[33mWallet {wallet} being scanned {scan}\u001b[0m")
 
-        df = df.append(tx_data, ignore_index=True)
+    df = df.append(tx_data, ignore_index=True)
 
     # Sort df
     if not df.empty:

@@ -381,10 +381,10 @@ def dismiss_notification():
 def node_info():
     data = specter_update(load=True)
     status = {
-        'info': data['info'],
-        'bitcoin': data['network_info'],
+        'info': data.info,
+        'bitcoin': data.network_info,
         'services': check_services(load=True),
-        'last_update': data['last_update']
+        'last_update': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
     return simplejson.dumps(status, ignore_nan=True)
 
