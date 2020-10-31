@@ -154,4 +154,4 @@ app.run(debug=app.settings['SERVER']['debug'],
         threaded=True,
         host='0.0.0.0',
         port=25442,
-        use_reloader=False)
+        use_reloader=True)

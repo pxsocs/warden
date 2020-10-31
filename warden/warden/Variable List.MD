@@ -1,3 +1,13 @@
+## Specter Object
+
+dir
+['CONFIG_FILE_NAME', '__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_current_version', '_info', '_is_configured', '_is_running', '_network_info', '_save', 'abortrescanutxo', 'add_new_user_otp', 'arg_config', 'bitcoin_core_version', 'bitcoin_datadir', 'broadcast', 'burn_new_user_otp', 'chain', 'check', 'clear_user_session', 'combine', 'config', 'data_folder', 'device_manager', 'estimatesmartfee', 'explorer', 'file_config', 'finalize', 'get_default_explorer', 'hwi_bridge_url', 'info', 'is_checking', 'is_configured', 'is_running', 'lock', 'network_info', 'rpc', 'specter_backup_file', 'test_rpc', 'unit', 'update_auth', 'update_explorer', 'update_hwi_bridge_url', 'update_merkleproof_settings', 'update_rpc', 'update_unit', 'utxorescanwallet', 'wallet_manager' ]
+
+## Wallet Manager
+
+dir:
+['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 'chain', 'create_wallet', 'data_folder', 'delete_wallet', 'device_manager', 'full_txlist', 'get_by_alias', 'is_loading', 'rename_wallet', 'rpc', 'rpc_path', 'update', 'wallets', 'wallets_names', 'working_folder' ]
+
 ## Specter Object Wallet
 
 dir:

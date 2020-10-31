@@ -375,53 +375,52 @@
                 </thead>
                 <tbody>
                     {%for wallet in warden_metadata['wallet_list']%}
-                    {%set alias = warden_metadata['wallet_info'][wallet]['name']%}
-                    {%set alias_tgt = warden_metadata['wallet_info'][wallet]['alias']%}
-                    {%if warden_metadata['txs_count'][alias_tgt] == 0%}
+                    {%set wallet_alias = specter.wallet_manager.wallets[wallet].alias%}
+                    {%if warden_metadata['txs'][wallet]['amount'].count() == 0%}
                     <div class="alert alert-info" role="alert"><i class="fas fa-info-circle"></i>&nbsp;&nbsp;
                         No Txs Found for Wallet {{warden_metadata['wallet_info'][wallet]['name']}}</div>
                     {%else%}
-                    {%if not warden_metadata['txs'][alias].empty%}
-                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{alias_tgt}}"
+                    {%if not warden_metadata['txs'][wallet].empty%}
+                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet_tgt}}"
                         class="accordion-toggle">
                         <td>
                             <i class="far fa-plus-square"></i>
                         </td>
                         <td class='text-left'>
-                            {{warden_metadata['wallet_info'][wallet]['name']}}
+                            {{wallet}}
                         </td>
                         <td>
-                            {%for device in warden_metadata['wallet_info'][wallet]['devices']%}
-                            {{device}}&nbsp;&nbsp;
+                            {%for device in specter.wallet_manager.wallets[wallet].devicess%}
+                            {{specter.wallet_manager.wallets[wallet].devices[0].name}}&nbsp;&nbsp;
                             {%endfor%}
                         </td>
                         <td class='text-right'>
-                            {{warden_metadata['txs'][alias]['amount'].sum() | jformat(4)}}
+                            {{warden_metadata['txs'][wallet]['amount'].sum() | jformat(4)}}
                         </td>
                         <td class='text-right'>
-                            {{warden_metadata['txs'][alias]['amount'].count() | jformat(0)}}
+                            {{warden_metadata['txs'][wallet]['amount'].count() | jformat(0)}}
                         </td>
                         <td>
-                            {{warden_metadata['wallet_info'][wallet]['sigs_required']}}
+                            {{specter.wallet_manager.wallets[wallet].sigs_required}}
                         </td>
                         <td>
-                            {{warden_metadata['wallet_info'][wallet]['address_type']}}
+                            {{specter.wallet_manager.wallets[wallet].address_type}}
                         </td>
                         <td>
-                            {% if warden_metadata['wallet_info'][wallet]['pending_psbts'] == {}%}
+                            {% if specter.wallet_manager.wallets[wallet].pending_psbts == {}%}
                             None
                             {%else%}
-                            {{warden_metadata['wallet_info'][wallet]['pending_psbts']}}
+                            {{specter.wallet_manager.wallets[wallet].pending_psbts}}
                             {%endif%}
                         </td>
                         <td>
-                            {{(warden_metadata['txs'][alias].time.max() | epoch) | time_ago}}
+                            {{(warden_metadata['txs'][wallet].time.max() | epoch) | time_ago}}
                         </td>
-                        {%if specter['wallets']['wallets'][alias]['info']['scanning']%}
+                        {%if specter.wallet_manager.wallets[wallet].info['scanning']%}
                         <td class='td-part-fill'
-                            style="background-size: {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100)}}% 100%">
+                            style="background-size: {{(specter.wallet_manager.wallets[wallet].info['scanning']['progress'] * 100)}}% 100%">
                             Scanning... (
-                            {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100) | jformat(2)}}%)
+                            {{(specter.wallet_manager.wallets[wallet].info['scanning']['progress'] * 100) | jformat(2)}}%)
                         </td>
                         {%else%}
                         <td>
@@ -429,9 +428,9 @@
                         {%endif%}
                     </tr>
 
-                    <tr data-toggle="collapse" data-target="#txs_{{alias_tgt}}" class="accordion-toggle">
+                    <tr data-toggle="collapse" data-target="#txs_{{wallet_tgt}}" class="accordion-toggle">
                         <td colspan="10" class="hiddenRow">
-                            <div id="txs_{{alias_tgt}}" class="accordian-body collapse" style='padding-top: 15px;'>
+                            <div id="txs_{{wallet_tgt}}" class="accordian-body collapse" style='padding-top: 15px;'>
                                 <div class="alert alert-secondary" role="alert">Transactions&nbsp;<i
                                         class="fas fa-exchange-alt"></i></div>
 
@@ -451,7 +450,8 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {%for tx in warden_metadata['full_df'][warden_metadata['full_df']['trade_account'] == alias].iterrows()%}
+
+                                        {%for tx in warden_metadata['full_df'][warden_metadata['full_df']['wallet_alias'] == wallet_alias].iterrows()%}
                                         {%set color=''%}
                                         {%set message=''%}
                                         {%if tx[1]['txid'] in warden_metadata['old_new_df_old']['TXID']%}
@@ -514,7 +514,7 @@
                         </td>
                     </tr>
                     {%else%}
-                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{alias_tgt}}"
+                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet_tgt}}"
                         class="accordion-toggle">
                         <td data-toggle="tooltip" data-placement="right"
                             title="There was an error importing UTXOs from this wallet">
@@ -550,11 +550,11 @@
                         <td>
                             N/A
                         </td>
-                        {%if specter['wallets']['wallets'][alias]['info']['scanning']%}
+                        {%if specter['wallets']['wallets'][wallet]['info']['scanning']%}
                         <td class='td-part-fill'
-                            style="background-size: {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100)}}% 100%">
+                            style="background-size: {{(specter['wallets']['wallets'][wallet]['info']['scanning']['progress'] * 100)}}% 100%">
                             Scanning... (
-                            {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100) | jformat(2)}}%)
+                            {{(specter['wallets']['wallets'][wallet]['info']['scanning']['progress'] * 100) | jformat(2)}}%)
                         </td>
                         {%else%}
                         <td>
@@ -933,13 +933,13 @@
                             <tr>
                                 <td>Wallets Folder</td>
                                 <td class="text-right">
-                                    {{specter['wallets']['data_folder']}}
+                                    {{specter.data_folder}}
                                 </td>
                             </tr>
                             <tr>
                                 <td>Configured?</td>
                                 <td class="text-right">
-                                    {{specter['is_configured']}}
+                                    {{specter.is_configured}}
                                 </td>
                             </tr>
                             <tr>

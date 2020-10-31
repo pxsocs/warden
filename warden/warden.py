@@ -47,6 +47,20 @@ def specter_update(load=True, data_folder=None, idx=0):
         with current_app.app_context():
             data = current_app.specter
         return (data)
+    if not data_folder:
+        with current_app.app_context():
+            data_folder = current_app.settings['SPECTER']['specter_datafolder']
+    specter_data = Specter(data_folder=data_folder)
+    logging.info(f"Finished Building Specter Class from data_folder: {data_folder}")
+
+    return(specter_data)
+
+
+def specter_update_off(load=True, data_folder=None, idx=0):
+    if load:
+        with current_app.app_context():
+            data = current_app.specter
+        return (data)
 
     if not data_folder:
         with current_app.app_context():
@@ -92,31 +106,28 @@ def specter_update(load=True, data_folder=None, idx=0):
         'wallets': {}
     }
     # Parse Wallets
-    if hasattr(current_app, 'specter'):
-        for wallet in specter_data.wallet_manager.wallets:
-            specter_data.check()
-            wallet = specter_data.wallet_manager.wallets[wallet]
-            wallet.get_info()
-            # is this scanning?
-            scan = wallet.rescan_progress
+    for wallet in specter_data.wallet_manager.wallets:
+        specter_data.check()
+        wallet = specter_data.wallet_manager.wallets[wallet]
+        wallet.get_info()
+        # is this scanning?
+        scan = wallet.rescan_progress
 
-            if not scan:
-                logging.info(f"Wallet {wallet} --- looking for txs")
-                tx_data = [
-                    wallet.txlist(idx)
-                    for idx in range(0, idx + 1)
-                ]
-                logging.info(f"Wallet {wallet} --- Finished txs")
-                # Merge list of lists into one single list
-                validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
-                tx_data = wallet.txlist(idx, validate_merkle_proofs=validate_merkle_proofs)
-            else:
-                tx_data = []
-                logging.warn(f"\u001b[33mWallet {wallet} being scanned {scan}\u001b[0m")
+        if not scan:
+            logging.info(f"Wallet {wallet} --- looking for txs")
+            tx_data = [
+                wallet.txlist(idx)
+                for idx in range(0, idx + 1)
+            ]
+            logging.info(f"Wallet {wallet} --- Finished txs")
+            # Merge list of lists into one single list
+            validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
+            tx_data = wallet.txlist(idx, validate_merkle_proofs=validate_merkle_proofs)
+        else:
+            tx_data = []
+            logging.warn(f"\u001b[33mWallet {wallet} being scanned {scan}\u001b[0m")
 
-            return_dict['wallets']['wallets'][wallet] = wallet
-    else:
-        logging.warn("No Specter Object found under current_app")
+        return_dict['wallets']['wallets'][wallet.__dict__['alias']] = tx_data
 
     return (return_dict)
 
@@ -240,27 +251,36 @@ def fxsymbol(fx, output='symbol'):
 
 def list_specter_wallets(load=True):
     specter_data = specter_update(load)
-    if specter_data:
-        wallets = list(specter_data['wallets']['wallets'].keys())
-    else:
-        wallets = []
-    return (wallets)
-
-
-def get_specter_wallets(load=True):
-    specter_data = specter_update(load)
-    wallets = specter_data['wallets']['wallets']
-    return (wallets)
+    return(specter_data.wallet_manager.wallets_names)
 
 
 # Get all transactions of specific wallet by using alias
 @ MWT(timeout=60)
-def get_specter_tx(wallet_name, sort_by='time'):
-    specter_data = specter_update(load=True)
+def get_specter_tx(wallet_name, sort_by='time', idx=0):
     df = pd.DataFrame()
-    # Import UTXOs into a dataframe
-    for utxo in specter_data['wallets']['wallets'][wallet_name]['txlist']:
-        df = df.append(utxo, ignore_index=True)
+    specter_data = specter_update(load=True)
+    for wallet in specter_data.wallet_manager.wallets:
+        specter_data.check()
+        wallet = specter_data.wallet_manager.wallets[wallet]
+        wallet.get_info()
+        # is this scanning?
+        scan = wallet.rescan_progress
+
+        if not scan:
+            logging.info(f"Wallet {wallet} --- looking for txs")
+            tx_data = [
+                wallet.txlist(idx)
+                for idx in range(0, idx + 1)
+            ]
+            logging.info(f"Wallet {wallet} --- Finished txs")
+            # Merge list of lists into one single list
+            validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
+            tx_data = wallet.txlist(idx, validate_merkle_proofs=validate_merkle_proofs)
+        else:
+            tx_data = []
+            logging.warn(f"\u001b[33mWallet {wallet} being scanned {scan}\u001b[0m")
+
+        df = df.append(tx_data, ignore_index=True)
 
     # Sort df
     if not df.empty:
@@ -281,22 +301,18 @@ def warden_metadata():
     else:
         meta['warden_enabled'] = True
 
-    meta['wallet_info'] = get_specter_wallets()
+    meta['wallet_info'] = list_specter_wallets()
 
     meta['txs'] = {}
-    meta['txs_count'] = {}
     for name in meta['wallet_info']:
-        tmp_name = meta['wallet_info'][name]['name']
         # Line below throws an error when specter is not loaded yet
-        meta['txs_count'][tmp_name] = specter_data['wallets']['wallets'][tmp_name]
-        meta['txs'][tmp_name] = get_specter_tx(
-            meta['wallet_info'][name]['name'])
+        meta['txs'][name] = get_specter_tx(name)
 
     meta['full_df'] = specter_df()
 
     meta['node_info'] = {
-        'info': specter_data['info'],
-        'network_info': specter_data['network_info']
+        'info': specter_data.info,
+        'network_info': specter_data.network_info
     }
 
     # Load pickle with previous checkpoint df
@@ -364,14 +380,11 @@ class Trades():
 
 
 @ MWT(timeout=60)
-def specter_df(save_files=False, sort_by='trade_date'):
-    wallet_info = get_specter_wallets()
+def specter_df(save_files=False, sort_by='trade_date', idx=0):
+    specter_data = specter_update(load=True)
+    validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
     df = pd.DataFrame()
-    for name in wallet_info:
-        txs = get_specter_tx(wallet_info[name]['name'])
-        txs['trade_account'] = wallet_info[name]['name']
-        txs['trade_inputon'] = datetime.now()
-        df = df.append(txs)
+    df = df.append(specter_data.wallet_manager.full_txlist(idx, validate_merkle_proofs))
 
     # Check if txs exists
     if df.empty:
