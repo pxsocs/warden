@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import glob
 import logging
+import configparser
 
 from datetime import datetime, timedelta
 from flask import flash, current_app, has_request_context
@@ -14,15 +15,16 @@ from pathlib import Path
 from warden.warden_pricing_engine import (get_price_ondate, fx_price_ondate,
                                           multiple_price_grab, price_data_rt,
                                           price_data_fx, price_data_rt_full,
-                                          price_data, fx_rate)
+                                          price_data, fx_rate, fxsymbol)
 from warden.warden_decorators import MWT, timing
+from warden.config import Config
 
-from cryptoadvance.specter.specter import Specter
-from cryptoadvance.specter.config import DATA_FOLDER
-
-
-FX = fx_rate()['base']
-FX_RATE = fx_rate()['fx_rate']
+try:
+    from cryptoadvance.specter.specter import Specter
+    from cryptoadvance.specter.config import DATA_FOLDER
+except Exception:
+    print("Specter Libraries could not be imported...")
+    print("Will search other paths...")
 
 
 # Returns the current application path
@@ -33,12 +35,18 @@ def current_path():
 
 # Start background threads
 # Get Specter tx data and updates every 30 seconds (see config.py)
-@timing
 def background_jobs():
-    print("Starting Background")
     current_app.specter = specter_update(load=False)
-    print("DONE")
     current_app.services = check_services(load=False)
+    # Reload config
+    config_file = Config.config_file
+    config_settings = configparser.ConfigParser()
+    config_settings.read(config_file)
+    current_app.settings = config_settings
+    current_app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
+    # Regenerare_nav
+    from warden.warden import regenerate_nav
+    regenerate_nav()
     return (current_app)
 
 
@@ -115,14 +123,16 @@ def specter_update_off(load=True, data_folder=None, idx=0):
 
         if not scan:
             logging.info(f"Wallet {wallet} --- looking for txs")
-            tx_data = [
-                wallet.txlist(idx)
-                for idx in range(0, idx + 1)
-            ]
-            logging.info(f"Wallet {wallet} --- Finished txs")
             # Merge list of lists into one single list
             validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
-            tx_data = wallet.txlist(idx, validate_merkle_proofs=validate_merkle_proofs)
+            tx_data = []
+            idx_l = idx
+            while tx_get != []:
+                tx_get = wallet.txlist(idx_l, validate_merkle_proofs=validate_merkle_proofs)
+                tx_data.append(tx_get)
+                idx_l += 1
+
+            logging.info(f"Wallet {wallet} --- Finished txs")
         else:
             tx_data = []
             logging.warn(f"\u001b[33mWallet {wallet} being scanned {scan}\u001b[0m")
@@ -225,28 +235,6 @@ def get_local_ip():
     return (local_ip_address)
 
 # End Config Variables ------------------------------------------------
-
-
-def fxsymbol(fx, output='symbol'):
-    # Gets an FX 3 letter symbol and returns the HTML symbol
-    # Sample outputs are:
-    # "EUR": {
-    # "symbol": "€",
-    # "name": "Euro",
-    # "symbol_native": "€",
-    # "decimal_digits": 2,
-    # "rounding": 0,
-    # "code": "EUR",
-    # "name_plural": "euros"
-    filename = os.path.join(current_path(),
-                            'warden/static/json_files/currency.json')
-    with open(filename) as fx_json:
-        fx_list = json.load(fx_json)
-    try:
-        out = fx_list[fx][output]
-    except Exception:
-        out = fx
-    return (out)
 
 
 def list_specter_wallets(load=True):
@@ -383,7 +371,14 @@ def specter_df(save_files=False, sort_by='trade_date', idx=0):
     specter_data = specter_update(load=True)
     validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
     df = pd.DataFrame()
-    df = df.append(specter_data.wallet_manager.full_txlist(idx, validate_merkle_proofs))
+    idx_l = idx
+    tx_list = []
+    # Get all txs under every idx
+    tx_a = specter_data.wallet_manager.full_txlist(idx_l, validate_merkle_proofs)
+    while tx_a != []:
+        tx_a = specter_data.wallet_manager.full_txlist(idx_l, validate_merkle_proofs)
+        df = df.append(tx_a)
+        idx_l += 1
 
     # Check if txs exists
     if df.empty:
@@ -397,8 +392,8 @@ def specter_df(save_files=False, sort_by='trade_date', idx=0):
 
     # Could include blockchain fees later here
     df['trade_fees'] = int(0)
-
-    df['trade_currency'] = FX
+    df['trade_account'] = df['wallet_alias']
+    df['trade_currency'] = current_app.settings['PORTFOLIO']['base_fx']
     df['trade_asset_ticker'] = "BTC"
     df['trade_quantity'] = df['amount']
     df['trade_notes'] = 'Imported from Specter Wallet using MyNode'
@@ -422,7 +417,8 @@ def specter_df(save_files=False, sort_by='trade_date', idx=0):
         get_date = datetime.strptime(date_input, "%Y-%m-%d")
         # Create price object
         try:
-            price = get_price_ondate("BTC", get_date).close
+            fx = fx_price_ondate("USD", current_app.fx['code'], get_date)
+            price = (get_price_ondate("BTC", get_date).close) * fx
         except Exception as e:
             price = "Not Found. Error: " + str(e)
         return (price)
@@ -546,7 +542,7 @@ def find_fx(row, fx=None):
     # row.name is the date being passed
     # row['trade_currency'] is the base fx (the one where the trade was included)
     # Create an instance of PriceData:
-    price = fx_price_ondate(FX, row['trade_currency'], row.name)
+    price = fx_price_ondate(current_app.settings['PORTFOLIO']['base_fx'], row['trade_currency'], row.name)
     return price
 
 
@@ -705,6 +701,7 @@ def positions_dynamic():
         notes = None
         try:
             # Parse the cryptocompare data
+            FX = current_app.settings['PORTFOLIO']['base_fx']
             price = multi_price["RAW"][ticker][FX]["PRICE"]
             # GBTC should not be requested from multi_price as there is a
             # coin with same ticker
@@ -839,6 +836,7 @@ def positions_dynamic():
 def generatenav(user='mynode', force=False, filter=None):
     PORTFOLIO_MIN_SIZE_NAV = 1
     RENEW_NAV = 10
+    FX = current_app.settings['PORTFOLIO']['base_fx']
     # Portfolios smaller than this size do not account for NAV calculations
     # Otherwise, there's an impact of dust left in the portfolio (in USD)
     # This is set in config.ini file

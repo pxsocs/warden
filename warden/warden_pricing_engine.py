@@ -11,6 +11,7 @@ import urllib
 from datetime import datetime
 
 from warden.warden_decorators import MWT
+from flask import current_app
 
 from time import time
 
@@ -734,27 +735,18 @@ def fxsymbol(fx, output='symbol'):
     try:
         out = fx_list[fx][output]
     except Exception:
+        if output == 'all':
+            return (fx_list[fx])
         out = fx
     return (out)
 
 
 # Gets Currency data for current user
 # Setting a timeout to 10 as fx rates don't change so often
-@MWT(timeout=600)
+@MWT(timeout=1)
 def fx_rate():
-    fx_file = os.path.join(current_path(), 'static/json_files/fx_default.json')
-    try:
-        with open(fx_file) as data_file:
-            fx = json.loads(data_file.read())
-    except Exception:
-        # If file not found, create a default one
-        fx = {
-            "FX": "USD"
-        }
-        with open(fx_file, 'w') as fp:
-            json.dump(fx, fp)
-
-    FX = fx['FX']
+    with current_app.app_context():
+        FX = current_app.settings['PORTFOLIO']['base_fx']
 
     # This grabs the realtime current currency conversion against USD
     try:

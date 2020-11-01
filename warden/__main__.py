@@ -18,6 +18,7 @@ from warden.config import Config
 from warden.utils import (create_config, update_config, specter_checks,
                           load_specter, specter_checks, specter_datafolder_check,
                           specter_library_check)
+from warden.warden_pricing_engine import fxsymbol
 from warden.warden import check_services
 
 
@@ -66,6 +67,8 @@ def init_app(app):
         create_config(config_file)
     with app.app_context():
         app.settings = config_settings
+    with app.app_context():
+        app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
     # Debug Mode?
     #  To debug the application set an environment variable:
     #  EXPORT WARDEN_STATUS=developer

@@ -1,12 +1,13 @@
 from flask import (Blueprint, redirect, render_template,
                    flash, session, request, current_app, url_for)
 from warden.warden import (list_specter_wallets, warden_metadata, positions,
-                           positions_dynamic, FX, get_price_ondate,
+                           positions_dynamic, get_price_ondate,
                            generatenav, specter_df, check_services,
                            current_path, specter_update, regenerate_nav)
 
 from warden.warden_pricing_engine import (test_tor, tor_request, price_data_rt,
                                           fx_rate)
+from warden.utils import update_config
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -17,6 +18,7 @@ import numpy as np
 import json
 import os
 import urllib
+import csv
 
 warden = Blueprint("warden",
                    __name__,
@@ -163,7 +165,7 @@ def warden_page():
         "warden_metadata": meta,
         "warden_enabled": warden_metadata()['warden_enabled'],
         "portfolio_data": df,
-        "FX": FX,
+        "FX": current_app.settings['PORTFOLIO']['base_fx'],
         "donated": donated,
         "alerts": alerts,
         "specter": specter_update(),
@@ -206,9 +208,23 @@ def setup():
     }
     return (render_template('warden/warden_empty.html', **templateData))
 
+# Update user fx settings in config.ini
+
+
+@warden.route('/update_fx', methods=['GET', 'POST'])
+def update_fx():
+    fx = request.args.get("code")
+    current_app.settings['PORTFOLIO']['base_fx'] = fx
+    update_config()
+    from warden.warden_pricing_engine import fxsymbol as fxs
+    current_app.fx = fxs(fx, 'all')
+    regenerate_nav()
+    redir = request.args.get("redirect")
+    return redirect(redir)
+
 
 # Save current folder to json
-@ warden.route('/data_folder', methods=['GET', 'POST'])
+@warden.route('/data_folder', methods=['GET', 'POST'])
 def data_folder():
     data_file = os.path.join(current_path(),
                              'static/json_files/specter_data_folder.json')
@@ -348,7 +364,7 @@ def positions_json():
     json_dict = {
         'positions': dfdyn,
         'piechart': piedata,
-        'user': fx_rate(),
+        'user': current_app.fx,
         'btc': price_data_rt("BTC") * fx_rate()['fx_rate']
     }
     return simplejson.dumps(json_dict, ignore_nan=True)
@@ -480,7 +496,7 @@ def portstats():
         meta["return_1yr"] = "-"
 
     # Create data for summa"age
-    meta["fx"] = FX
+    meta["fx"] = current_app.settings['PORTFOLIO']['base_fx']
     meta["daily"] = {}
     for days in range(1, 8):
         meta["daily"][days] = {}
@@ -535,7 +551,7 @@ def navchart():
                            title="NAV Historical Chart",
                            navchart=navchart,
                            port_value_chart=port_value_chart,
-                           fx=FX,
+                           fx=current_app.settings['PORTFOLIO']['base_fx'],
                            current_user=fx_rate(),
                            donated=donate_check(),
                            current_app=current_app)
@@ -606,6 +622,32 @@ def getprice_ondate():
         except Exception as e:
             price = "Not Found. Error: " + str(e)
         return price
+
+
+@warden.route("/fx_lst", methods=["GET"])
+# Receiver argument ?term to return a list of fx (fiat and digital)
+# Searches the list both inside the key as well as value of dict
+def fx_list():
+    fx_dict = {}
+    filename = os.path.join(current_path(),
+                            'static/csv_files/physical_currency_list.csv')
+    with open(filename, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        fx_dict = {rows[0]: rows[1] for rows in reader}
+    q = request.args.get("term")
+    if q is None:
+        q = ""
+    list_key = {
+        key: value
+        for key, value in fx_dict.items() if q.upper() in key.upper()
+    }
+    list_value = {
+        key: value
+        for key, value in fx_dict.items() if q.upper() in value.upper()
+    }
+    list = {**list_key, **list_value}
+    list = json.dumps(list)
+    return list
 
 
 # -------------------------------------------------

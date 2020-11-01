@@ -18,9 +18,8 @@
             <tbody>
                 <tr>
                     <td class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
-                        title="Market Value in {{FX | fxsymbol}}">
+                        title="Market Value in {{current_app.fx['symbol']}}">
                         <span id="pvalue">
-
                             <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
                                 height="30"></img>
                         </span>
@@ -151,7 +150,7 @@
                         </th>
 
                         <th class="text-right">
-                            Latest Price ({{FX | fxsymbol}})
+                            Latest Price ({{current_app.fx['symbol']}})
                         </th>
 
                         <th class="text-right small">
@@ -161,7 +160,7 @@
 
                         </th>
                         <th class="text-right">
-                            Position ({{FX | fxsymbol}})
+                            Position ({{current_app.fx['symbol']}})
                         </th>
                         <th class="text-right small">
                             % of total
@@ -313,10 +312,10 @@
                             TxID
                         </th>
                         <th class='text-right'>
-                            Balance
+                            Confirmations
                         </th>
                         <th class='text-right'>
-                            Confirmations
+                            New Balance
                         </th>
                     </tr>
                 </thead>
@@ -332,11 +331,12 @@
                             </a>
                         </td>
                         <td class='text-right'>
-                            {{element[1]['amount'] | jformat(4)}}
-                        </td>
-                        <td class='text-right'>
                             {{element[1]['confirmations'] | jformat(0)}}
                         </td>
+                        <td class='text-right'>
+                            {{element[1]['amount'] | jformat(4)}}
+                        </td>
+
                     </tr>
                     {%endfor%}
                 </tbody>
@@ -378,10 +378,14 @@
                     {%set wallet_alias = specter.wallet_manager.wallets[wallet].alias%}
                     {%if warden_metadata['txs'][wallet].empty%}
                     {%if specter.wallet_manager.wallets[wallet].info['scanning']%}
-                    <div class="alert alert-dark" role="alert"><i class="fas fa-info-circle"></i>&nbsp;&nbsp;
-                        Wallet {{wallet}} is scanning for transactions
-                        ({{(specter.wallet_manager.wallets[wallet].info['scanning']['progress'] * 100) | jformat(2)}}%
-                        complete)
+                    <div class="alert alert-dark" role="alert"><i class="fab fa-searchengin fa-lg"></i>&nbsp;&nbsp;
+                        Wallet <span style='color: darkslategray; font-weight: bold;'>{{wallet}}</span> is scanning for
+                        transactions
+                        <span class='float-right' style="color: darkgreen"><strong>
+                                {{(specter.wallet_manager.wallets[wallet].info['scanning']['progress'] * 100) | jformat(2)}}%
+                                complete
+                            </strong>
+                        </span>
                     </div>
 
                     {%else%}
@@ -454,12 +458,11 @@
                                             <th> TX id </th>
                                             <th> Confirmations </th>
                                             <th> Amount (&#8383)</th>
-                                            <th> Price</th>
-                                            <th> Cash ({{FX}})</th>
+                                            <th> ₿ ({{current_app.fx['symbol']}})</th>
+                                            <th> Cash ({{current_app.fx['symbol']}})</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-
                                         {%for tx in warden_metadata['full_df'][warden_metadata['full_df']['wallet_alias'] == wallet_alias].iterrows()%}
                                         {%set color=''%}
                                         {%set message=''%}
@@ -716,7 +719,7 @@
                         </th>
 
                         <th class="text-right">
-                            Price ({{FX | fxsymbol}})
+                            Price ({{current_app.fx['symbol']}})
                         </th>
 
                         <th class="text-right small">
@@ -966,6 +969,25 @@
             </div>
             <!-- END Bitcoin Address Summary -->
         </div>
+
+        <!-- Notes -->
+        <div class='row'>
+            <div class="container-fluid small">
+                <i>
+                    <sup>1</sup> All returns in this page are in {{current_app.fx['name_plural'].title()}}.
+                    <br>
+                    {%if current_app.fx['symbol'] != 'USD'%}
+                    This means that the returns include the asset returns plus the currency return in the period.
+                    <br>For example, if Bitcoin in USD is up 5% and the {{current_app.fx['name']}} is
+                    up
+                    1%, the
+                    return will be 6.05% in {{FX}}.
+                    {%endif%}
+                </i>
+            </div>
+        </div>
+
+
     </div>
     <div class="col-sm-4">
 
@@ -995,21 +1017,10 @@
                                 src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
                                 height="30"></img> </td>
                     </tr>
-                    {% if FX!='USD'%}
-                    <tr>
-                        {%else%}
-                    <tr hidden>
-                        {%endif%}
-                        <td>Portfolio Value (USD)</td>
-                        <td id='end_portvalue_usd' class="text-right"> <img
-                                src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                height="30"></img> </td>
-                    </tr>
-
                     <tr>
                         <td>Portfolio Value</td>
                         <td class="text-right">
-                            {{FX | fxsymbol}}
+                            {{current_app.fx['symbol']}}
                             <span id='end_portvalue'> <img
                                     src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
                                     height="30"></img>
@@ -1020,7 +1031,7 @@
                     <tr>
                         <td>Highest Value</td>
                         <td class="text-right">
-                            {{FX | fxsymbol}}
+                            {{current_app.fx['symbol']}}
                             <span id='max_portvalue'>
                                 <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
                                     height="30"></img>
@@ -1103,25 +1114,6 @@
             </div>
         </div>
         <!-- END Charts -->
-
-
-
-
-        <div class='row'>
-            <div class="container-fluid small">
-                <i>
-                    <sup>1</sup> All returns in this page are in {{FX}}.
-                    <br>
-                    {%if FX != 'USD'%}
-                    This means that the returns include the asset returns plus the currency return in the period.
-                    <br>For example, if Bitcoin in USD is up 5% and the {{FX}} is
-                    up
-                    1%, the
-                    return will be 6.05% in {{FX}}.
-                    {%endif%}
-                </i>
-            </div>
-        </div>
 
 
     </div>
