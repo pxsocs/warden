@@ -97,7 +97,6 @@ def have_specter_wallets(load=True):
 @ warden.route("/", methods=['GET'])
 @ warden.route("/warden", methods=['GET'])
 def warden_page():
-
     # For now pass only static positions, will update prices and other
     # data through javascript after loaded. This improves load time
     # and refresh speed.
@@ -172,6 +171,15 @@ def warden_page():
         "current_app": current_app
     }
     return (render_template('warden/warden.html', **templateData))
+
+
+@ warden.route("/list_transactions", methods=['GET'])
+def list_transactions():
+    transactions = specter_df()
+    return render_template("warden/transactions.html",
+                           title="Full Transaction History",
+                           transactions=transactions,
+                           current_app=current_app)
 
 
 # Returns notification if no wallets were found at Specter
@@ -527,7 +535,7 @@ def portstats():
 @ warden.route("/navchart")
 def navchart():
     data = generatenav()
-    navchart = data[["NAV_fx"]]
+    navchart = data[["NAV_fx"]].copy()
     # dates need to be in Epoch time for Highcharts
     navchart.index = (navchart.index - datetime(1970, 1, 1)).total_seconds()
     navchart.index = navchart.index * 1000
@@ -537,7 +545,7 @@ def navchart():
 
     port_value_chart = data[[
         "PORT_cash_value_fx", "PORT_fx_pos", "PORT_ac_CFs_fx"
-    ]]
+    ]].copy()
     port_value_chart["ac_pnl_fx"] = (port_value_chart["PORT_fx_pos"] -
                                      port_value_chart["PORT_ac_CFs_fx"])
     # dates need to be in Epoch time for Highcharts

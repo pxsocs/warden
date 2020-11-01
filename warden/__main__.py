@@ -4,6 +4,7 @@ import os
 import sys
 import atexit
 import json
+import warnings
 
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
@@ -45,6 +46,7 @@ def create_app():
 # ------------------------------------
 # Application Factory
 def init_app(app):
+    warnings.filterwarnings('ignore')
     # Create the empty Mail instance
     mail = Mail()
     mail.init_app(app)
@@ -55,7 +57,7 @@ def init_app(app):
     # Can be accessed like a dictionary like:
     # app.settings['PORTFOLIO']['RENEW_NAV']
     # --------------------------------------------
-    print("Getting Config ...")
+    print("  Getting Config ...")
     config_file = Config.config_file
     os.path.isfile(config_file)
     # create empty instance
@@ -63,7 +65,7 @@ def init_app(app):
     if os.path.isfile(config_file):
         config_settings.read(config_file)
     else:
-        print("Config File could not be loaded, created a new one with default values...")
+        print("  Config File could not be loaded, created a new one with default values...")
         create_config(config_file)
     with app.app_context():
         app.settings = config_settings
@@ -75,7 +77,7 @@ def init_app(app):
     flask_debug = False
     WARDEN_STATUS = os.environ.get("WARDEN_STATUS")
     if 'debug' in sys.argv or WARDEN_STATUS == "developer":
-        print(">> Debug is On")
+        print("  >> Debug is On")
         with app.app_context():
             app.settings['SERVER']['debug'] = 'True'
         logging.getLogger().setLevel(logging.DEBUG)
@@ -91,23 +93,23 @@ def init_app(app):
     # 2. Specter python library found?
 
     # Check Specter
-    print("Checking Specter Server status ...")
+    print("  Checking Specter Server status ...")
     specter_checks()
-    print("Loading Specter data ...")
+    print("  Loading Specter data ...")
     app.specter = load_specter()
 
     from warden.warden_pricing_engine import test_tor
-    print("Testing Tor ...")
+    print("  Testing Tor ...")
     app.tor = test_tor()
     if app.tor:
-        print("Tor Running ...")
+        print("✓ Tor Running")
     else:
-        print("Tor disabled - check your connection and Tor browser ...")
+        print("  Tor disabled - check your connection or Tor browser")
 
-    print("Checking Services Status ...")
+    print("  Checking Services Status ...")
     app.services = check_services()
 
-    print("[Done] Application startup is complete.")
+    print("✓ Application startup is complete")
 
     return app
 
@@ -119,13 +121,13 @@ def create_and_init():
     return app
 
 
-print("Launching Application...")
+print("  Launching Application ...")
 app = create_app()
 app.app_context().push()
 init_app(app)
 
 # Start Schedulers
-print("Starting Background Jobs ...")
+print("  Starting Background Jobs ...")
 with app.app_context():
     scheduler = APScheduler()
     scheduler.init_app(app)
@@ -152,7 +154,8 @@ def close_running_threads():
 # Register the def above to run at close
 atexit.register(close_running_threads)
 
-print("Launching Server ...")
+print("  Launching Server ...")
+print("✓ WARden Server is Ready")
 app.run(debug=app.settings['SERVER']['debug'],
         threaded=True,
         host='0.0.0.0',
