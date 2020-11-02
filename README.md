@@ -26,7 +26,7 @@ Installation instructions for Specter can be found [here](https://github.com/cry
 Log in to your computer running Specter, open Terminal and type:
 
 ```bash
-pip3 install -i https://test.pypi.org/simple/ alphazeta.warden==0.2
+pip3 install alphazeta.warden
 ```
 
 Then run the WARden server:
@@ -43,7 +43,7 @@ Open your browser and navigate to:
 From the WARden directory, type:
 
 ```bash
- pip3 install -i https://test.pypi.org/simple/ alphazeta.warden==0.2 --upgrade
+ pip3 install alphazeta.warden --upgrade
 ```
 
 ## This is an Open Source project

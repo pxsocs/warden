@@ -17,14 +17,15 @@ add_reqs = [
 
 setup(
     name="alphazeta.warden",
-    version="0.042",
+    version="0.05",
     author="Alpha Zeta",
     author_email="alphaazeta@protonmail.com",
     description="Private Portfolio Tool - Specter Server Edition",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/pxsocs/specter_warden",
-    packages=find_packages(),
+    packages=find_packages("src"),
+    package_dir={"": "src"},
     include_package_data=True,
     install_requires=reqs.append(add_reqs),
     zip_safe=False,

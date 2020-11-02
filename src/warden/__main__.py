@@ -79,10 +79,15 @@ def init_app(app):
     else:
         print("  Config File could not be loaded, created a new one with default values...")
         create_config(config_file)
+
     with app.app_context():
         app.settings = config_settings
     with app.app_context():
-        app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
+        try:
+            app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
+        except KeyError:  # Problem with this config, reset
+            print("[!] Config File needs to be rebuilt")
+            create_config(config_file)
     # Debug Mode?
     #  To debug the application set an environment variable:
     #  EXPORT WARDEN_STATUS=developer
