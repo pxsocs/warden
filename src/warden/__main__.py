@@ -41,7 +41,7 @@ def create_app():
     logging.basicConfig(
         handlers=[RotatingFileHandler(
             filename=Config.debug_file,
-            mode='w', maxBytes=512000, backupCount=2)],
+            mode='w', maxBytes=120000, backupCount=0)],
         level=logging.INFO,
         format=formatter,
         datefmt='%m/%d/%Y %I:%M:%S %p')
