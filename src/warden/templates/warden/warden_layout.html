@@ -48,39 +48,45 @@
             </a>
 
             <div class="rightfloater">
-                {%if services['mynode']['running']%}
-                <a href="{{services['mynode']['connection'][0]}}:{{services['mynode']['connection'][1]}}""
-                    target='_blank'>
-                    <span class=" statusbox text-white">
-                    Powered by
-                    <img src='{{url_for('warden.static', filename='images/logo.png')}}' height="20">
-                    </span>
-                </a>
-                {%endif%}
 
-                {%if services['specter']['running']%}
-                <a href="http://{{services['specter']['connection'][0]}}:{{services['specter']['connection'][1]}}""
-                    target='_blank'>
-                <span class=" statusbox text-white">
-                    Connected to Specter Wallet
-                    <img src='{{url_for('warden.static', filename='images/specter_icon.png')}}' width="20">
-                    </span>
-                </a>
-                {%endif%}
 
-                <span class="statusbox text-white">
-                    <span id="tor_span" data-html="true">
-                        <span class="loadanim small">Checking TOR</span>
-                    </span>
-                </span>
 
-                {%if tor%}
-                <span class="statusbox text-white">
-                    BTC $
+                {%if current_app.tor%}
+                <span class="btn btn-sm statusbox text-white">
                     <span id="btc_usd">
                         <span class="loadanim small">loading</span>
-                    </span>
+                    </span>&nbsp;$/₿
                 </span>
+
+                {%if current_app.fx['code'] != "USD"%}
+                <span class="btn btn-sm statusbox text-white">
+                    <span id="btc_fx">
+                        <span class="loadanim small">loading</span>
+                    </span>&nbsp;{{current_app.fx['symbol']}}/₿
+                </span>
+                <span class="btn btn-sm statusbox text-white">
+                    <span id="fx_rate">
+                        <span class="loadanim small">loading</span>
+                    </span>&nbsp;{{current_app.fx['symbol']}}/$
+                </span>
+                {%endif%}
+
+                <div class="btn-group">
+                    <button type="button" id='fiat_change' class="btn btn-sm statusbox text-white">
+                        All values in
+                        {{current_app.fx['name_plural'].title()}} ({{current_app.fx['symbol']}})
+                    </button>
+                    <button id="list_fx" type="button"
+                        class="btn btn-sm statusbox text-white dropdown-toggle dropdown-toggle-split"
+                        data-toggle="dropdown">
+                    </button>
+                    <div class="dropdown-menu scrollable-menu dropdown-menu-right">
+                        <span id='fx_sel'>
+                            <a class="dropdown-item">Loading....</a>
+                        </span>
+                    </div>
+                </div>
+
                 {%endif%}
             </div>
         </nav>
@@ -108,15 +114,45 @@
                     <a class="sidebar-subitem" href="/navchart"><i class="fas fa-chart-area fa-lg"></i>&nbsp;&nbsp;NAV
                         and Cost Chart</a>
 
+                    <a class="sidebar-subitem" href="/list_transactions"><i
+                            class="fas fa-list fa-lg"></i>&nbsp;&nbsp;All Transactions</a>
+
                     <a class="sidebar-subitem" href="/setup"><i
                             class="fas fa-satellite-dish fa-lg"></i>&nbsp;&nbsp;System
                         Status</a>
 
+
                 </div>
 
+                <li class="text-center">
+                    <div style='color: #DFE0E1; padding-left: 10px; padding-top: 40px;'>
+                        <h6>Status</h6>
+                        <span class=" btn btn-secondary btn-block" role="button" class="btn btn-light btn-sm">
+                            <span id="tor_span" data-html="true">
+                                <span class="loadanim small">Checking TOR</span>
+                            </span>
+                        </span>
 
-                <li class="border-top text-center">
+                        {%if current_app.services['mynode']['running']%}
+                        <a href="{{current_app.services['mynode']['connection'][0]}}:{{current_app.services['mynode']['connection'][1]}}""
+                    target='_blank' class=" btn btn-secondary btn-block" role="button" class="btn btn-light btn-sm">
+                            Powered by
+                            <img src='{{url_for('warden.static', filename='images/logo.png')}}' height="20">
+                        </a>
+                        {%endif%}
 
+                        {%if current_app.services['specter']['running']%}
+                        <a href="http://{{current_app.services['specter']['connection'][0]}}:{{current_app.services['specter']['connection'][1]}}""
+                    target='_blank' class=" btn btn-secondary btn-block" role="button" class="btn btn-light btn-sm">
+
+                            Connected to Specter Wallet
+                            <img src='{{url_for('warden.static', filename='images/specter_icon.png')}}' width="20">
+                        </a>
+                        {%endif%}
+                    </div>
+                </li>
+
+                <li class="text-center">
                     <div id='Donate' style='color: #DFE0E1; padding-left: 10px; padding-top: 40px;'>
                         {%if donated == True%}
                         <a href="/donated" class="btn btn-secondary btn-block" role="button"
@@ -139,6 +175,7 @@
                     </div>
 
                 </li>
+
             </ul>
 
 

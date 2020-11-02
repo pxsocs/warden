@@ -18,9 +18,8 @@
             <tbody>
                 <tr>
                     <td class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
-                        title="Market Value in {{FX | fxsymbol}}">
+                        title="Market Value in {{current_app.fx['symbol']}}">
                         <span id="pvalue">
-
                             <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
                                 height="30"></img>
                         </span>
@@ -151,7 +150,7 @@
                         </th>
 
                         <th class="text-right">
-                            Latest Price ({{FX | fxsymbol}})
+                            Latest Price ({{current_app.fx['symbol']}})
                         </th>
 
                         <th class="text-right small">
@@ -161,7 +160,7 @@
 
                         </th>
                         <th class="text-right">
-                            Position ({{FX | fxsymbol}})
+                            Position ({{current_app.fx['symbol']}})
                         </th>
                         <th class="text-right small">
                             % of total
@@ -313,10 +312,10 @@
                             TxID
                         </th>
                         <th class='text-right'>
-                            Balance
+                            Confirmations
                         </th>
                         <th class='text-right'>
-                            Confirmations
+                            New Balance
                         </th>
                     </tr>
                 </thead>
@@ -332,11 +331,12 @@
                             </a>
                         </td>
                         <td class='text-right'>
-                            {{element[1]['amount'] | jformat(4)}}
-                        </td>
-                        <td class='text-right'>
                             {{element[1]['confirmations'] | jformat(0)}}
                         </td>
+                        <td class='text-right'>
+                            {{element[1]['amount'] | jformat(4)}}
+                        </td>
+
                     </tr>
                     {%endfor%}
                 </tbody>
@@ -375,53 +375,65 @@
                 </thead>
                 <tbody>
                     {%for wallet in warden_metadata['wallet_list']%}
-                    {%set alias = warden_metadata['wallet_info'][wallet]['name']%}
-                    {%set alias_tgt = warden_metadata['wallet_info'][wallet]['alias']%}
-                    {%if warden_metadata['txs_count'][alias_tgt] == 0%}
-                    <div class="alert alert-info" role="alert"><i class="fas fa-info-circle"></i>&nbsp;&nbsp;
-                        No Txs Found for Wallet {{warden_metadata['wallet_info'][wallet]['name']}}</div>
+                    {%set wallet_alias = specter.wallet_manager.wallets[wallet].alias%}
+                    {%if warden_metadata['txs'][wallet].empty%}
+                    {%if specter.wallet_manager.wallets[wallet].info['scanning']%}
+                    <div class="alert alert-dark" role="alert"><i class="fab fa-searchengin fa-lg"></i>&nbsp;&nbsp;
+                        Wallet <span style='color: darkslategray; font-weight: bold;'>{{wallet}}</span> is scanning for
+                        transactions
+                        <span class='float-right' style="color: darkgreen"><strong>
+                                {{(specter.wallet_manager.wallets[wallet].info['scanning']['progress'] * 100) | jformat(2)}}%
+                                complete
+                            </strong>
+                        </span>
+                    </div>
+
                     {%else%}
-                    {%if not warden_metadata['txs'][alias].empty%}
-                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{alias_tgt}}"
+                    <div class="alert alert-info" role="alert"><i class="fas fa-info-circle"></i>&nbsp;&nbsp;
+                        No Txs Found for Wallet {{wallet}}</div>
+                    {%endif%}
+                    {%else%}
+                    {%if not warden_metadata['txs'][wallet].empty%}
+                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet_alias}}"
                         class="accordion-toggle">
                         <td>
                             <i class="far fa-plus-square"></i>
                         </td>
                         <td class='text-left'>
-                            {{warden_metadata['wallet_info'][wallet]['name']}}
+                            {{wallet}}
                         </td>
                         <td>
-                            {%for device in warden_metadata['wallet_info'][wallet]['devices']%}
-                            {{device}}&nbsp;&nbsp;
+                            {%for device in specter.wallet_manager.wallets[wallet].devices%}
+                            {{specter.wallet_manager.wallets[wallet].devices[0].name}}&nbsp;&nbsp;
                             {%endfor%}
                         </td>
                         <td class='text-right'>
-                            {{warden_metadata['txs'][alias]['amount'].sum() | jformat(4)}}
+                            {{warden_metadata['txs'][wallet]['amount'].sum() | jformat(4)}}
                         </td>
                         <td class='text-right'>
-                            {{warden_metadata['txs'][alias]['amount'].count() | jformat(0)}}
+                            {{warden_metadata['txs'][wallet]['amount'].count() | jformat(0)}}
                         </td>
                         <td>
-                            {{warden_metadata['wallet_info'][wallet]['sigs_required']}}
+                            {{specter.wallet_manager.wallets[wallet].sigs_required}}
                         </td>
                         <td>
-                            {{warden_metadata['wallet_info'][wallet]['address_type']}}
+                            {{specter.wallet_manager.wallets[wallet].address_type}}
                         </td>
                         <td>
-                            {% if warden_metadata['wallet_info'][wallet]['pending_psbts'] == {}%}
+                            {% if specter.wallet_manager.wallets[wallet].pending_psbts == {}%}
                             None
                             {%else%}
-                            {{warden_metadata['wallet_info'][wallet]['pending_psbts']}}
+                            {{specter.wallet_manager.wallets[wallet].pending_psbts}}
                             {%endif%}
                         </td>
                         <td>
-                            {{(warden_metadata['txs'][alias].time.max() | epoch) | time_ago}}
+                            {{(warden_metadata['txs'][wallet].time.max() | epoch) | time_ago}}
                         </td>
-                        {%if specter['wallets']['wallets'][alias]['info']['scanning']%}
+                        {%if specter.wallet_manager.wallets[wallet].info['scanning']%}
                         <td class='td-part-fill'
-                            style="background-size: {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100)}}% 100%">
+                            style="background-size: {{(specter.wallet_manager.wallets[wallet].info['scanning']['progress'] * 100)}}% 100%">
                             Scanning... (
-                            {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100) | jformat(2)}}%)
+                            {{(specter.wallet_manager.wallets[wallet].info['scanning']['progress'] * 100) | jformat(2)}}%)
                         </td>
                         {%else%}
                         <td>
@@ -429,9 +441,9 @@
                         {%endif%}
                     </tr>
 
-                    <tr data-toggle="collapse" data-target="#txs_{{alias_tgt}}" class="accordion-toggle">
+                    <tr data-toggle="collapse" data-target="#txs_{{wallet_alias}}" class="accordion-toggle">
                         <td colspan="10" class="hiddenRow">
-                            <div id="txs_{{alias_tgt}}" class="accordian-body collapse" style='padding-top: 15px;'>
+                            <div id="txs_{{wallet_alias}}" class="accordian-body collapse" style='padding-top: 15px;'>
                                 <div class="alert alert-secondary" role="alert">Transactions&nbsp;<i
                                         class="fas fa-exchange-alt"></i></div>
 
@@ -446,12 +458,12 @@
                                             <th> TX id </th>
                                             <th> Confirmations </th>
                                             <th> Amount (&#8383)</th>
-                                            <th> Price</th>
-                                            <th> Cash ({{FX}})</th>
+                                            <th> ₿ ({{current_app.fx['symbol']}})</th>
+                                            <th> Cash ({{current_app.fx['symbol']}})</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {%for tx in warden_metadata['full_df'][warden_metadata['full_df']['trade_account'] == alias].iterrows()%}
+                                        {%for tx in warden_metadata['full_df'][warden_metadata['full_df']['wallet_alias'] == wallet_alias].iterrows()%}
                                         {%set color=''%}
                                         {%set message=''%}
                                         {%if tx[1]['txid'] in warden_metadata['old_new_df_old']['TXID']%}
@@ -514,7 +526,7 @@
                         </td>
                     </tr>
                     {%else%}
-                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{alias_tgt}}"
+                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet_alias}}"
                         class="accordion-toggle">
                         <td data-toggle="tooltip" data-placement="right"
                             title="There was an error importing UTXOs from this wallet">
@@ -550,11 +562,11 @@
                         <td>
                             N/A
                         </td>
-                        {%if specter['wallets']['wallets'][alias]['info']['scanning']%}
+                        {%if specter['wallets']['wallets'][wallet]['info']['scanning']%}
                         <td class='td-part-fill'
-                            style="background-size: {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100)}}% 100%">
+                            style="background-size: {{(specter['wallets']['wallets'][wallet]['info']['scanning']['progress'] * 100)}}% 100%">
                             Scanning... (
-                            {{(specter['wallets']['wallets'][alias]['info']['scanning']['progress'] * 100) | jformat(2)}}%)
+                            {{(specter['wallets']['wallets'][wallet]['info']['scanning']['progress'] * 100) | jformat(2)}}%)
                         </td>
                         {%else%}
                         <td>
@@ -707,7 +719,7 @@
                         </th>
 
                         <th class="text-right">
-                            Price ({{FX | fxsymbol}})
+                            Price ({{current_app.fx['symbol']}})
                         </th>
 
                         <th class="text-right small">
@@ -823,8 +835,8 @@
                 <div class='col-6'>
                     <span class="lead">Bitcoin Node Status</span>
                     <span class="float-right">
-                        {% if services['mynode']['running']%}
-                        <a href="http://{{services['mynode']['connection'][0]}}:{{services['mynode']['connection'][1]}}"
+                        {% if current_app.services['mynode']['running']%}
+                        <a href="http://{{current_app.services['mynode']['connection'][0]}}:{{current_app.services['mynode']['connection'][1]}}"
                             style="text-decoration: none; color:gray;">
                             <i class="fas fa-external-link-square-alt fa-lg"></i>
                         </a>
@@ -908,9 +920,9 @@
                 <div class='col-6'>
                     <span class="lead">Specter Server Status</span>
                     <span class="float-right">
-                        {% if services['specter']['running']%}
-                        <a href="http://{{services['specter']['connection'][0]}}:{{services['specter']['connection'][1]}}"
-                            style="text-decoration: none; color:gray;">
+                        {% if current_app.services['specter']['running']%}
+                        <a href="http://{{current_app.services['specter']['connection'][0]}}:{{current_app.services['specter']['connection'][1]}}"
+                            target="_blank" style="text-decoration: none; color:gray;">
                             <i class="fas fa-external-link-square-alt fa-lg"></i>
                         </a>
                         {%endif%}
@@ -919,7 +931,7 @@
                     <table id="btctable" class="table table-sm small-text">
                         <tbody>
                             <tr>
-                                <td>Specter Status</td>
+                                <td>Status</td>
                                 <td id='specter_status' class="text-right"> <img
                                         src='{{url_for('warden.static', filename='images/loading_small.gif')}}'
                                         width="30" height="30"></img> </td>
@@ -933,13 +945,19 @@
                             <tr>
                                 <td>Wallets Folder</td>
                                 <td class="text-right">
-                                    {{specter['wallets']['data_folder']}}
+                                    {{specter.data_folder}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Library Folder</td>
+                                <td class="text-right">
+                                    {{current_app.services['specter']['pip_path']}}
                                 </td>
                             </tr>
                             <tr>
                                 <td>Configured?</td>
                                 <td class="text-right">
-                                    {{specter['is_configured']}}
+                                    {{specter.is_configured}}
                                 </td>
                             </tr>
                             <tr>
@@ -957,6 +975,25 @@
             </div>
             <!-- END Bitcoin Address Summary -->
         </div>
+
+        <!-- Notes -->
+        <div class='row'>
+            <div class="container-fluid small">
+                <i>
+                    <sup>1</sup> All returns in this page are in {{current_app.fx['name_plural'].title()}}.
+                    <br>
+                    {%if current_app.fx['symbol'] != 'USD'%}
+                    This means that the returns include the asset returns plus the currency return in the period.
+                    <br>For example, if Bitcoin in USD is up 5% and the {{current_app.fx['name']}} is
+                    up
+                    1%, the
+                    return will be 6.05% in {{FX}}.
+                    {%endif%}
+                </i>
+            </div>
+        </div>
+
+
     </div>
     <div class="col-sm-4">
 
@@ -986,21 +1023,10 @@
                                 src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
                                 height="30"></img> </td>
                     </tr>
-                    {% if FX!='USD'%}
-                    <tr>
-                        {%else%}
-                    <tr hidden>
-                        {%endif%}
-                        <td>Portfolio Value (USD)</td>
-                        <td id='end_portvalue_usd' class="text-right"> <img
-                                src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
-                                height="30"></img> </td>
-                    </tr>
-
                     <tr>
                         <td>Portfolio Value</td>
                         <td class="text-right">
-                            {{FX | fxsymbol}}
+                            {{current_app.fx['symbol']}}
                             <span id='end_portvalue'> <img
                                     src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
                                     height="30"></img>
@@ -1011,7 +1037,7 @@
                     <tr>
                         <td>Highest Value</td>
                         <td class="text-right">
-                            {{FX | fxsymbol}}
+                            {{current_app.fx['symbol']}}
                             <span id='max_portvalue'>
                                 <img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width="30"
                                     height="30"></img>
@@ -1094,25 +1120,6 @@
             </div>
         </div>
         <!-- END Charts -->
-
-
-
-
-        <div class='row'>
-            <div class="container-fluid small">
-                <i>
-                    <sup>1</sup> All returns in this page are in {{FX}}.
-                    <br>
-                    {%if FX != 'USD'%}
-                    This means that the returns include the asset returns plus the currency return in the period.
-                    <br>For example, if Bitcoin in USD is up 5% and the {{FX}} is
-                    up
-                    1%, the
-                    return will be 6.05% in {{FX}}.
-                    {%endif%}
-                </i>
-            </div>
-        </div>
 
 
     </div>

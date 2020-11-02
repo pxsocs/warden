@@ -1,0 +1,106 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+<h5>Full Transaction History</h5>
+
+<div class="row">
+    <div class="col-sm-12">
+        <table id="transactionstable" class="table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th class="small" scope="col">
+                        Date
+                    </th>
+                    <th class="small text-right" scope="col">
+                        Ticker
+                    </th>
+                    <th class="small text-right" scope="col">
+                        Operation
+                    </th>
+                    <th class="small text-right" scope="col">
+                        Quantity
+                    </th>
+
+                    <th class="small text-right">
+                        Price
+                    </th>
+                    <th class="small text-right">
+                        fx
+                    </th>
+                    <th class="small text-right">
+                        Fees
+                    </th>
+                    <th class="small text-right">
+                        Account
+                    </th>
+                    <th class="small text-right">
+                        Address
+                    </th>
+                    <th class="small text-right">
+                        TXid
+                    </th>
+                    <th class="small text-right">
+                        Confirmations
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="transactions">
+                {% for transaction in transactions.iterrows() %}
+                <tr id="id{{transaction[1].txid}}">
+                    <td>
+                        {%if transaction[1]['category'] == 'receive'%}
+                        <span class='text-success'>
+                            <i class="far fa-arrow-alt-circle-down"></i>
+                        </span>
+                        {%elif transaction[1]['category'] == 'send'%}
+                        <span class='text-danger'>
+                            <i class="far fa-arrow-alt-circle-up"></i>
+                        </span>
+                        {%endif%}
+                    </td>
+                    <td class="align-middle text-left small" scope="row">
+                        {{transaction[1].trade_date}}</td>
+                    <td class="align-middle text-right" scope="row">{{transaction[1].trade_asset_ticker}}</td>
+                    <td class="align-middle text-right small" scope="row">{{transaction[1].category}}</td>
+                    <td class="align-middle text-right" scope="row">{{"{:,.6f}".format(transaction[1].trade_quantity)}}
+                    </td>
+                    <td class="align-middle text-right" scope="row">
+                        {{transaction[1].trade_currency | fxsymbol}}
+                        {{"{:,.2f}".format(transaction[1].trade_price)}}</td>
+                    <td class="align-middle text-right small" scope="row">
+                        {{transaction[1].trade_currency}}
+                    </td>
+
+                    <td class="align-middle text-right small" scope="row">
+                        {{transaction[1].trade_currency | fxsymbol}}
+                        {{"{:,.2f}".format(transaction[1].trade_fees)}}
+                    </td>
+                    <td class="align-middle text-right" scope="row">{{transaction[1].trade_account}}</td>
+                    <td class='text-right'>
+                        <a href="http://mynode.local:3002/address/{{transaction[1]['address']}}" target="_blank">
+                            {{transaction[1]['address'][0:3]}}...{{transaction[1]['address'][-4:-1]}}
+                        </a>
+                    </td>
+                    <td class='text-right'>
+                        <a href="http://mynode.local:3002/tx/{{transaction[1]['txid']}}" target="_blank">
+                            {{transaction[1]['txid'][0:3]}}...{{transaction[1]['txid'][-4:-1]}}
+                        </a>
+                    </td>
+                    <td class='text-right'>
+                        {{transaction[1]['confirmations'] | jformat(0)}}
+                    </td>
+
+
+
+
+                    {% endfor %}
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="/static/transactions.js"></script>
+{% endblock content %}

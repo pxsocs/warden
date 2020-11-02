@@ -26,15 +26,13 @@ Installation instructions for Specter can be found [here](https://github.com/cry
 Log in to your computer running Specter, open Terminal and type:
 
 ```bash
-sudo git clone https://github.com/pxsocs/specter_warden
-cd specter_warden
-source ./warden_upgrade.sh
+pip3 install alphazeta.warden
 ```
 
 Then run the WARden server:
 
 ```bash
-sudo ./warden.sh
+python3 -m warden
 ```
 
 Open your browser and navigate to:
@@ -45,7 +43,7 @@ Open your browser and navigate to:
 From the WARden directory, type:
 
 ```bash
- source ./warden_upgrade.sh
+ pip3 install alphazeta.warden --upgrade
 ```
 
 ## This is an Open Source project

@@ -11,6 +11,7 @@ import urllib
 from datetime import datetime
 
 from warden.warden_decorators import MWT
+from flask import current_app
 
 from time import time
 
@@ -570,7 +571,7 @@ def price_data(ticker):
 
 
 # Returns price data in current user's currency
-def price_data_fx(ticker):  #BTC
+def price_data_fx(ticker):  # BTC
     FX = fx_rate()['base']
     GBTC_PROVIDER_PRIORITY = [
         'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock', 'bitmex'
@@ -642,7 +643,7 @@ def price_data_rt_full(ticker, provider):
     # separated so it can be memoized for a period of time (this price will
     # not refresh as frequently)
     # default: timeout=30
-    from warden import (FX, FX_RATE)
+    from warden_modules import (FX, FX_RATE)
     if provider == 'cc':
         multi_price = multiple_price_grab(ticker, 'USD,' + FX)
         try:
@@ -734,19 +735,18 @@ def fxsymbol(fx, output='symbol'):
     try:
         out = fx_list[fx][output]
     except Exception:
+        if output == 'all':
+            return (fx_list[fx])
         out = fx
     return (out)
 
 
 # Gets Currency data for current user
 # Setting a timeout to 10 as fx rates don't change so often
-@MWT(timeout=600)
+@MWT(timeout=1)
 def fx_rate():
-    fx_file = os.path.join(current_path(), 'static/json_files/fx_default.json')
-    with open(fx_file) as data_file:
-        fx = json.loads(data_file.read())
-
-    FX = fx['FX']
+    with current_app.app_context():
+        FX = current_app.settings['PORTFOLIO']['base_fx']
 
     # This grabs the realtime current currency conversion against USD
     try:
@@ -851,8 +851,7 @@ PROVIDER_LIST = {
     'fmp_stock':
     PriceProvider(
         name='financialmodelingprep',
-        base_url=
-        'https://financialmodelingprep.com/api/v3/historical-price-full',
+        base_url='https://financialmodelingprep.com/api/v3/historical-price-full',
         ticker_field='',
         field_dict={
             'from': '2001-01-01',
@@ -884,8 +883,7 @@ PROVIDER_LIST = {
             'api_key':
             '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
         },
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
+        doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
     'cc_fx':
     PriceProvider(
@@ -900,8 +898,7 @@ PROVIDER_LIST = {
             'api_key':
             '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
         },
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
+        doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
     'bitmex':
     PriceProvider(name='bitmex',
@@ -936,8 +933,7 @@ PROVIDER_LIST = {
             'api_key':
             '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
         },
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'
+        doc_link='https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'
     ),
     'aa_realtime_digital':
     PriceProvider(name='aarealtime',
@@ -961,8 +957,7 @@ PROVIDER_LIST = {
     'fp_realtime_stock':
     PriceProvider(
         name='fprealtimestock',
-        base_url=
-        'https://financialmodelingprep.com/api/v3/stock/real-time-price',
+        base_url='https://financialmodelingprep.com/api/v3/stock/real-time-price',
         ticker_field='',
         field_dict='',
         doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'

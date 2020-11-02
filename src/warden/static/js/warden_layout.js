@@ -39,6 +39,28 @@ $(document).ready(function () {
         });
     });
 
+    $("#list_fx").click(function (e) {
+        $.ajax({
+            type: "GET",
+            dataType: 'json',
+            url: "/fx_lst",
+            success: function (data) {
+                $('#fx_sel').html('');
+                current_path = window.location.pathname;
+                $.each(data, function (option) {
+                    link = '/update_fx?code=' + option + '&redirect=' + current_path
+                    html = "<a class='dropdown-item fx_changer' href='" + link + "'>" + option + " | " + data[option] + "</a>"
+                    $('#fx_sel').append(html);
+                });
+            },
+            error: function (xhr, status, error) {
+                console.log("Error on fx list request")
+            }
+        });
+    });
+
+
+
     $("#menu-toggle").click(function (e) {
         e.preventDefault();
         $("#wrapper").toggleClass("toggled");
@@ -112,7 +134,7 @@ function test_tor() {
         success: function (data) {
             console.log("[Check Tor] ajax request: OK");
             if (data.status) {
-                html_tor = "<span style='color: lightgreen;' data-toggle='tooltip' data-placement='bottom' title='Tor Enabled (" + data.post_proxy.origin + ") Ping time " + data.post_proxy_ping + "'><i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor running</span>"
+                html_tor = "<span style='color: lightgreen;' data-toggle='tooltip' data-placement='right' title='Tor Enabled (" + data.post_proxy.origin + ") Ping time " + data.post_proxy_ping + "'><i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor running</span>"
                 $('[data-toggle="tooltip"]').tooltip()
             } else {
                 html_tor = "<span class='text-warning'><i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled</span>"

@@ -91,24 +91,6 @@
 
           <div class="text-left text-white">
 
-            {%if not services['specter']['pip_installed']%}
-            <h5 class='text-warning'>
-              Although a server seems to be running, Specter is not installed in this computer.</h5>
-            <p>WARden and Specter need to be installed at the same computer.</p>
-            <p>To install Specter open your terminal and type:</p>
-            <p><code>pip3 install cryptoadvance.specter</code></p>
-            <h6>More info and detailed instructions can be found <a
-                href='https://github.com/cryptoadvance/specter-desktop' class="text-white"> here </a>.</h6>
-            {%endif%}
-
-            {%if not services['specter']['running_on_same_machine']%}
-            <h5 class='text-warning'>
-              <i class="fas fa-exclamation-triangle"></i>&nbsp;&nbsp;
-              Although a Specter server seems to be running, it does not appear to be in the same computer running
-              WARden.</h5>
-            <p>WARden and Specter need to be installed at the same computer.</p>
-            <h6>Please install the WARden again in the same machine running specter, located at the address below</h6>
-            {%endif%}
 
             <a class="btn btn-outline-secondary text-success btn-block" target="new_page"
               href="https://{{messages['services']['specter']['connection'][0]}}:{{messages['services']['specter']['connection'][1]}}/""
