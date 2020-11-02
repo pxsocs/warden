@@ -17,7 +17,7 @@ add_reqs = [
 
 setup(
     name="alphazeta.warden",
-    version="0.02",
+    version="0.042",
     author="Alpha Zeta",
     author_email="alphaazeta@protonmail.com",
     description="Private Portfolio Tool - Specter Server Edition",

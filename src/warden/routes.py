@@ -1,13 +1,13 @@
 from flask import (Blueprint, redirect, render_template,
                    flash, session, request, current_app, url_for)
-from warden.warden import (list_specter_wallets, warden_metadata, positions,
-                           positions_dynamic, get_price_ondate,
-                           generatenav, specter_df, check_services,
-                           current_path, specter_update, regenerate_nav)
+from warden_modules import (list_specter_wallets, warden_metadata, positions,
+                            positions_dynamic, get_price_ondate,
+                            generatenav, specter_df, check_services,
+                            current_path, specter_update, regenerate_nav)
 
 from warden.warden_pricing_engine import (test_tor, tor_request, price_data_rt,
                                           fx_rate)
-from warden.utils import update_config
+from utils import update_config
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta

@@ -25,7 +25,7 @@ class Config:
     # ApScheduler Jobs
     JOBS = [{
         'id': 'background_job',
-        'func': 'warden.warden:background_jobs',
+        'func': 'warden_modules:background_jobs',
         'trigger': 'interval',
         'seconds': 30,
         'next_run_time': datetime.now() + timedelta(seconds=15)

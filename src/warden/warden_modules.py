@@ -25,9 +25,11 @@ try:
 except Exception:
     print("Specter Libraries could not be imported...")
     print("Will search other paths...")
-
+    pass
 
 # Returns the current application path
+
+
 def current_path():
     application_path = os.path.dirname(os.path.abspath(__file__))
     return (application_path)
@@ -45,7 +47,7 @@ def background_jobs():
     current_app.settings = config_settings
     current_app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
     # Regenerare_nav
-    from warden.warden import regenerate_nav
+    from warden_modules import regenerate_nav
     regenerate_nav()
     return (current_app)
 

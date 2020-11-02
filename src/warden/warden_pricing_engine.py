@@ -643,7 +643,7 @@ def price_data_rt_full(ticker, provider):
     # separated so it can be memoized for a period of time (this price will
     # not refresh as frequently)
     # default: timeout=30
-    from warden import (FX, FX_RATE)
+    from warden_modules import (FX, FX_RATE)
     if provider == 'cc':
         multi_price = multiple_price_grab(ticker, 'USD,' + FX)
         try:

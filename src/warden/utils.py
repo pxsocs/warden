@@ -18,7 +18,7 @@ from warden.config import Config
 
 
 # Method to create a new config file if not found
-# Copies data from config_default.ini into a new config.ini
+# Copies data from warden.config_default.ini into a new config.ini
 def create_config(config_file):
     logging.warn("Config File not found. Getting default values and saving.")
     # Get the default config and save into config.ini
@@ -32,7 +32,7 @@ def create_config(config_file):
 
 
 # Method to create a new config file if not found
-# Copies data from config_default.ini into a new config.ini
+# Copies data from warden.config_default.ini into a new config.ini
 def update_config(config_file=Config.config_file):
     logging.info("Updating Config file")
     with open(config_file, 'w') as file:
@@ -52,7 +52,7 @@ def specter_checks():
 def load_specter():
     # First, try to get the json that is saved
     logging.info("Updating Specter Class...")
-    from warden.warden import specter_update
+    from warden_modules import specter_update
     specter = specter_update(load=False)
     return (specter)
 
