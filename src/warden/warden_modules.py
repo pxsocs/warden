@@ -66,84 +66,6 @@ def specter_update(load=True, data_folder=None, idx=0):
     return(specter_data)
 
 
-def specter_update_off(load=True, data_folder=None, idx=0):
-    if load:
-        with current_app.app_context():
-            data = current_app.specter
-        return (data)
-
-    if not data_folder:
-        with current_app.app_context():
-            data_folder = current_app.settings['SPECTER']['specter_datafolder']
-
-    specter_data = Specter(data_folder=data_folder)
-
-    specter_config = specter_data.is_running
-    logging.info(f"Finished Building Specter Class from data_folder: {data_folder}")
-    logging.info(f"Specter Running: {specter_config}")
-
-    return_dict = {
-        'specter_config': specter_config,
-        'data_folder': specter_data.data_folder,
-        'file_config': specter_data.file_config,
-        'config': specter_data.config,
-        'is_checking': specter_data.is_checking,
-        'is_configured': specter_data._is_configured,
-        'is_running': specter_data._is_running,
-        'info': specter_data._info,
-        'network_info': specter_data._network_info,
-        'device_manager_datafolder': specter_data.device_manager.data_folder,
-        'last_update': datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-    }
-
-    return_dict['devices'] = {}
-
-    # Parse Devices
-    for device in specter_data.device_manager.devices:
-        return_dict['devices'][device] = {
-            'name':
-            specter_data.device_manager.devices[device].__dict__['name'],
-            'alias':
-            specter_data.device_manager.devices[device].__dict__['alias'],
-            'file':
-            specter_data.device_manager.devices[device].__dict__['fullpath'],
-        }
-        logging.info(f"\u001b[32mSuccess, Device {device} imported...\u001b[0m")
-
-    return_dict['wallets'] = {
-        'data_folder': specter_data.wallet_manager.working_folder,
-        'is_loading': specter_data.wallet_manager.is_loading,
-        'wallets': {}
-    }
-    # Parse Wallets
-    for wallet in specter_data.wallet_manager.wallets:
-        specter_data.check()
-        wallet = specter_data.wallet_manager.wallets[wallet]
-        wallet.get_info()
-        # is this scanning?
-        scan = wallet.rescan_progress
-
-        if not scan:
-            logging.info(f"Wallet {wallet} --- looking for txs")
-            # Merge list of lists into one single list
-            validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
-            tx_data = []
-            idx_l = idx
-            while tx_get != []:
-                tx_get = wallet.txlist(idx_l, validate_merkle_proofs=validate_merkle_proofs)
-                tx_data.append(tx_get)
-                idx_l += 1
-
-            logging.info(f"Wallet {wallet} --- Finished txs")
-        else:
-            tx_data = []
-            logging.warn(f"\u001b[33mWallet {wallet} being scanned {scan}\u001b[0m")
-
-        return_dict['wallets']['wallets'][wallet.__dict__['alias']] = tx_data
-
-    return (return_dict)
-
-
 # ------------------------------------
 # Address and Port checker - to check
 # which services are running
@@ -187,7 +109,11 @@ def check_services(load=True, expiry=60):
         'connection': None
     }
 
-    pip_installed = True
+    try:
+        import cryptoadvance.specter
+        pip_path = os.path.abspath(cryptoadvance.specter.__file__)
+    except Exception:
+        pip_path = None
 
     services['specter'] = {
         'name':
@@ -195,10 +121,9 @@ def check_services(load=True, expiry=60):
         # The below is a list in format [(address, port)] - include as many as needed
         'typical_connections': [('mynode.local', 25441), ('127.0.0.1', 25441),
                                 ('localhost', 25441)],
-        'running':
-        False,
-        'connection':
-        None
+        'running': False,
+        'connection': None,
+        'pip_path': pip_path,
     }
     # Test Connections
     for service in services:
