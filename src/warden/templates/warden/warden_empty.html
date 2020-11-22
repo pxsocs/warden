@@ -170,33 +170,6 @@
   {%endif%}
   {%endif%}
 
-  <div class="row">
-    <div class='col-lg-12 d-flex align-items-stretch'>
-      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
-        <div class="card-header text-white" style="border-bottom: 1px solid white;">
-          <div class="input-group mb-3">
-            <div class="input-group-prepend">
-              <span class="input-group-text" id="basic-addon1">Specter Data Folder: </span>
-            </div>
-            <input type="text" id="data_folder" class="form-control" value="{{specter['data_folder']}}">
-            <div class="input-group-append">
-              <button class="btn btn-outline-secondary" id="save_folder" type="button">Save</button>
-            </div>
-          </div>
-          </form>
-          <small class='text-white'>
-            This is the location where your specter wallets are saved. Make sure it contains the wallet files.<br>
-            If Specter seems to be running but no txs or wallets are found, make sure that the folder above contains the
-            data. If not, change it to the correct path.
-          </small>
-          <div class='row'>
-            <div id='alertsection_df' class='col-12'>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
   </br>
 
   <script>

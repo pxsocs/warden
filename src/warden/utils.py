@@ -4,6 +4,8 @@ import os
 import sys
 import atexit
 import json
+import requests
+import pickle
 
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
@@ -14,11 +16,14 @@ from flask_apscheduler import APScheduler
 from flask_mail import Mail
 from pathlib import Path
 
-from warden.config import Config
-
+from config import Config
+from warden_pricing_engine import tor_request
+from warden_decorators import MWT, timing
 
 # Method to create a new config file if not found
 # Copies data from warden.config_default.ini into a new config.ini
+
+
 def create_config(config_file):
     logging.warn("Config File not found. Getting default values and saving.")
     # Get the default config and save into config.ini
@@ -41,104 +46,115 @@ def update_config(config_file=Config.config_file):
 
 # Critical checks for specter
 def specter_checks():
-    # Check if Python Library is present - this is a requirement
-    specter_library_check()
-    # Check if data folder is present
-    # does config have a specter folder? If yes, test
-    # data_folder = g.settings['SPECTER']['specter_datafolder']
-    check = specter_datafolder_check()
+    specter_data = load_specter()
+    if specter_data == "unauthorized":
+        print("  Specter Login UNAUTHORIZED -- Check username and password")
+    elif specter_data['is_running']:
+        print("  Specter API is available [SUCCESS]")
+    elif not specter_data['is_running']:
+        print("  Specter API is available but Specter is not running [WARNING]")
 
 
+@MWT(timeout=10)
 def load_specter():
-    # First, try to get the json that is saved
-    logging.info("Updating Specter Class...")
-    from warden_modules import specter_update
-    specter = specter_update(load=False)
-    return (specter)
-
-
-def specter_datafolder_check():
-    logging.info("Starting... Looking for Specter Data Folder...")
-    # Get Python Library
-    from cryptoadvance.specter.specter import Specter
-    # First use whatever is in config.ini
-    data_folder = current_app.settings['SPECTER']['specter_datafolder']
-    specter = Specter(data_folder=data_folder)
-    if specter.is_running:
-        logging.info(f"[Success] Specter is running from {data_folder}")
-        return (True)
-    logging.warn("[WARN] Specter does not seem to be running at {datafolder}")
-    # Let's try to find the specter data folder
-    home = str(Path.home())
-    home = os.path.join(home, '.specter')
-    typical_folders = [home, '/.specter',
-                       '/mnt/hdd/mynode/specter', '/home/admin/.specter']
-    for folder in typical_folders:
-        # check if the file config.json is in this folder and has info
-        json_file = os.path.join(folder, 'config.json')
+    logging.info("Updating Specter...")
+    # Try to reach API
+    file = Config.config_file
+    config = configparser.ConfigParser()
+    config.read(file)
+    onion = config['SPECTER']['specter_onion']
+    url = config['SPECTER']['specter_url']
+    username = config['SPECTER']['specter_login']
+    password = config['SPECTER']['specter_password']
+    login_data = {
+        'username': username,
+        'password': password
+    }
+    session = requests.session()
+    if not onion or onion == '':
         try:
-            with open(json_file) as data_file:
-                json_data = json.loads(data_file.read())
-            if json_data['rpc']:
-                current_app.specter_config = json_data
-                current_app.settings['SPECTER']['specter_datafolder'] = folder
-                update_config()
-                return(True)
-                break
+            # First post login info into session to authenticate
+            login = session.post(url + '/login', login_data)
+            # Check if login was authorized
+            if login.status_code == 401:
+                print("  Specter Login UNAUTHORIZED -- Check username and password")
+                logging.warn("Could not authenticate Specter login")
+                return ("unauthorized")
+            r = session.get(url + '/api/specter/')
+            specter = json.loads(r.content.decode('utf-8'))
+
         except Exception as e:
-            pass
-    return (False)
+            specter = f"Error: {e}"
+    else:
+        url = url + '/api/specter/'
+        specter = tor_request(url, tor_only=True)
+    return(specter)
 
 
-def specter_library_check():
-    logging.info("Starting... Looking for Specter Library...")
-    try:
-        if current_app.settings['SPECTER']['specter_python'] != '':
-            sys.path = sys.path + g.settings['SPECTER']['specter_python']
-        from cryptoadvance.specter.specter import Specter
-        from cryptoadvance.specter.config import DATA_FOLDER
-        logging.info("\u001b[32mSuccess, found Specter Library...\u001b[0m")
-    except Exception:
-        logging.info("\u001b[33mCould not import Specter Library..." +
-                     " Trying other paths.\u001b[0m")
-        # MyNode stores these libraries at different path, will also try different
-        # places
-        found = False
-        # list of paths to look for libraries recursively
-        home = str(Path.home())
-        path_list = ['/home/usr', '/usr/lib', '/usr/local', '/usr', home]
-        for path_search in path_list:
-            if found:
-                break
-            logging.debug(f"Looking into {path_search}...")
-            try:
-                result = list(Path(path_search).rglob("site-packages"))
-                result.append(list(Path(path_search).rglob("dist-packages")))
-            except Exception:
-                result = []
-            # Try to import
-            for element in result:
-                logging.debug(f"Trying to import from {element}...")
-                sys.path.append(str(element))
-                try:
-                    from cryptoadvance.specter.specter import Specter
-                    from cryptoadvance.specter.config import DATA_FOLDER
-                    logging.debug("\u001b[32mSuccess, found Specter Library...\u001b[0m")
-                    logging.debug(f"\u001b[32mon folder {str(element)}\u001b[0m")
-                    found = True
-                    # save this for later
-                    current_app.settings['SPECTER']['specter_python'] = str(element)
-                    update_config()
-                    break
-                except Exception:
-                    pass
-        if not found:
-            print("--------------------------------------------------------------------")
-            print("              SPECTER IS REQUIRED BUT NOT FOUND")
-            print("--------------------------------------------------------------------")
-            print(f" Could not find Specter Library installed. Are you sure ")
-            print(f" Specter is installed in this computer? ")
-            print(f" If it is, you can include the path for the Specter Python Library")
-            print(f" at the warden/config.ini file.")
-            print("--------------------------------------------------------------------")
-            exit()
+@MWT(timeout=30)
+def load_wallet(wallet_alias):
+    logging.info(f"Loading Wallet: {wallet_alias}")
+    # Try to reach API
+    file = Config.config_file
+    config = configparser.ConfigParser()
+    config.read(file)
+    onion = config['SPECTER']['specter_onion']
+    url = config['SPECTER']['specter_url']
+    username = config['SPECTER']['specter_login']
+    password = config['SPECTER']['specter_password']
+    login_data = {
+        'username': username,
+        'password': password
+    }
+    session = requests.session()
+    if not onion or onion == '':
+        try:
+            # First post login info into session to authenticate
+            login = session.post(url + '/login', login_data)
+            # Check if login was authorized
+            if login.status_code == 401:
+                print("  Specter Login UNAUTHORIZED -- Check username and password")
+                logging.warn("Could not authenticate Specter login")
+                return ("unauthorized")
+            r = session.get(url + '/api/wallet_info/' + wallet_alias + '/')
+            specter = json.loads(r.content.decode('utf-8'))
+        except Exception as e:
+            specter = f"Error: {e}"
+    else:
+        url = url + '/api/wallet_info/' + wallet_alias + '/'
+        specter = tor_request(url, tor_only=True)
+    logging.info(f"Done Loading Wallet: {wallet_alias}")
+    return(specter)
+
+
+def load_wallets():
+    logging.info(f"Loading all Wallets")
+    specter_data = load_specter()
+    wallets_data = {}
+    for alias in specter_data['wallets_alias']:
+        wallet_json = load_wallet(alias)
+        wallets_data[alias] = wallet_json
+    logging.info(f"Finished Building Wallets Class")
+    return (wallets_data)
+
+
+# Function to load and save data into pickles
+def pickle_it(action='load', filename=None, data=None):
+    logging.info(f"Pickle {action} file: {filename}")
+    from warden_modules import home_path
+    filename = 'warden/' + filename
+    filename = os.path.join(home_path(), filename)
+    if action == 'load':
+        try:
+            with open(filename, 'rb') as handle:
+                ld = pickle.load(handle)
+                logging.info(f"Loaded: Pickle {action} file: {filename}")
+                return (ld)
+        except Exception as e:
+            logging.warn(f"Error: Pickle {action} file: {filename} error:{e}")
+            return ("file not found")
+    else:
+        with open(filename, 'wb') as handle:
+            pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            logging.info(f"Saved: Pickle {action} file: {filename}")
+            return ("saved")

@@ -10,7 +10,8 @@ import os
 import urllib
 from datetime import datetime
 
-from warden.warden_decorators import MWT
+from warden_decorators import MWT
+
 from flask import current_app
 
 from time import time
@@ -23,6 +24,13 @@ import requests
 def current_path():
     application_path = os.path.dirname(os.path.abspath(__file__))
     return (application_path)
+
+
+# Returns the home path
+def home_path():
+    from pathlib import Path
+    home = str(Path.home())
+    return (home)
 
 
 @MWT(timeout=60)
@@ -256,9 +264,9 @@ class PriceData():
         # ex: ['alphavantage', 'Yahoo']
         self.ticker = ticker.upper()
         self.provider = provider
-        self.filename = ("warden/pricing_engine/pricing_data/" + self.ticker +
+        self.filename = ("warden/" + self.ticker +
                          "_" + provider.name + ".price")
-        self.filename = os.path.join(current_path(), self.filename)
+        self.filename = os.path.join(home_path(), self.filename)
         self.errors = []
         # makesure file path exists
         try:
@@ -505,14 +513,13 @@ class ApiKeys():
     # returns current stored keys in the api_keys.conf file
     # makesure file path exists
     def __init__(self):
-        self.filename = 'warden/pricing_engine/api_keys.conf'
+        self.filename = 'warden/api_keys.conf'
+        self.filename = os.path.join(home_path(), self.filename)
         try:
             os.makedirs(os.path.dirname(self.filename))
         except OSError as e:
             if e.errno != 17:
                 raise
-
-        self.filename = os.path.join(current_path(), self.filename)
 
     def loader(self):
         if os.path.exists(self.filename):

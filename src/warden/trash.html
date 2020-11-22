@@ -1,0 +1,112 @@
+<!DOCTYPE html>\n<html>\n\t
+
+<head>\n\t\t
+    <link rel="shortcut icon" type="image/png" href="/static/img/icon.png" />\n\t\t<title>Specter Desktop</title>\n\t\t
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n\t\t
+    <meta name="format-detection" content="telephone=no">\n\t\t
+    <link rel="stylesheet" type="text/css" href="/static/styles.css?">\n\t\t<style>
+        \n\t\t\timg[src="/static/img/cobo_icon.svg"] {
+            \n\t\t\t\ttransform: scale(1.30);
+            \n\t\t\t
+        }
+
+        \n\n\t\t\timg[src="/static/img/bitbox02_icon.svg"] {
+            \n\t\t\t\ttransform: scale(1.9);
+            \n\t\t\t
+        }
+
+        \n\t\t
+    </style>\n\t</head>\n\t
+
+<body>\n\t<div class="pageloader" id="pageloader"></div>\n\t\n\t
+    <!--\n  Custom message box component.\n  You can use it as a normal html tag, for example:\n  <message-box type="error">error happened!!!</message-box>\n-->\n<template
+        id="messagebox">\n <style>
+            \n .main {
+                \n min-width: 200px;
+                \n max-width: 800px;
+                \n font-size: 0.7em;
+                \n color: #fff;
+                \n overflow-x: scroll;
+                \n background: var(--cmap-bg-lightest);
+                \n border-radius: 0 0 4px 4px;
+                \n padding: 7px 30px;
+                \n box-shadow: 0 3px 3px rgba(0, 0, 0, 0.7);
+                \n line-height: 1.5;
+                \n text-align: center;
+                \n animation-duration: 0.2s;
+                \n background: var(--cmap-blue-darker);
+                \n margin-bottom: 3px;
+                \n -ms-overflow-style: none;
+                /* IE and Edge */
+                \n scrollbar-width: none;
+                /* Firefox */
+                \n scrollbar-height: none;
+                /* Firefox */
+                \n
+            }
+
+            \n .main.error {
+                \n background: var(--cmap-red-darker);
+                \n
+            }
+
+            \n a {
+                \n cursor: pointer;
+                \n float: right;
+                \n margin: -5px -22px;
+                \n opacity: 0.7;
+                \n
+            }
+
+            \n a:hover {
+                \n opacity: 1;
+                \n
+            }
+
+            \n @keyframes appear {
+                \n from {
+                    opacity: 0;
+                }
+
+                \n to {
+                    opacity: 1;
+                }
+
+                \n
+            }
+
+            \n @keyframes disappear {
+                \n from {
+                    opacity: 1;
+                }
+
+                \n to {
+                    opacity: 0;
+                }
+
+                \n
+            }
+
+            \n .main::-webkit-scrollbar {
+                \n display: none;
+                \n
+            }
+
+            \n
+        </style>\n <div class="main">\n <a class="close">\xe2\xa8\x89</a>\n <slot>\n Error: Something bad happened!\n
+            </slot>\n </div>\n</template>\n\n
+    <script
+        type="text/javascript">\nclass MessageBoxElement extends HTMLElement { \n  constructor() { \n    super(); \n    // Create a shadow root\n    var shadow = this.attachShadow({mode: \'open\'});\n    var style = document.getElementById(\'messagebox\').content;\n    var clone = style.cloneNode(true);\n    this.main = clone.querySelector(".main");\n    clone.querySelector("a").addEventListener(\'click\', e=>{\n      this.close();\n    });\n    // Attach the created element to the shadow dom\n    shadow.appendChild(clone);\n  }\n  static get observedAttributes() {\n    return [\'type\', \'timeout\'];\n  }\n  close(){\n    this.main.style.opacity = 0;\n    this.main.style["animation-name"]="disappear";\n    window.setTimeout(()=>{\n      this.main.style.display = "none";\n    }, 200);\n  }\n  connectedCallback(){\n    this.main.style.opacity = 0;\n    this.main.style["animation-name"]="appear";\n    this.main.style.opacity = 1;\n  }\n  attributeChangedCallback(attrName, oldValue, newValue) {\n    var type = this.getAttribute(\'type\');\n    var timeout = parseInt(this.getAttribute(\'timeout\'));\n    this.main.classList.remove("error");\n    if(type=="error"){\n      this.main.classList.add("error");\n    }\n    if(timeout > 0){\n      setTimeout(()=>{\n        this.close();\n      }, timeout);\n    }\n  }\n}\ncustomElements.define(\'message-box\', MessageBoxElement);\n</script>
+    \n\t<div class="row holder">\n\t\t\n\n\t\t<main>
+            <div><br><br></div>\n\t\t\t\n\n\t\t\t<div id="messages">\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\t\t
+                <message-box type="message">Please log in to access this page.</message-box>
+                \n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t</div>\n\n\t\t\t\n <div class="card">\n <h1>Login to
+                    Specter</h1>\n <form action="/login" method="POST" role="form">\n \n <input class="form-control"
+                        placeholder="Username" name="username" type="text" value=""><br><br>\n \n <input
+                        class="form-control" placeholder="Password" name="password" type="password" value="">\n <input
+                        type="hidden" name="next" value="/api/specter/">\n <br>\n <br>\n <div class="row">\n <button
+                            type="submit" class="btn">Login</button>\n </div>\n </form>\n </div>\n\n\t\t
+        </main>\n\t</div>\n\n\t
+    <script type="text/javascript" src="/static/helpers.js"></script>\n\n\t\n\t\n\t</body>\n
+
+</html>

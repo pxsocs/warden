@@ -12,8 +12,10 @@ class Config:
 
     debug_file = os.path.join(basedir, 'debug.log')
 
+    version_file = os.path.join(basedir, 'static/config/version.txt')
+
+    default_config_file = os.path.join(basedir, 'static/config/config_default.ini')
     config_file = os.path.join(basedir, 'config.ini')
-    default_config_file = os.path.join(basedir, 'config_default.ini')
 
     # Used for password recovery. Not needed in most cases.
     MAIL_SERVER = "smtp.googlemail.com"

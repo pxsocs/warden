@@ -12,58 +12,47 @@ from datetime import datetime, timedelta
 from flask import flash, current_app, has_request_context
 from pathlib import Path
 
-from warden.warden_pricing_engine import (get_price_ondate, fx_price_ondate,
-                                          multiple_price_grab, price_data_rt,
-                                          price_data_fx, price_data_rt_full,
-                                          price_data, fx_rate, fxsymbol)
-from warden.warden_decorators import MWT, timing
-from warden.config import Config
+from warden_pricing_engine import (get_price_ondate, fx_price_ondate,
+                                   multiple_price_grab, price_data_rt,
+                                   price_data_fx, price_data_rt_full,
+                                   price_data, fx_rate, fxsymbol)
+from warden_decorators import MWT, timing
+from utils import load_specter, load_wallets, pickle_it
+from config import Config
 
-try:
-    from cryptoadvance.specter.specter import Specter
-    from cryptoadvance.specter.config import DATA_FOLDER
-except Exception:
-    print("Specter Libraries could not be imported...")
-    print("Will search other paths...")
-    pass
 
 # Returns the current application path
-
-
 def current_path():
     application_path = os.path.dirname(os.path.abspath(__file__))
     return (application_path)
 
 
-# Start background threads
-# Get Specter tx data and updates every 30 seconds (see config.py)
-def background_jobs():
-    current_app.specter = specter_update(load=False)
-    current_app.services = check_services(load=False)
-    # Reload config
-    config_file = Config.config_file
-    config_settings = configparser.ConfigParser()
-    config_settings.read(config_file)
-    current_app.settings = config_settings
-    current_app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
-    # Regenerare_nav
-    from warden_modules import regenerate_nav
-    regenerate_nav()
-    return (current_app)
+# Returns the home path
+def home_path():
+    home = str(Path.home())
+    return (home)
 
 
-def specter_update(load=True, data_folder=None, idx=0):
+def specter_update(load=True):
     if load:
-        with current_app.app_context():
-            data = current_app.specter
-        return (data)
-    if not data_folder:
-        with current_app.app_context():
-            data_folder = current_app.settings['SPECTER']['specter_datafolder']
-    specter_data = Specter(data_folder=data_folder)
-    logging.info(f"Finished Building Specter Class from data_folder: {data_folder}")
-
+        data = pickle_it(action='load', filename='specter_data.pkl')
+        if data != 'file not found':
+            return (data)
+    specter_data = load_specter()
+    pickle_it(action='save', filename='specter_data.pkl', data=specter_data)
+    logging.info(f"Finished Building Specter Class")
     return(specter_data)
+
+
+def wallets_update(load=True):
+    if load:
+        data = pickle_it(action='load', filename='wallets_data.pkl')
+        if data != 'file not found':
+            return (data)
+    wallets_data = load_wallets()
+    pickle_it(action='save', filename='wallets_data.pkl', data=wallets_data)
+    logging.info(f"Finished Building Wallets Class")
+    return(wallets_data)
 
 
 # ------------------------------------
@@ -109,12 +98,6 @@ def check_services(load=True, expiry=60):
         'connection': None
     }
 
-    try:
-        import cryptoadvance.specter
-        pip_path = os.path.abspath(cryptoadvance.specter.__file__)
-    except Exception:
-        pip_path = None
-
     services['specter'] = {
         'name':
         'Specter Server',
@@ -122,8 +105,7 @@ def check_services(load=True, expiry=60):
         'typical_connections': [('mynode.local', 25441), ('127.0.0.1', 25441),
                                 ('localhost', 25441)],
         'running': False,
-        'connection': None,
-        'pip_path': pip_path,
+        'connection': None
     }
     # Test Connections
     for service in services:
@@ -134,17 +116,6 @@ def check_services(load=True, expiry=60):
                 services[service]['running'] = True
                 services[service]['connection'] = connection
                 break
-
-    # Test if specter is running in this machine or remote
-    if services['specter']['running']:
-        connection = (get_local_ip(), 25441)
-        services['specter']['running_on_same_machine'] = check_server(
-            *connection)
-        # Try again on localhost
-        if not services['specter']['running_on_same_machine']:
-            connection = ('localhost', 25441)
-            services['specter']['running_on_same_machine'] = check_server(
-                *connection)
 
     services['last_update'] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
 
@@ -166,33 +137,31 @@ def get_local_ip():
 
 def list_specter_wallets(load=True):
     specter_data = specter_update(load)
-    return(specter_data.wallet_manager.wallets_names)
+    return(specter_data['wallets_names'])
 
 
 # Get all transactions of specific wallet by using alias
 @ MWT(timeout=60)
-def get_specter_tx(wallet, sort_by='time', idx=0):
+def get_specter_tx(wallet_alias, sort_by='time', idx=0):
     df = pd.DataFrame()
     specter_data = specter_update(load=True)
-    specter_data.check()
-    wallet = specter_data.wallet_manager.wallets[wallet]
-    wallet.get_info()
+    wallet = load_wallet(wallet_alias)
     # is this scanning?
-    scan = wallet.rescan_progress
+    scan = wallet[wallet_alias]['info']['scanning']
 
     if not scan:
-        logging.info(f"Wallet {wallet} --- looking for txs")
-        tx_data = [
-            wallet.txlist(idx)
-            for idx in range(0, idx + 1)
-        ]
-        logging.info(f"Wallet {wallet} --- Finished txs")
+        logging.info(f"Wallet {wallet_alias} --- looking for txs")
+
+        t = wallet['txlist']
+        # Flatten the tx list
+        tx_data = [item for sublist in t for item in sublist]
+
+        logging.info(f"Wallet {wallet_alias} --- Finished txs")
         # Merge list of lists into one single list
-        validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
-        tx_data = wallet.txlist(idx, validate_merkle_proofs=validate_merkle_proofs)
+
     else:
         tx_data = []
-        logging.warn(f"\u001b[33mWallet {wallet} being scanned {scan}\u001b[0m")
+        logging.warn(f"\u001b[33mWallet {wallet_alias} being scanned {scan}\u001b[0m")
 
     df = df.append(tx_data, ignore_index=True)
 
@@ -218,26 +187,28 @@ def warden_metadata():
     meta['wallet_info'] = list_specter_wallets()
 
     meta['txs'] = {}
-    for name in meta['wallet_info']:
+    meta['scan'] = {}
+    for alias in specter_data['wallets_alias']:
         # Line below throws an error when specter is not loaded yet
-        meta['txs'][name] = get_specter_tx(name)
+        meta['txs'][alias] = get_specter_tx(alias)
+        meta['scan'][alias] = load_wallet(alias)['scan']
 
     meta['full_df'] = specter_df()
 
     meta['node_info'] = {
-        'info': specter_data.info,
-        'network_info': specter_data.network_info
+        'info': specter_data['info'],
+        'network_info': specter_data['network_info']
     }
 
     # Load pickle with previous checkpoint df
-    df_pkl = os.path.join(current_path(), 'static/json_files/txs_pf.pkl')
+    df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
     try:
         meta['df_old'] = pd.read_pickle(df_pkl)
     except IOError:
         meta['df_old'] = None
 
     # load difference / changes in addresses from file
-    ack_file = os.path.join(current_path(), 'static/json_files/txs_ack.json')
+    ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
     meta['old_new_df_old'] = None
     meta['old_new_df_new'] = None
     try:
@@ -293,19 +264,19 @@ class Trades():
         return (vars(self))
 
 
-@ MWT(timeout=60)
-def specter_df(save_files=False, sort_by='trade_date', idx=0):
+@ MWT(timeout=10)
+def specter_df(save_files=False, sort_by='trade_date'):
     specter_data = specter_update(load=True)
-    validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
-    df = pd.DataFrame()
-    idx_l = idx
+    df1 = df = pd.DataFrame()
+
     tx_list = []
-    # Get all txs under every idx
-    tx_a = specter_data.wallet_manager.full_txlist(idx_l, validate_merkle_proofs)
-    while tx_a != []:
-        tx_a = specter_data.wallet_manager.full_txlist(idx_l, validate_merkle_proofs)
-        df = df.append(tx_a)
-        idx_l += 1
+    for alias in specter_data['wallets_alias']:
+        wallet_json = load_wallet(alias)
+        t = wallet_json['txlist']
+        for element in t:
+            df1 = df1.append(pd.DataFrame.from_dict(element))
+        df1['wallet_alias'] = alias
+        df = df.append(df1)
 
     # Check if txs exists
     if df.empty:
@@ -397,10 +368,10 @@ def specter_df(save_files=False, sort_by='trade_date', idx=0):
     # END TEST LINE ----------------------------------------------------
 
     # Files ----------------------------------
-    checksum_file = os.path.join(current_path(),
-                                 'static/json_files/txs_checksum.json')
-    ack_file = os.path.join(current_path(), 'static/json_files/txs_ack.json')
-    df_pkl = os.path.join(current_path(), 'static/json_files/txs_pf.pkl')
+    checksum_file = os.path.join(home_path(),
+                                 'warden/txs_checksum.json')
+    ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
+    df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
     # -----------------------------------------
 
     # Create checksum
@@ -480,6 +451,7 @@ def transactions_fx():
 
     df = specter_df()
     if df.empty:
+        logging.info("Transactions_FX - no txs found")
         return df
 
     df['trade_date'] = pd.to_datetime(df['trade_date'])
@@ -558,6 +530,7 @@ def positions():
     # Get all transactions & group by ticker name and operation
     df = transactions_fx()
     if df.empty:
+        logging.warn("No Transactions Found")
         return df
 
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[[
@@ -777,8 +750,8 @@ def generatenav(user='mynode', force=False, filter=None):
     # will be used.
     # Unless force is true, then a rebuild is done regardless
     # Local files are  saved under a hash of username.
-    filename = "thewarden/nav_data/" + user + FX + ".nav"
-    filename = os.path.join(current_path(), filename)
+    filename = "warden/" + user + FX + ".nav"
+    filename = os.path.join(home_path(), filename)
     if force:
         # Since this function can be run as a thread, it's safer to delete
         # the current NAV file if it exists. This avoids other tasks reading
@@ -955,8 +928,8 @@ def generatenav(user='mynode', force=False, filter=None):
 
     # Save NAV Locally as Pickle
     if save_nav:
-        filename = "thewarden/nav_data/" + user + FX + ".nav"
-        filename = os.path.join(current_path(), filename)
+        filename = "warden/" + user + FX + ".nav"
+        filename = os.path.join(home_path(), filename)
         # makesure file path exists
         try:
             os.makedirs(os.path.dirname(filename))
@@ -984,11 +957,11 @@ def regenerate_nav():
     # Check if there any trades in the database. If not, skip.
     try:
         # Delete all pricing history
-        filename = os.path.join(current_path(),
-                                'thewarden/pricing_engine/pricing_data/*.*')
+        filename = os.path.join(home_path(),
+                                'warden/*.nav')
         aa_files = glob.glob(filename)
         [os.remove(x) for x in aa_files]
-        filename = os.path.join(current_path(), 'thewarden/nav_data/*.*')
+        filename = os.path.join(home_path(), 'warden/*.nav')
         nav_files = glob.glob(filename)
         [os.remove(x) for x in nav_files]
         # Clear memory, cache

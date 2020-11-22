@@ -5,8 +5,8 @@ from warden_modules import (list_specter_wallets, warden_metadata, positions,
                             generatenav, specter_df, check_services,
                             current_path, specter_update, regenerate_nav)
 
-from warden.warden_pricing_engine import (test_tor, tor_request, price_data_rt,
-                                          fx_rate)
+from warden_pricing_engine import (test_tor, tor_request, price_data_rt,
+                                   fx_rate)
 from utils import update_config
 
 from datetime import datetime
@@ -72,8 +72,8 @@ def before_request():
 
 # Support method to check if donation was acknowledged
 def donate_check():
-    counter_file = os.path.join(current_path(),
-                                'static/json_files/counter.json')
+    counter_file = os.path.join(home_path(),
+                                'warden/counter.json')
     donated = False
     try:
         with open(counter_file) as data_file:
@@ -108,8 +108,8 @@ def warden_page():
     df = df.to_dict(orient='index')
 
     # Open Counter, increment, send data
-    counter_file = os.path.join(current_path(),
-                                'static/json_files/counter.json')
+    counter_file = os.path.join(home_path(),
+                                'warden/counter.json')
     donated = False
     try:
         with open(counter_file) as data_file:
@@ -168,7 +168,7 @@ def warden_page():
         "donated": donated,
         "alerts": alerts,
         "specter": specter_update(),
-        "current_app": current_app
+        "current_app": current_app,
     }
     return (render_template('warden/warden.html', **templateData))
 
@@ -224,7 +224,7 @@ def update_fx():
     fx = request.args.get("code")
     current_app.settings['PORTFOLIO']['base_fx'] = fx
     update_config()
-    from warden.warden_pricing_engine import fxsymbol as fxs
+    from warden_pricing_engine import fxsymbol as fxs
     current_app.fx = fxs(fx, 'all')
     regenerate_nav()
     redir = request.args.get("redirect")
@@ -234,15 +234,11 @@ def update_fx():
 # Save current folder to json
 @warden.route('/data_folder', methods=['GET', 'POST'])
 def data_folder():
-    data_file = os.path.join(current_path(),
-                             'static/json_files/specter_data_folder.json')
-
     if request.method == 'GET':
         try:
-            with open(data_file) as data_file:
-                return_data = json.loads(data_file.read())
-        except Exception as e:
-            return_data = str(e)
+            return_data = current_app.settings['SPECTER']['specter_datafolder']
+        except Exception:
+            return_data = None
         return(json.dumps(return_data))
 
     if request.method == 'POST':
@@ -253,9 +249,9 @@ def data_folder():
             # Test if can get specter data
             specter = specter_update(load=False, data_folder=data_folder)
             # Check Status
-            is_configured = specter['is_configured']
-            is_running = specter['is_running']
-            wallets = specter['wallets']['wallets']
+            is_configured = specter.is_configured
+            is_running = specter.is_running
+            wallets = specter.wallet_manager.wallets_name
 
         except Exception as e:
             return json.dumps({"message": "Error: " + str(e)})
@@ -275,8 +271,8 @@ def data_folder():
             message += "No wallets found - check folder."
 
         if ok_save:
-            with open(data_file, 'w') as fp:
-                json.dump(results, fp)
+            current_app.settings['SPECTER']['specter_datafolder'] = data_folder
+            update_config()
             message += "Specter Data folder found. Saved Successfully."
 
         return json.dumps({"message": message})
@@ -330,8 +326,8 @@ def metadata_json():
 # Donation Thank you Page
 @ warden.route("/donated", methods=['GET'])
 def donated():
-    counter_file = os.path.join(current_path(),
-                                'static/json_files/counter.json')
+    counter_file = os.path.join(home_path(),
+                                'warden/counter.json')
     templateData = {"title": "Thank You!", "donated": donate_check(), "current_app": current_app}
     with open(counter_file, 'w') as fp:
         json.dump("donated", fp)
