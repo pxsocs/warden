@@ -72,6 +72,7 @@ def init_app(app):
     else:
         print("\033[1;36;40m  Config File could not be loaded, created a new one with default values...\033[1;37;40m")
         create_config(config_file)
+        config_settings.read(config_file)
 
     # Get Version
     try:
@@ -91,7 +92,7 @@ def init_app(app):
         try:
             app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
         except KeyError:  # Problem with this config, reset
-            print("[!] Config File needs to be rebuilt")
+            print("\033[1;33;40m  [!] Config File needs to be rebuilt")
             create_config(config_file)
     # Debug Mode?
     #  To debug the application set an environment variable:
@@ -111,11 +112,15 @@ def init_app(app):
     app.register_blueprint(errors)
 
     specter_login_success = False
-
+    print(f"\033[1;37;40m  Contacting Specter Server...")
     while not specter_login_success:
         # Create Specter Session
         with app.app_context():
             app.specter_session = create_specter_session()
+        if app.specter_session == 'API404':
+            print("\033[1;33;40m  [API 404 Error] Seems like your running version of Specter does not have API capabilities. Upgrade Specter.")
+            print("  Try opening the page /API/specter on your browser")
+            exit()
         if app.specter_session == 'unauthorized':
             print("\033[1;33;40m  [UNAUTHORIZED] Could not login to Specter - check username and password.")
             input_username = (input(f"  >> Specter Username [{app.settings['SPECTER']['specter_login']}] : "))
@@ -124,8 +129,10 @@ def init_app(app):
                 app.settings['SPECTER']['specter_login'] = input_username
             if input_password:
                 app.settings['SPECTER']['specter_password'] = input_password
-            update_config()
+            with open(config_file, 'w') as f:
+                app.settings.write(f)
         else:
+            print("  [OK] Authenticated and Config Updated")
             specter_login_success = True
 
     print("\033[1;32;40m✓ Logged in to Specter Server\033[1;37;40m")
@@ -207,8 +214,11 @@ def create_and_init():
 
 def main():
     # CLS + Welcome
+    print("\033[1;32;40m")
+    for _ in range(50):
+        print("")
 
-    print("  Launching Application ...")
+    print("\033[1;37;40m  Welcome to the WARden <> Launching Application ...")
     app = create_app()
     app.app_context().push()
     app = init_app(app)

@@ -365,8 +365,11 @@ def gitreleases():
 def positions_json():
     # Get all transactions and cost details
     # This serves the main page
-    dfdyn, piedata = positions_dynamic()
-    dfdyn = dfdyn.to_dict(orient='index')
+    try:
+        dfdyn, piedata = positions_dynamic()
+        dfdyn = dfdyn.to_dict(orient='index')
+    except Exception as e:
+        dfdyn = piedata = None
 
     btc = price_data_rt("BTC")
     if not btc:

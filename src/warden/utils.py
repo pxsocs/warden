@@ -36,8 +36,6 @@ def create_config(config_file):
         default_config.write(file)
 
 
-# Method to create a new config file if not found
-# Copies data from warden.config_default.ini into a new config.ini
 def update_config(config_file=Config.config_file):
     logging.info("Updating Config file")
     with open(config_file, 'w') as file:
@@ -75,13 +73,8 @@ def load_specter(session=None):
         try:
             r = session.get(url + '/api/specter/')
             specter = r.json()
-
         except Exception as e:
-            print(f"  [Error] {e}")
-            print("")
-            print("  [CRITICAL ERROR] Could not reach Specter Server")
-            print("")
-            exit()
+            return(f"Error {e}")
 
     else:
         url = url + '/api/specter/'
@@ -183,11 +176,32 @@ def create_specter_session():
         try:
             session.post(url+'/login', data=data)
         except Exception:
-            return("ConnectionError")
+            failed = True
+            while failed:
+                print("")
+                print("\033   [!] WARNING")
+                print(f"\033[1;33;40m  [!] Could not connect to Specter at url: {url}")
+                print("      Format: http://127.0.0.1:25441")
+                url = input("  >> Enter Specter Server URL: ")
+                # Remove redundant /
+                if url[-1] == '/':
+                    url = url[:-1]
+                try:
+                    failed = False
+                    session.post(url+'/login', data=data)
+                    config['SPECTER']['specter_url'] = url
+                    with open(file, 'w') as f:
+                        config.write(f)
+                    print("  [OK] Config Updated")
+                except Exception:
+                    failed = True
 
     # Check if login was authorized
     r = session.get(url + '/api/specter/')
     # If an html page is returned instead of json, there is an error
+    if r.status_code == 404:
+        logging.warn("Could not authenticate Specter login")
+        return("API404")
     if "<!DOCTYPE html>" in str(r.content):
         logging.warn("Could not authenticate Specter login")
         return("unauthorized")

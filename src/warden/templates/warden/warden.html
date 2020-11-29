@@ -403,7 +403,7 @@
                             {{wallet}}
                         </td>
                         <td>
-                            ---
+                            {{current_app.wallets[wallet_alias][wallet_alias]['devices']}}
                         </td>
                         <td class='text-right'>
                             {{warden_metadata['txs'][wallet_alias]['amount'].sum() | jformat(4)}}
@@ -412,16 +412,16 @@
                             {{warden_metadata['txs'][wallet_alias]['amount'].count() | jformat(0)}}
                         </td>
                         <td>
-                            {{current_app.wallets[wallet_alias]['sigs_required']}}
+                            {{current_app.wallets[wallet_alias][wallet_alias]['sigs_required']}}
                         </td>
                         <td>
-                            {{current_app.wallets[wallet_alias]['address_type']}}
+                            {{current_app.wallets[wallet_alias][wallet_alias]['address_type']}}
                         </td>
                         <td>
-                            {% if current_app.wallets[wallet_alias]['pending_psbts'] == {}%}
+                            {% if current_app.wallets[wallet_alias][wallet_alias]['pending_psbts'] == {}%}
                             None
                             {%else%}
-                            {{current_app.wallets[wallet_alias]['pending_psbts']}}
+                            {{current_app.wallets[wallet_alias][wallet_alias]['pending_psbts']}}
                             {%endif%}
                         </td>
                         <td>
