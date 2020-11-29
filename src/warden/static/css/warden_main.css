@@ -623,3 +623,20 @@ a {
   max-height: 500px;
   overflow-x: hidden;
 }
+
+
+/* Define the hover highlight color for the table row */
+.hoverTable tr:hover {
+  background-color: rgb(216, 216, 216);
+  color: white;
+}
+
+.tableFixHead {
+  overflow-y: auto;
+  height: 100px;
+}
+
+.tableFixHead thead th {
+  position: sticky;
+  top: -32px;
+}

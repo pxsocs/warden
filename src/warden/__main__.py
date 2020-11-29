@@ -2,9 +2,8 @@ from warden_modules import (check_services, specter_update, wallets_update)
 from warden_pricing_engine import fxsymbol
 from utils import (create_config, update_config,
                    load_specter, specter_checks,
-                   load_wallets)
-from backgroundjobs import (background_fx_update,
-                            background_services_update,
+                   load_wallets, diags, create_specter_session)
+from backgroundjobs import (background_services_update,
                             background_settings_update,
                             background_specter_update,
                             background_wallets_update)
@@ -111,9 +110,25 @@ def init_app(app):
     app.register_blueprint(warden)
     app.register_blueprint(errors)
 
-    # After app was created, make some important checks for Specter
-    # 1. Specter data folder found / setup?
-    # 2. Specter python library found?
+    specter_login_success = False
+
+    while not specter_login_success:
+        # Create Specter Session
+        with app.app_context():
+            app.specter_session = create_specter_session()
+        if app.specter_session == 'unauthorized':
+            print("\033[1;33;40m  [UNAUTHORIZED] Could not login to Specter - check username and password.")
+            input_username = (input(f"  >> Specter Username [{app.settings['SPECTER']['specter_login']}] : "))
+            input_password = (input(f"  >> Specter Password [{app.settings['SPECTER']['specter_password']}] : "))
+            if input_username:
+                app.settings['SPECTER']['specter_login'] = input_username
+            if input_password:
+                app.settings['SPECTER']['specter_password'] = input_password
+            update_config()
+        else:
+            specter_login_success = True
+
+    print("\033[1;32;40m✓ Logged in to Specter Server\033[1;37;40m")
 
     # Check Specter
     print("\033[1;37;40m  Checking Specter Server status ...")
@@ -137,12 +152,6 @@ def init_app(app):
     else:
         print("\033[1;33;40m  Tor disabled - check your connection or Tor browser")
 
-    print("\033[1;37;40m  Checking Services Status ...")
-    with app.app_context():
-        app.services = check_services()
-
-    print("\033[1;32;40m✓ Application startup is complete\033[1;37;40m")
-
     # Check if home folder exists, if not create
     home = str(Path.home())
     home_path = os.path.join(home, 'warden/')
@@ -150,6 +159,10 @@ def init_app(app):
         os.makedirs(os.path.dirname(home_path))
     except Exception:
         pass
+
+    print("  Checking Services Availability ...")
+    with app.app_context():
+        app.services = check_services()
 
     # Start Schedulers
     print("  Starting Background Jobs ...")
@@ -180,6 +193,8 @@ def init_app(app):
 
     app.app_context().push()
 
+    print("\033[1;32;40m✓ Application startup is complete\033[1;37;40m")
+
     return app
 
 
@@ -192,34 +207,6 @@ def create_and_init():
 
 def main():
     # CLS + Welcome
-
-    print("\033[1;32;40m")
-    for _ in range(50):
-        print("")
-    print(f"""
-    \033[1;32;40m
-    -----------------------------------------------------------------
-        _   _           __        ___    ____     _
-        | |_| |__   ___  \ \      / / \  |  _ \ __| | ___ _ __
-        | __| '_ \ / _ \  \ \ /\ / / _ \ | |_) / _` |/ _ \ '_  |
-        | |_| | | |  __/   \ V  V / ___ \|  _ < (_| |  __/ | | |
-         \__|_| |_|\___|    \_/\_/_/   \_\_| \_\__,_|\___|_| |_|
-                                          Specter Server Edition
-    -----------------------------------------------------------------
-    \033[1;37;40m       Privacy Focused Portfolio & Bitcoin Address Tracker
-    \033[1;32;40m-----------------------------------------------------------------
-    \033[1;37;40m                      Application Loaded
-    \033[1;32;40m-----------------------------------------------------------------
-    \033[1;37;40m                Open your browser and navigate to:
-    \033[1;37;40m
-    \033[1;37;40m                     http://localhost:25442/
-    \033[1;37;40m                               or
-    \033[1;37;40m                     http://127.0.0.1:25442/
-    \033[1;32;40m-----------------------------------------------------------------
-    \033[1;37;40m                     CTRL + C to quit server
-    \033[1;32;40m-----------------------------------------------------------------
-    \033[1;37;40m
-    """)
 
     print("  Launching Application ...")
     app = create_app()
@@ -249,12 +236,45 @@ def main():
         debug = app.settings['SERVER']['debug']
     except:
         debug = False
+
+    print("\033[1;32;40m")
+    for _ in range(50):
+        print("")
+    print(f"""
+    \033[1;32;40m
+    -----------------------------------------------------------------
+         _   _           __        ___    ____     _
+        | |_| |__   ___  \ \      / / \  |  _ \ __| | ___ _ __
+        | __| '_ \ / _ \  \ \ /\ / / _ \ | |_) / _` |/ _ \ '_  |
+        | |_| | | |  __/   \ V  V / ___ \|  _ < (_| |  __/ | | |
+         \__|_| |_|\___|    \_/\_/_/   \_\_| \_\__,_|\___|_| |_|
+                                          Specter Server Edition
+    -----------------------------------------------------------------
+    \033[1;37;40m       Privacy Focused Portfolio & Bitcoin Address Tracker
+    \033[1;32;40m-----------------------------------------------------------------
+    \033[1;37;40m                      Application Loaded
+    \033[1;32;40m-----------------------------------------------------------------
+    \033[1;37;40m                Open your browser and navigate to:
+    \033[1;37;40m
+    \033[1;37;40m                     http://localhost:5000/
+    \033[1;37;40m                               or
+    \033[1;37;40m                     http://127.0.0.1:5000/
+    \033[1;32;40m-----------------------------------------------------------------
+    \033[1;37;40m                     CTRL + C to quit server
+    \033[1;32;40m-----------------------------------------------------------------
+    \033[1;37;40m
+    """)
+
     app.run(debug=debug,
             threaded=True,
             host='0.0.0.0',
-            port=25442,
+            port=5000,
             use_reloader=False)
 
 
 if __name__ == '__main__':
+    # Run Diagnostic Function
+    if "--diag" in sys.argv:
+        diags()
+        exit()
     main()

@@ -18,16 +18,104 @@
 </script>
 
 
-<div class="container">
-  <div class="row">
-    <div class="col-sm-12">
-      <div id="portchart" style="min-width: 310px; height: 700px; margin: 0 auto">
-      </div>
+<ul class="nav nav-tabs" style="padding-top: 20px;">
+  <li class="nav-item text-rebel">
+    <a class="nav-link active text-rebel" data-toggle="tab" href="#chart_tab">Chart</a>
+  </li>
+  <li class="nav-item text-rebel">
+    <a class="nav-link text-rebel" data-toggle="tab" href="#table_tab">Table</a>
+  </li>
+</ul>
 
+
+
+<div class="container-fluid">
+  <div class="tab-content">
+
+    <div role="tabpanel" class="tab-pane active" id="chart_tab">
+      <div class="row" style="padding-top: 20px;">
+        <div class="col-sm-12">
+          <div class="content-section">
+            <div id="portchart" style="min-width: 310px; height: 700px; margin: 0 auto">
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <div role="tabpanel" class="tab-pane fade" id="table_tab">
+      <div class="row" style="padding-top: 20px;">
+        <div class="col-sm-12">
+          <h5>Table</h5>
+          <!-- {%for key,element in data.iteritems()%}{{key}} / {%endfor%} -->
+          <table class="table tableFixHead hoverTable">
+            <thead class='thead-dark'>
+              <tr>
+                <th class='text-left'>Date</th>
+                <th class='text-center'>Portfolio Value<br>({{current_user['symbol']}})</th>
+                <th class='text-center'>Cost<br>({{current_user['symbol']}})</th>
+                <th class='text-center'>PnL<br>({{current_user['symbol']}})</th>
+                <th class='text-center'>₿<br>(Position)</th>
+                <th class='text-center'>₿<br>(Flow)</th>
+                <th class='text-center'>₿<br>(price in {{current_user['symbol']}})</th>
+                <th class='text-center'>NAV</th>
+              </tr>
+            </thead>
+            <tbody>
+              {%for key, value in data.iterrows()%}
+              {%if value['BTC_quant'] != 0%}
+              <tr>
+                <td>
+                  {{key.strftime("%Y-%b-%d")}}
+                </td>
+                <td class='text-right'>
+                  {{current_user['symbol']}}&nbsp;{{value['PORT_fx_pos'] | jformat(0)}}
+                </td>
+
+                <td class='text-right'>
+                  {{current_user['symbol']}}&nbsp;{{value['PORT_ac_CFs_fx'] | jformat(0)}}
+                </td>
+
+                <td class='text-right'>
+
+                  {{current_user['symbol']}}&nbsp;{{(value['PORT_fx_pos'] - value['PORT_ac_CFs_fx']) | jformat(0)}}
+                </td>
+
+                <td class='text-right'>
+                  {{value['BTC_pos'] | jformat(4)}}
+                </td>
+                <td class='text-right'>
+                  {%if value['BTC_quant'] > 0 %}
+                  <span class='text-success'>
+                    <i class="far fa-arrow-alt-circle-down"></i>
+                  </span>
+                  {%elif value['BTC_quant'] < 0 %}
+                  <span class='text-danger'>
+                    <i class="far fa-arrow-alt-circle-up"></i>
+                  </span>
+                  {%endif%}
+                  {{value['BTC_quant'] | jformat(4)}}
+                </td>
+                <td class='text-right'>
+                  {{current_user['symbol']}}&nbsp;{{value['BTC_price'] | jformat(0)}}
+                </td>
+                <td class='text-right'>
+                  {{value['NAV_fx'] | jformat(2)}}
+                </td>
+
+              </tr>
+              {%endif%}
+              {%endfor%}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
   </div>
 </div>
-</br></br>
+
 
 <div class='row'>
   <div class="container-fluid">

@@ -427,11 +427,11 @@
                         <td>
                             {{(warden_metadata['txs'][wallet_alias].time.max() | epoch) | time_ago}}
                         </td>
-                        {%if current_app.wallets[wallet_alias]['info']['scanning']%}
+                        {%if current_app.wallets[wallet_alias]['scan']%}
                         <td class='td-part-fill'
-                            style="background-size: {{(current_app.wallets[wallet_alias]['info']['scanning']['progress'] * 100)}}% 100%">
+                            style="background-size: {{(current_app.wallets[wallet_alias]['scan'] * 100)}}% 100%">
                             Scanning... (
-                            {{(current_app.wallets[wallet_alias]['info']['scanning']['progress'] * 100) | jformat(2)}}%)
+                            {{(current_app.wallets[wallet_alias]['scan'] * 100) | jformat(2)}}%)
                         </td>
                         {%else%}
                         <td>
@@ -946,12 +946,7 @@
                                     {{specter.data_folder}}
                                 </td>
                             </tr>
-                            <tr>
-                                <td>Library Folder</td>
-                                <td class="text-right">
-                                    {{current_app.services['specter']['pip_path']}}
-                                </td>
-                            </tr>
+
                             <tr>
                                 <td>Configured?</td>
                                 <td class="text-right">

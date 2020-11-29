@@ -17,7 +17,7 @@ from warden_pricing_engine import (get_price_ondate, fx_price_ondate,
                                    price_data_fx, price_data_rt_full,
                                    price_data, fx_rate, fxsymbol)
 from warden_decorators import MWT, timing
-from utils import load_specter, load_wallets, pickle_it
+from utils import load_specter, load_wallets, pickle_it, load_wallet
 from config import Config
 
 
@@ -33,12 +33,12 @@ def home_path():
     return (home)
 
 
-def specter_update(load=True):
+def specter_update(load=True, session=None):
     if load:
         data = pickle_it(action='load', filename='specter_data.pkl')
         if data != 'file not found':
             return (data)
-    specter_data = load_specter()
+    specter_data = load_specter(session=session)
     pickle_it(action='save', filename='specter_data.pkl', data=specter_data)
     logging.info(f"Finished Building Specter Class")
     return(specter_data)
@@ -50,6 +50,7 @@ def wallets_update(load=True):
         if data != 'file not found':
             return (data)
     wallets_data = load_wallets()
+
     pickle_it(action='save', filename='wallets_data.pkl', data=wallets_data)
     logging.info(f"Finished Building Wallets Class")
     return(wallets_data)
@@ -77,7 +78,7 @@ def check_server(address, port, timeout=10):
 def check_services(load=True, expiry=60):
     if load:
         try:
-            data = current_app.services
+            data = pickle_it(action='load', filename='services.pkl')
             update_time = datetime.strptime(data['last_update'],
                                             "%m/%d/%Y, %H:%M:%S")
             elapsed = (datetime.now() - update_time).total_seconds()
@@ -95,7 +96,8 @@ def check_services(load=True, expiry=60):
         # The below is a list in format [(address, port)] - include as many as needed
         'typical_connections': [('mynode.local', 80), ('127.0.0.1', 80)],
         'running': False,
-        'connection': None
+        'connection': None,
+        'loaded': load
     }
 
     services['specter'] = {
@@ -119,9 +121,7 @@ def check_services(load=True, expiry=60):
 
     services['last_update'] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
 
-    if has_request_context:
-        current_app.services = services
-
+    pickle_it(action='save', filename='services.pkl', data=services)
     return (services)
 
 
@@ -137,33 +137,42 @@ def get_local_ip():
 
 def list_specter_wallets(load=True):
     specter_data = specter_update(load)
-    return(specter_data['wallets_names'])
-
+    try:
+        return (specter_data['wallets_names'])
+    except Exception:
+        return None
 
 # Get all transactions of specific wallet by using alias
-@ MWT(timeout=60)
-def get_specter_tx(wallet_alias, sort_by='time', idx=0):
+
+
+def get_specter_tx(wallet_alias, sort_by='time', idx=0, load=True, session=None):
     df = pd.DataFrame()
-    specter_data = specter_update(load=True)
-    wallet = load_wallet(wallet_alias)
+    specter_data = specter_update(load=load, session=session)
+    try:
+        wallet = current_app.wallets[wallet_alias]
+    except Exception:
+        logging.error(f"Wallet {wallet_alias}: Wallet not in current_app")
+        # Try to load it
+        try:
+            wallet = load_wallet(wallet_alias, session=session)
+            logging.info("Wallet. Loaded successfully.")
+        except Exception as e:
+            # Nope...
+            logging.error(f"Wallet {wallet_alias}: Final try to load failed. Error {e}")
+            return (df)
     # is this scanning?
     scan = wallet[wallet_alias]['info']['scanning']
-
     if not scan:
         logging.info(f"Wallet {wallet_alias} --- looking for txs")
-
-        t = wallet['txlist']
-        # Flatten the tx list
-        tx_data = [item for sublist in t for item in sublist]
-
-        logging.info(f"Wallet {wallet_alias} --- Finished txs")
-        # Merge list of lists into one single list
-
     else:
-        tx_data = []
         logging.warn(f"\u001b[33mWallet {wallet_alias} being scanned {scan}\u001b[0m")
 
-    df = df.append(tx_data, ignore_index=True)
+    t = wallet['txlist']
+
+    for element in t:
+        df = df.append(pd.DataFrame(element))
+
+    logging.info(f"Wallet {wallet_alias} --- Finished txs")
 
     # Sort df
     if not df.empty:
@@ -191,7 +200,7 @@ def warden_metadata():
     for alias in specter_data['wallets_alias']:
         # Line below throws an error when specter is not loaded yet
         meta['txs'][alias] = get_specter_tx(alias)
-        meta['scan'][alias] = load_wallet(alias)['scan']
+        meta['scan'][alias] = current_app.wallets[alias]['scan']
 
     meta['full_df'] = specter_df()
 
@@ -264,19 +273,28 @@ class Trades():
         return (vars(self))
 
 
-@ MWT(timeout=10)
 def specter_df(save_files=False, sort_by='trade_date'):
+    df = pd.DataFrame()
+    items = None
     specter_data = specter_update(load=True)
-    df1 = df = pd.DataFrame()
+    if not specter_data:
+        return df
+    try:
+        items = current_app.wallets.items()
+    except Exception:
+        items = None
+    if not items:
+        items = wallets_update()
+    if not items:
+        return df
 
-    tx_list = []
-    for alias in specter_data['wallets_alias']:
-        wallet_json = load_wallet(alias)
+    for key, value in current_app.wallets.items():
+        wallet_json = value
         t = wallet_json['txlist']
         for element in t:
-            df1 = df1.append(pd.DataFrame.from_dict(element))
-        df1['wallet_alias'] = alias
-        df = df.append(df1)
+            df_tmp = pd.DataFrame(element)
+            df_tmp['wallet_alias'] = key
+            df = df.append(df_tmp)
 
     # Check if txs exists
     if df.empty:
@@ -293,16 +311,16 @@ def specter_df(save_files=False, sort_by='trade_date'):
     df['trade_account'] = df['wallet_alias']
     df['trade_currency'] = current_app.settings['PORTFOLIO']['base_fx']
     df['trade_asset_ticker'] = "BTC"
-    df['trade_quantity'] = df['amount']
+    df['trade_quantity'] = (df['amount'])
     df['trade_notes'] = 'Imported from Specter Wallet using MyNode'
     df['trade_reference_id'] = ""
 
     def trade_operation(value):
         # Get Bitcoin price on each Date
         try:
-            if value == 'receive':
+            if value.lower() == 'receive':
                 return ("B")
-            if value == 'send':
+            if value.lower() == 'send':
                 return ("S")
         except Exception:
             return ("")
@@ -318,17 +336,20 @@ def specter_df(save_files=False, sort_by='trade_date'):
             fx = fx_price_ondate("USD", current_app.fx['code'], get_date)
             price = (get_price_ondate("BTC", get_date).close) * fx
         except Exception as e:
-            price = "Not Found. Error: " + str(e)
+            logging.error("Not Found. Error: " + str(e))
+            price = 0
         return (price)
 
     df['trade_price'] = df['date_str'].apply(btc_price)
 
     df['trade_multiplier'] = 0
     df.loc[df.trade_operation == 'B', 'trade_multiplier'] = 1
+    df.loc[df.trade_operation == 'receive', 'trade_multiplier'] = 1
     df.loc[df.trade_operation == 'S', 'trade_multiplier'] = -1
+    df.loc[df.trade_operation == 'send', 'trade_multiplier'] = -1
 
     try:
-        df['cash_value'] = df['trade_price'] * df['trade_quantity'] * df[
+        df['cash_value'] = abs(df['trade_price']) * abs(df['trade_quantity']) * df[
             'trade_multiplier']
     except Exception:
         df['cash_value'] = 0
@@ -450,8 +471,9 @@ def transactions_fx():
     # Get all transactions from Specter and format
 
     df = specter_df()
+
     if df.empty:
-        logging.info("Transactions_FX - no txs found")
+        logging.warning("Transactions_FX - No txs found")
         return df
 
     df['trade_date'] = pd.to_datetime(df['trade_date'])
@@ -579,6 +601,8 @@ def positions_dynamic():
     # should be called from an AJAX request at the front page in order
     # to reduce loading time.
     df = positions()
+    if df.empty:
+        return(df)
     # Drop all currencies from table
     df = df[df['is_currency'] == False]
     # check if trade_asset_ticker is set as index. If so, move to column
@@ -733,7 +757,7 @@ def positions_dynamic():
 
 
 @ MWT(timeout=10)
-def generatenav(user='mynode', force=False, filter=None):
+def generatenav(user='warden', force=False, filter=None):
     PORTFOLIO_MIN_SIZE_NAV = 1
     RENEW_NAV = 10
     FX = current_app.settings['PORTFOLIO']['base_fx']

@@ -1,13 +1,14 @@
-from flask import (Blueprint, redirect, render_template,
+from flask import (Blueprint, redirect, render_template, abort,
                    flash, session, request, current_app, url_for)
 from warden_modules import (list_specter_wallets, warden_metadata, positions,
                             positions_dynamic, get_price_ondate,
                             generatenav, specter_df, check_services,
-                            current_path, specter_update, regenerate_nav)
+                            current_path, specter_update, regenerate_nav,
+                            home_path)
 
 from warden_pricing_engine import (test_tor, tor_request, price_data_rt,
                                    fx_rate)
-from utils import update_config
+from utils import update_config, diags
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -46,25 +47,22 @@ def before_request():
     if request.endpoint in exclude_list:
         return
     need_setup = False
+    txs_empty = False
     # Check Tor
     tor = current_app.tor
     need_setup = not tor['status']
     # Get Services
     services = current_app.services
-    need_setup = not services['specter']['running']
-    # Are Wallets Found?
-    specter_wallets = have_specter_wallets(load=False)
-    need_setup = not specter_wallets
-    # Transactions found?
-    df = positions()
-    need_setup = df.empty
+    if services == 'loading':
+        flash("Specter still loading. Data may be outdated.", "warning")
+
     if need_setup:
         meta = {
             'tor': tor,
             'services': services,
-            'specter_wallets': specter_wallets,
-            'txs': df.empty
+            'txs': txs_empty
         }
+        print(meta)
         messages = json.dumps(meta)
         session['messages'] = messages
         return redirect(url_for("warden.setup"))
@@ -102,11 +100,14 @@ def warden_page():
     # and refresh speed.
     # Get positions and prepare df for delivery
     df = positions()
+    if df.empty:
+        msg = "No Transactions were found at Specter. Check Connections."
+        flash(msg, "danger")
+        abort(500, msg)
     if df.index.name != 'trade_asset_ticker':
         df.set_index('trade_asset_ticker', inplace=True)
     df = df[df['is_currency'] == 0].sort_index(ascending=True)
     df = df.to_dict(orient='index')
-
     # Open Counter, increment, send data
     counter_file = os.path.join(home_path(),
                                 'warden/counter.json')
@@ -186,23 +187,25 @@ def list_transactions():
 @ warden.route("/setup", methods=['GET'])
 def setup():
     need_setup = False
+    txs_empty = False
     # Check Tor
-    tor = test_tor()
+    tor = current_app.tor
     need_setup = not tor['status']
     # Get Services
-    services = check_services()
+    services = current_app.services
     need_setup = not services['specter']['running']
     # Are Wallets Found?
     specter_wallets = have_specter_wallets()
     need_setup = not specter_wallets
     # Transactions found?
     df = positions()
-    need_setup = not df.empty
+    if df.empty:
+        txs_empty = need_setup = True
     meta = {
         'tor': tor,
         'services': services,
         'specter_wallets': specter_wallets,
-        'txs': not df.empty,
+        'txs': txs_empty,
         'need_setup': need_setup,
     }
     messages = json.dumps(meta)
@@ -365,6 +368,10 @@ def positions_json():
     dfdyn, piedata = positions_dynamic()
     dfdyn = dfdyn.to_dict(orient='index')
 
+    btc = price_data_rt("BTC")
+    if not btc:
+        btc = 0
+
     json_dict = {
         'positions': dfdyn,
         'piechart': piedata,
@@ -379,10 +386,13 @@ def positions_json():
 # Please note that the default is to update every 20s (MWT(20) above)
 @ warden.route("/realtime_btc", methods=["GET"])
 def realtime_btc():
-    fx_details = fx_rate()
-    fx_r = {'cross': fx_details['symbol'], 'fx_rate': fx_details['fx_rate']}
-    fx_r['btc_usd'] = price_data_rt("BTC")
-    fx_r['btc_fx'] = fx_r['btc_usd'] * fx_r['fx_rate']
+    try:
+        fx_details = fx_rate()
+        fx_r = {'cross': fx_details['symbol'], 'fx_rate': fx_details['fx_rate']}
+        fx_r['btc_usd'] = price_data_rt("BTC")
+        fx_r['btc_fx'] = fx_r['btc_usd'] * fx_r['fx_rate']
+    except Exception:
+        fx_r = 0
     return json.dumps(fx_r)
 
 
@@ -401,8 +411,8 @@ def dismiss_notification():
 def node_info():
     data = specter_update(load=True)
     status = {
-        'info': data.info,
-        'bitcoin': data.network_info,
+        'info': data['info'],
+        'bitcoin': data['network_info'],
         'services': check_services(load=True),
         'last_update': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
@@ -558,6 +568,7 @@ def navchart():
                            fx=current_app.settings['PORTFOLIO']['base_fx'],
                            current_user=fx_rate(),
                            donated=donate_check(),
+                           data=data,
                            current_app=current_app)
 
 
