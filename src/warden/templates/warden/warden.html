@@ -389,7 +389,7 @@
                     </div>
 
                     {%else%}
-                    <div class="alert alert-info" role="alert"><i class="fas fa-info-circle"></i>&nbsp;&nbsp;
+                    <div class="alert alert-info text-small" role="alert"><i class="fas fa-info-circle"></i>&nbsp;&nbsp;
                         No Txs Found for Wallet {{wallet}}</div>
                     {%endif%}
                     {%else%}
@@ -403,7 +403,11 @@
                             {{wallet}}
                         </td>
                         <td>
-                            {{current_app.wallets[wallet_alias][wallet_alias]['devices']}}
+                            {%if current_app.wallets[wallet_alias][wallet_alias]['devices']%}
+                            {%for element in current_app.wallets[wallet_alias][wallet_alias]['devices']%}
+                            {{element}}<br>
+                            {%endfor%}
+                            {%endif%}
                         </td>
                         <td class='text-right'>
                             {{warden_metadata['txs'][wallet_alias]['amount'].sum() | jformat(4)}}

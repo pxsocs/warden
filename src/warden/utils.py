@@ -71,13 +71,13 @@ def load_specter(session=None):
 
     if not onion or onion == '':
         try:
-            r = session.get(url + '/api/specter/')
+            r = session.get(url + '/api/v1alpha/specter/')
             specter = r.json()
         except Exception as e:
             return(f"Error {e}")
 
     else:
-        url = url + '/api/specter/'
+        url = url + '/api/v1alpha/specter/'
         specter = tor_request(url, tor_only=True)
     return(specter)
 
@@ -99,7 +99,7 @@ def load_wallet(wallet_alias, session=None):
 
     if not onion or onion == '':
         try:
-            r = session.get(url + '/api/wallet_info/' + str(wallet_alias) + '/')
+            r = session.get(url + '/api/v1alpha/wallet_info/' + str(wallet_alias) + '/')
             wallet = json.loads(r.text)
             logging.info(f"Done Loading Wallet: {wallet_alias}")
             return(wallet)
@@ -107,7 +107,7 @@ def load_wallet(wallet_alias, session=None):
             print(f"Could not update Wallet {wallet_alias}. Error {e}")
             wallet = None
     else:
-        url = url + '/api/wallet_info/' + wallet_alias + '/'
+        url = url + '/api/v1alpha/wallet_info/' + wallet_alias + '/'
         wallet = tor_request(url, tor_only=True)
 
     return (wallet)
@@ -182,11 +182,13 @@ def create_specter_session():
                 print("\033   [!] WARNING")
                 print(f"\033[1;33;40m  [!] Could not connect to Specter at url: {url}")
                 print("      Format: http://127.0.0.1:25441")
-                url = input("  >> Enter Specter Server URL: ")
-                # Remove redundant /
-                if url[-1] == '/':
-                    url = url[:-1]
+                url_new = input(f"  >> Enter Specter Server URL [{url}]: ")
+                if url_new:
+                    url = url_new
                 try:
+                    # Remove redundant /
+                    if url[-1] == '/':
+                        url = url[:-1]
                     failed = False
                     session.post(url+'/login', data=data)
                     config['SPECTER']['specter_url'] = url
@@ -197,7 +199,7 @@ def create_specter_session():
                     failed = True
 
     # Check if login was authorized
-    r = session.get(url + '/api/specter/')
+    r = session.get(url + '/api/v1alpha/specter/')
     # If an html page is returned instead of json, there is an error
     if r.status_code == 404:
         logging.warn("Could not authenticate Specter login")
@@ -247,7 +249,7 @@ def diags(e=None):
     else:
         url = config['SPECTER']['specter_url']
         print("  Trying to get Specter Data...")
-        r = specter_session.get(url + '/api/specter/')
+        r = specter_session.get(url + '/api/v1alpha/specter/')
         print("  Returned Response Code: " + str(r))
 
     # Load basic specter data

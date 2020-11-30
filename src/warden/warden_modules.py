@@ -169,8 +169,7 @@ def get_specter_tx(wallet_alias, sort_by='time', idx=0, load=True, session=None)
 
     t = wallet['txlist']
 
-    for element in t:
-        df = df.append(pd.DataFrame(element))
+    df = df.append(pd.DataFrame(t))
 
     logging.info(f"Wallet {wallet_alias} --- Finished txs")
 
@@ -291,10 +290,9 @@ def specter_df(save_files=False, sort_by='trade_date'):
     for key, value in current_app.wallets.items():
         wallet_json = value
         t = wallet_json['txlist']
-        for element in t:
-            df_tmp = pd.DataFrame(element)
-            df_tmp['wallet_alias'] = key
-            df = df.append(df_tmp)
+        df_tmp = pd.DataFrame(t)
+        df_tmp['wallet_alias'] = key
+        df = df.append(df_tmp)
 
     # Check if txs exists
     if df.empty:
