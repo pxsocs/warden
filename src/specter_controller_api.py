@@ -2,7 +2,7 @@
 
 
 # Specter Basic info
-@app.route("/api/specter/", methods=["GET"])
+@app.route("/api/v1alpha/specter/", methods=["GET"])
 @login_required
 def api_specter():
     specter_data = app.specter
@@ -38,45 +38,84 @@ def api_specter():
 
 
 # Get wallet basic information
-@app.route("/api/wallet_info/<wallet_alias>/", methods=["GET"])
+@app.route("/api/v1alpha/full_txlist/", methods=["GET"])
+@login_required
+def api_full_txlist():
+    try:
+        validate_merkle_proofs = app.specter.config.get(
+            "validate_merkle_proofs")
+        idx = 0
+        tx_len = 1
+        tx_list = []
+        while tx_len > 0:
+            transactions = app.specter.wallet_manager.full_txlist(
+                idx, validate_merkle_proofs)
+            tx_list.append(transactions)
+            tx_len = len(transactions)
+            idx += 1
+        # Flatten the list
+        flat_list = []
+        for element in tx_list:
+            for dic_item in element:
+                flat_list.append(dic_item)
+
+    except SpecterError as se:
+        message = ("API error: %s" % se)
+        app.logger.error(message)
+        flat_list = message
+    return json.dumps(flat_list)
+
+
+# Get wallet basic information
+
+
+@app.route("/api/v1alpha/wallet_info/<wallet_alias>/", methods=["GET"])
 @login_required
 def api_wallet_info(wallet_alias):
 
     try:
         wallet = app.specter.wallet_manager.get_by_alias(wallet_alias)
-        # update balances in the wallet
     except SpecterError as se:
         message = ("API error: %s" % se)
         app.logger.error(message)
         return json.dumps(message)
 
     wallet.get_balance()
+    wallet.check_utxo()
+    wallet.check_unused()
 
     return_dict = {}
     # Get full list of idx from specter
     address_index = wallet.address_index
     validate_merkle_proofs = app.specter.config.get("validate_merkle_proofs")
 
-    tx_data = []
-    for idx in range(0, address_index + 1):
-        tx_data.append(wallet.txlist(idx, validate_merkle_proofs=validate_merkle_proofs))
+    tx_list = []
+    idx = 0
+    tx_len = 1
+    while tx_len > 0:
+        transactions = wallet.txlist(
+            idx, validate_merkle_proofs=validate_merkle_proofs)
+        tx_list.append(transactions)
+        tx_len = len(transactions)
+        idx += 1
+    # Flatten the list
+    flat_list = []
+    for element in tx_list:
+        for dic_item in element:
+            flat_list.append(dic_item)
 
     # Check if scanning
     scan = wallet.rescan_progress
-    # Clear public keys - no need to broadcast on API
-    wallet.__dict__['keys'] = ''
-    # Expand list of devices used to sign this wallet, store only alias
-    wallet.__dict__['device_list'] = []
-    for device in wallet.__dict__['devices']:
-        wallet.__dict__['device_list'].append(device.name)
-    # clear old device list - to not store pub keys
-    # This also makes for a leaner json file
-    wallet.__dict__['devices'] = ''
-    wallet.__dict__['manager'] = ''
-    wallet.__dict__['rpc'] = ''
     return_dict[wallet_alias] = (wallet.__dict__)
-    return_dict['txlist'] = tx_data
+    return_dict['txlist'] = flat_list
     return_dict['scan'] = scan
     return_dict['address_index'] = address_index
+    return_dict['utxo'] = wallet.utxo
 
-    return (json.dumps(return_dict))
+    def safe_serialize(obj):
+        def default(o):
+            return f"{type(o).__qualname__}"
+
+        return json.dumps(obj, default=default)
+
+    return (safe_serialize(return_dict))
