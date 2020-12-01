@@ -367,9 +367,11 @@ def positions_json():
     # This serves the main page
     try:
         dfdyn, piedata = positions_dynamic()
+        btc_price = price_data_rt("BTC") * fx_rate()['fx_rate']
         dfdyn = dfdyn.to_dict(orient='index')
     except Exception as e:
         dfdyn = piedata = None
+        btc_price = 0
 
     btc = price_data_rt("BTC")
     if not btc:
@@ -379,7 +381,7 @@ def positions_json():
         'positions': dfdyn,
         'piechart': piedata,
         'user': current_app.fx,
-        'btc': price_data_rt("BTC") * fx_rate()['fx_rate']
+        'btc': btc_price
     }
     return simplejson.dumps(json_dict, ignore_nan=True)
 

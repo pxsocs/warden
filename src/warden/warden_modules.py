@@ -161,13 +161,19 @@ def get_specter_tx(wallet_alias, sort_by='time', idx=0, load=True, session=None)
             logging.error(f"Wallet {wallet_alias}: Final try to load failed. Error {e}")
             return (df)
     # is this scanning?
-    scan = wallet[wallet_alias]['info']['scanning']
+    try:
+        scan = wallet[wallet_alias]['info']['scanning']
+    except TypeError:
+        scan = None
     if not scan:
         logging.info(f"Wallet {wallet_alias} --- looking for txs")
     else:
         logging.warn(f"\u001b[33mWallet {wallet_alias} being scanned {scan}\u001b[0m")
 
-    t = wallet['txlist']
+    try:
+        t = wallet['txlist']
+    except TypeError:
+        return(df)
 
     df = df.append(pd.DataFrame(t))
 
@@ -184,6 +190,8 @@ def warden_metadata():
     specter_data = specter_update(load=True)
     meta = {}
     meta['wallet_list'] = list_specter_wallets()
+    if not meta['wallet_list']:
+        abort(500, "Specter Server could not be reached. Check that it's running.")
 
     # Check if there are specter wallet files, if not do not enable WARden
     if len(meta['wallet_list']) == 0:
@@ -199,7 +207,10 @@ def warden_metadata():
     for alias in specter_data['wallets_alias']:
         # Line below throws an error when specter is not loaded yet
         meta['txs'][alias] = get_specter_tx(alias)
-        meta['scan'][alias] = current_app.wallets[alias]['scan']
+        try:
+            meta['scan'][alias] = current_app.wallets[alias]['scan']
+        except TypeError:
+            meta['scan'][alias] = None
 
     meta['full_df'] = specter_df()
 

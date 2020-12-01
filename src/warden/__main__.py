@@ -1,13 +1,3 @@
-from warden_modules import (check_services, specter_update, wallets_update)
-from warden_pricing_engine import fxsymbol
-from utils import (create_config, update_config,
-                   load_specter, specter_checks,
-                   load_wallets, diags, create_specter_session)
-from backgroundjobs import (background_services_update,
-                            background_settings_update,
-                            background_specter_update,
-                            background_wallets_update)
-from config import Config
 import logging
 import configparser
 import os
@@ -26,6 +16,22 @@ from flask_mail import Mail
 from pathlib import Path
 
 from apscheduler.schedulers.background import BackgroundScheduler
+
+# Make sure current libraries are found in path
+current_path = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(current_path)
+
+from warden_modules import (check_services, specter_update, wallets_update)
+from warden_pricing_engine import fxsymbol
+from utils import (create_config, update_config,
+                   load_specter, specter_checks,
+                   load_wallets, diags, create_specter_session)
+from backgroundjobs import (background_services_update,
+                            background_settings_update,
+                            background_specter_update,
+                            background_wallets_update)
+from config import Config
+
 
 
 def create_app():
@@ -213,12 +219,15 @@ def create_and_init():
 
 
 def main():
+    # Make sure current libraries are found in path
+    current_path = os.path.abspath(os.path.dirname(__file__))
     # CLS + Welcome
     print("\033[1;32;40m")
     for _ in range(50):
         print("")
 
     print("\033[1;37;40m  Welcome to the WARden <> Launching Application ...")
+    print(f"  [i] Running from: {current_path}")
     app = create_app()
     app.app_context().push()
     app = init_app(app)

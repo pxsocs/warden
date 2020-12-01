@@ -104,7 +104,6 @@ def load_wallet(wallet_alias, session=None):
             logging.info(f"Done Loading Wallet: {wallet_alias}")
             return(wallet)
         except Exception as e:
-            print(f"Could not update Wallet {wallet_alias}. Error {e}")
             wallet = None
     else:
         url = url + '/api/v1alpha/wallet_info/' + wallet_alias + '/'
