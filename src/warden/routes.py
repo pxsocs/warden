@@ -8,9 +8,10 @@ from warden_modules import (list_specter_wallets, warden_metadata, positions,
 
 from warden_pricing_engine import (test_tor, tor_request, price_data_rt,
                                    fx_rate)
-from utils import update_config, diags
+from utils import update_config, diags, load_specter
 
 from datetime import datetime
+from dateutil import parser
 from dateutil.relativedelta import relativedelta
 import jinja2
 import simplejson
@@ -27,6 +28,29 @@ warden = Blueprint("warden",
                    static_folder='static')
 
 
+def specter_test():
+    return_dict = {}
+    messages = None
+    # Load basic specter data
+    try:
+        specter = load_specter()
+
+        if specter == 'unauthorized':
+            return_dict['specter_status'] = 'Unauthorized'
+            messages = 'Unauthorized - check Specter login credentials'
+        else:
+            return_dict['specter_isrunning'] = specter['is_running']
+            return_dict['specter_lastupdate'] = specter['last_update']
+            return_dict['specter_wallets'] = specter['wallets_names']
+            if specter['is_running'] == False:
+                messages = 'Specter Not Running'
+
+    except Exception as e:
+        return_dict['specter_status'] = 'Error'
+        messages = str(e)
+
+    return (return_dict, messages)
+
 # START WARDEN ROUTES ----------------------------------------
 # Things to check before each request:
 # 1. Is Tor running? It's a requirement.
@@ -34,6 +58,8 @@ warden = Blueprint("warden",
 # 2.5 If running, is there a balance?
 # 3. Found MyNode? Not a requirement but enables added functions.
 # 4. Found Bitcoin Node? Not a requirement but enables added functions.
+
+
 @warden.before_request
 def before_request():
     # Ignore check for some pages - these are mostly methods that need
@@ -55,6 +81,10 @@ def before_request():
     services = current_app.services
     if services == 'loading':
         flash("Specter still loading. Data may be outdated.", "warning")
+
+    specter_dict, specter_messages = specter_test()
+    if specter_messages:
+        abort(500, specter_messages)
 
     if need_setup:
         meta = {
@@ -285,16 +315,22 @@ def data_folder():
 @ warden.route("/check_activity", methods=['GET'])
 def check_activity():
     alerts = False
-    meta = warden_metadata()
-    if meta['warden_enabled']:
-        if isinstance(meta['old_new_df_old'], pd.DataFrame):
-            if not meta['old_new_df_old'].empty:
-                alerts = True
-                regenerate_nav()
-        if isinstance(meta['old_new_df_new'], pd.DataFrame):
-            if not meta['old_new_df_new'].empty:
-                alerts = True
-                regenerate_nav()
+    ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
+    with open(ack_file) as data_file:
+        tx_list = json.loads(data_file.read())
+        data_file.close()
+
+    last_changes = parser.parse(tx_list['changes_detected_on'])
+    elapsed = datetime.now() - last_changes
+    elapsed = elapsed.seconds
+
+    # Limit of 60 seconds = if changes happened in the last minute or less, flag it
+    EXPIRED = 60
+
+    if elapsed < EXPIRED:
+        alerts = True
+        regenerate_nav()
+
     return (json.dumps(alerts))
 
 

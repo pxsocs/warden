@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, current_app
-from utils import diags
 import sys
 
 errors = Blueprint('errors', __name__)
@@ -24,5 +23,4 @@ def page_not_found_500(error):
     import traceback
     trace = traceback.format_exc()
     return render_template('errors/500.html', error=error, traceback=trace,
-                           current_app=current_app,
-                           diags=diags(error)), 500
+                           current_app=current_app), 500

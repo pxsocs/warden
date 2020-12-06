@@ -9,7 +9,7 @@ import logging
 import configparser
 
 from datetime import datetime, timedelta
-from flask import flash, current_app, has_request_context
+from flask import flash, current_app, has_request_context, abort
 from pathlib import Path
 
 from warden_pricing_engine import (get_price_ondate, fx_price_ondate,
@@ -439,6 +439,8 @@ def specter_df(save_files=False, sort_by='trade_date'):
                 'added':
                 added_addresses
             }
+
+            print(json_save)
 
             with open(ack_file, 'w') as fp:
                 json.dump(json_save, fp)

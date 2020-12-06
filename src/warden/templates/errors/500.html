@@ -1,6 +1,7 @@
 {% extends "warden/warden_layout.html" %}
 {% block content %}
 
+
 <div class="row">
     <div class="col-sm-2">
 
@@ -10,7 +11,7 @@
 
     <div class="col-sm-8">
         <h1>
-            500 Server ERROR
+            {{error}}
         </h1>
         <hr>
 
@@ -32,16 +33,7 @@
             Please report this error at the <a href='https://github.com/pxsocs/specter_warden/issues'>Github repository
                 issues page</a>.
             <br>
-            <div class='content-section'>
-                Message:
-                <hr>
-                {{error}}
-            </div>
-            <div class='content-section'>
-                Diagnostic Information (Check your console for additional info)
-                <hr>
-                {{diags}}
-            </div>
+
 
 
 
@@ -54,6 +46,5 @@
     </div>
 
 </div>
-
 
 {% endblock content %}
