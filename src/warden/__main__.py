@@ -1,3 +1,13 @@
+from config import Config
+from backgroundjobs import (background_services_update,
+                            background_settings_update,
+                            background_specter_update,
+                            background_wallets_update)
+from utils import (create_config, update_config,
+                   load_specter, specter_checks,
+                   load_wallets, diags, create_specter_session)
+from warden_pricing_engine import fxsymbol
+from warden_modules import (check_services, specter_update, wallets_update)
 import logging
 import configparser
 import os
@@ -20,18 +30,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # Make sure current libraries are found in path
 current_path = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(current_path)
-
-from warden_modules import (check_services, specter_update, wallets_update)
-from warden_pricing_engine import fxsymbol
-from utils import (create_config, update_config,
-                   load_specter, specter_checks,
-                   load_wallets, diags, create_specter_session)
-from backgroundjobs import (background_services_update,
-                            background_settings_update,
-                            background_specter_update,
-                            background_wallets_update)
-from config import Config
-
 
 
 def create_app():

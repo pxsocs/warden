@@ -42,7 +42,7 @@ def specter_test():
             return_dict['specter_isrunning'] = specter['is_running']
             return_dict['specter_lastupdate'] = specter['last_update']
             return_dict['specter_wallets'] = specter['wallets_names']
-            if specter['is_running'] == False:
+            if specter['is_running'] is False:
                 messages = 'Specter Not Running'
 
     except Exception as e:
@@ -92,7 +92,6 @@ def before_request():
             'services': services,
             'txs': txs_empty
         }
-        print(meta)
         messages = json.dumps(meta)
         session['messages'] = messages
         return redirect(url_for("warden.setup"))
@@ -320,16 +319,19 @@ def check_activity():
         tx_list = json.loads(data_file.read())
         data_file.close()
 
-    last_changes = parser.parse(tx_list['changes_detected_on'])
-    elapsed = datetime.now() - last_changes
-    elapsed = elapsed.seconds
+    try:
+        last_changes = parser.parse(tx_list['changes_detected_on'])
+        elapsed = datetime.now() - last_changes
+        elapsed = elapsed.seconds
 
-    # Limit of 60 seconds = if changes happened in the last minute or less, flag it
-    EXPIRED = 60
+        # Limit of 60 seconds = if changes happened in the last minute or less, flag it
+        EXPIRED = 60
 
-    if elapsed < EXPIRED:
-        alerts = True
-        regenerate_nav()
+        if elapsed < EXPIRED:
+            alerts = True
+            regenerate_nav()
+    except Exception as e:
+        alerts = False
 
     return (json.dumps(alerts))
 

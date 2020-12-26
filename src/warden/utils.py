@@ -55,12 +55,7 @@ def specter_checks():
 
 
 @MWT(timeout=10)
-def load_specter(session=None):
-    if not session:
-        try:
-            session = current_app.specter_session
-        except Exception:
-            session = create_specter_session()
+def load_specter():
     logging.info("Updating Specter...")
     # Try to reach API
     file = Config.config_file
@@ -68,11 +63,13 @@ def load_specter(session=None):
     config.read(file)
     onion = config['SPECTER']['specter_onion']
     url = config['SPECTER']['specter_url']
+    username = config['SPECTER']['specter_login']
+    password = config['SPECTER']['specter_password']
 
     if not onion or onion == '':
         try:
-            r = session.get(url + '/api/v1alpha/specter/')
-            specter = r.json()
+            r = requests.get(url + '/api/v1alpha/specter', auth=(username, password))
+            specter = json.loads(r.json())
         except Exception as e:
             return(f"Error {e}")
 
@@ -96,11 +93,13 @@ def load_wallet(wallet_alias, session=None):
     config.read(file)
     onion = config['SPECTER']['specter_onion']
     url = config['SPECTER']['specter_url']
+    username = config['SPECTER']['specter_login']
+    password = config['SPECTER']['specter_password']
 
     if not onion or onion == '':
         try:
-            r = session.get(url + '/api/v1alpha/wallet_info/' + str(wallet_alias) + '/')
-            wallet = json.loads(r.text)
+            r = requests.get(url + '/api/v1alpha/wallet_info/' + str(wallet_alias) + '/', auth=(username, password))
+            wallet = json.loads(r.json())
             logging.info(f"Done Loading Wallet: {wallet_alias}")
             return(wallet)
         except Exception as e:
@@ -160,20 +159,12 @@ def create_specter_session():
     url = config['SPECTER']['specter_url']
     username = config['SPECTER']['specter_login']
     password = config['SPECTER']['specter_password']
-    login_data = {
-        'username': username,
-        'password': password
-    }
-    session = requests.Session()
-
+    r = None
     # First post login info into session to authenticate
-    data = {
-        'username': username,
-        'password': password
-    }
+
     if password:
         try:
-            session.post(url+'/login', data=data)
+            r = requests.get(url + '/api/v1alpha/specter/', auth=(username, password))
         except Exception:
             failed = True
             while failed:
@@ -189,7 +180,7 @@ def create_specter_session():
                     if url[-1] == '/':
                         url = url[:-1]
                     failed = False
-                    session.post(url+'/login', data=data)
+                    r = requests.get(url + '/api/v1alpha/specter/', auth=(username, password))
                     config['SPECTER']['specter_url'] = url
                     with open(file, 'w') as f:
                         config.write(f)
@@ -198,19 +189,19 @@ def create_specter_session():
                     failed = True
 
     # Check if login was authorized
-    r = session.get(url + '/api/v1alpha/specter/')
-    # If an html page is returned instead of json, there is an error
-    if r.status_code == 404:
-        logging.warn("Could not authenticate Specter login")
-        return("API404")
-    if "<!DOCTYPE html>" in str(r.content):
-        logging.warn("Could not authenticate Specter login")
-        return("unauthorized")
-    if r.status_code == 401:
-        logging.warn("Could not authenticate Specter login")
-        return("unauthorized")
+    if r:
+        # If an html page is returned instead of json, there is an error
+        if r.status_code == 404:
+            logging.warn("Could not authenticate Specter login")
+            return("API404")
+        if "<!DOCTYPE html>" in str(r.content):
+            logging.warn("Could not authenticate Specter login")
+            return("unauthorized")
+        if r.status_code == 401:
+            logging.warn("Could not authenticate Specter login")
+            return("unauthorized")
 
-    return(session)
+    return()
 
 
 #  Tests
@@ -235,6 +226,8 @@ def diags(e=None):
     file = Config.config_file
     config = configparser.ConfigParser()
     config.read(file)
+    username = config['SPECTER']['specter_login']
+    password = config['SPECTER']['specter_password']
 
     print("  Trying Specter Server Authorization...")
     # Fist check if authentication works
@@ -248,34 +241,35 @@ def diags(e=None):
     else:
         url = config['SPECTER']['specter_url']
         print("  Trying to get Specter Data...")
-        r = specter_session.get(url + '/api/v1alpha/specter/')
+        r = requests.get(url + '/api/v1alpha/specter/', auth=(username, password))
         print("  Returned Response Code: " + str(r))
 
     # Load basic specter data
-    try:
-        print("  Load Specter Data...")
-        specter = load_specter(session=specter_session)
+    # try:
+    print("  Load Specter Data...")
+    specter = load_specter()
 
-        if specter == 'unauthorized':
-            return_dict['specter_status'] = 'Unauthorized'
-            msg = 'Could not login to Specter: Unauthorized'
-            print(msg)
-            messages.append(msg)
-        else:
-            return_dict['specter_isrunning'] = specter['is_running']
-            return_dict['specter_lastupdate'] = specter['last_update']
-            return_dict['specter_wallets'] = specter['wallets_names']
-            print("Specter Results:")
-            print("Running: " + str(return_dict['specter_isrunning']))
-            print("Last Update: " + str(return_dict['specter_lastupdate']))
-            print("Wallets Found: " + str(return_dict['specter_wallets']))
-
-    except Exception as e:
+    if specter == 'unauthorized':
+        return_dict['specter_status'] = 'Unauthorized'
+        msg = 'Could not login to Specter: Unauthorized'
+        print(msg)
+        messages.append(msg)
+    else:
+        return_dict['specter_isrunning'] = specter['is_running']
+        return_dict['specter_lastupdate'] = specter['last_update']
+        return_dict['specter_wallets'] = specter['wallets_names']
         print("Specter Results:")
-        print("Error message")
-        print(str(e))
-        return_dict['specter_status'] = 'Error'
-        messages.append(str(e))
+        print("Running: " + str(return_dict['specter_isrunning']))
+        print("Last Update: " + str(return_dict['specter_lastupdate']))
+        print("Wallets Found: " + str(return_dict['specter_wallets']))
+
+    # except Exception as e:
+    #     print("Specter Results:")
+    #     print("Error message")
+    #     print(str(e))
+    #     return_dict['specter_status'] = 'Error'
+    #     messages.append(str(e))
+    #     exit()
 
     # run wallet tests
     wallets_data = {}

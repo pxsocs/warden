@@ -38,7 +38,7 @@ def specter_update(load=True, session=None):
         data = pickle_it(action='load', filename='specter_data.pkl')
         if data != 'file not found':
             return (data)
-    specter_data = load_specter(session=session)
+    specter_data = load_specter()
     pickle_it(action='save', filename='specter_data.pkl', data=specter_data)
     logging.info(f"Finished Building Specter Class")
     return(specter_data)
@@ -439,8 +439,6 @@ def specter_df(save_files=False, sort_by='trade_date'):
                 'added':
                 added_addresses
             }
-
-            print(json_save)
 
             with open(ack_file, 'w') as fp:
                 json.dump(json_save, fp)
