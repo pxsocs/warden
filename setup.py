@@ -21,7 +21,8 @@ reqs = [
     'PySocks',
     'requests',
     'urllib3',
-    'simplejson'
+    'simplejson',
+    'jsonify'
 ]
 
 setup(

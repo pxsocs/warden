@@ -7,12 +7,13 @@ from warden_modules import (list_specter_wallets, warden_metadata, positions,
                             home_path)
 
 from warden_pricing_engine import (test_tor, tor_request, price_data_rt,
-                                   fx_rate)
-from utils import update_config, diags, load_specter
+                                   fx_rate, price_data_fx)
+from utils import update_config, diags, load_specter, heatmap_generator
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
+import mhp as mrh
 import jinja2
 import simplejson
 import pandas as pd
@@ -21,6 +22,7 @@ import json
 import os
 import urllib
 import csv
+import jsonify
 
 warden = Blueprint("warden",
                    __name__,
@@ -708,12 +710,136 @@ def fx_list():
     return list
 
 
+@warden.route("/heatmapbenchmark_json", methods=["GET"])
+# Return Monthly returns for Benchmark and Benchmark difference from NAV
+# Takes arguments:
+# ticker   - single ticker for filter
+def heatmapbenchmark_json():
+
+    # Get portfolio data first
+    heatmap_gen, heatmap_stats, years, cols = heatmap_generator()
+
+    # Now get the ticker information and run comparison
+    if request.method == "GET":
+        ticker = request.args.get("ticker")
+        # Defaults to king BTC
+        if not ticker:
+            ticker = "BTC"
+
+    # Gather the first trade date in portfolio and store
+    # used to match the matrixes later
+    # Panda dataframe with transactions
+    df = specter_df()
+    # Filter the df acccoring to filter passed as arguments
+    df["trade_date"] = pd.to_datetime(df["trade_date"])
+    start_date = df["trade_date"].min()
+    start_date -= timedelta(days=1)  # start on t-1 of first trade
+
+    # Generate price Table now for the ticker and trim to match portfolio
+    data = price_data_fx(ticker)
+    mask = data.index >= start_date
+    data = data.loc[mask]
+
+    # If notification is an error, skip this ticker
+    if data is None:
+        messages = data.errors
+        return jsonify(messages)
+
+    data = data.rename(columns={'close_converted': ticker + '_price'})
+    data = data[[ticker + '_price']]
+    data.sort_index(ascending=True, inplace=True)
+    data["pchange"] = (data / data.shift(1)) - 1
+    # Run the mrh function to generate heapmap table
+    heatmap = mrh.get(data["pchange"], eoy=True)
+    heatmap_stats = heatmap
+    cols = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+        "eoy",
+    ]
+    cols_months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    years = heatmap.index.tolist()
+    # Create summary stats for the Ticker
+    heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(
+        axis=1)
+    heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(
+        axis=1)
+    heatmap_stats["POSITIVES"] = heatmap_stats[
+        heatmap_stats[cols_months] > 0].count(axis=1)
+    heatmap_stats["NEGATIVES"] = heatmap_stats[
+        heatmap_stats[cols_months] < 0].count(axis=1)
+    heatmap_stats["POS_MEAN"] = heatmap_stats[
+        heatmap_stats[cols_months] > 0].mean(axis=1)
+    heatmap_stats["NEG_MEAN"] = heatmap_stats[
+        heatmap_stats[cols_months] < 0].mean(axis=1)
+    heatmap_stats["MEAN"] = heatmap_stats[
+        heatmap_stats[cols_months] != 0].mean(axis=1)
+
+    # Create the difference between the 2 df - Pandas is cool!
+    heatmap_difference = heatmap_gen - heatmap
+
+    # return (heatmap, heatmap_stats, years, cols, ticker, heatmap_diff)
+    return simplejson.dumps(
+        {
+            "heatmap": heatmap.to_dict(),
+            "heatmap_stats": heatmap_stats.to_dict(),
+            "cols": cols,
+            "years": years,
+            "ticker": ticker,
+            "heatmap_diff": heatmap_difference.to_dict(),
+        },
+        ignore_nan=True,
+        default=datetime.isoformat,
+    )
+
+
+@warden.route("/heatmap")
+# Returns a monthly heatmap of returns and statistics
+def heatmap():
+    heatmap_gen, heatmap_stats, years, cols = heatmap_generator()
+
+    return render_template(
+        "warden/heatmap.html",
+        title="Monthly Returns HeatMap",
+        heatmap=heatmap_gen,
+        heatmap_stats=heatmap_stats,
+        years=years,
+        cols=cols,
+        current_app=current_app,
+        current_user=fx_rate()
+    )
+
 # -------------------------------------------------
 #  START JINJA 2 Filters
 # -------------------------------------------------
 # Jinja2 filter to format time to a nice string
 # Formating function, takes self +
 # number of decimal places + a divisor
+
+
 @ jinja2.contextfilter
 @ warden.app_template_filter()
 def jformat(context, n, places, divisor=1):

@@ -20,6 +20,8 @@ from config import Config
 from warden_pricing_engine import tor_request
 from warden_decorators import MWT, timing
 
+import mhp as mrh
+
 # Method to create a new config file if not found
 # Copies data from warden.config_default.ini into a new config.ini
 
@@ -311,3 +313,67 @@ def diags(e=None):
     print(json.dumps(return_dict, indent=4, sort_keys=True))
 
     return(return_dict)
+
+
+def heatmap_generator():
+    # If no Transactions for this user, return empty.html
+    from warden_modules import specter_df, generatenav
+    transactions = specter_df()
+    if transactions.empty:
+        return None, None, None, None
+
+    # Generate NAV Table first
+    data = generatenav()
+    data["navpchange"] = (data["NAV_fx"] / data["NAV_fx"].shift(1)) - 1
+    returns = data["navpchange"]
+    # Run the mrh function to generate heapmap table
+    heatmap = mrh.get(returns, eoy=True)
+
+    heatmap_stats = heatmap
+    cols = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+        "eoy",
+    ]
+    cols_months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    years = (heatmap.index.tolist())
+    heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(axis=1)
+    heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(axis=1)
+    heatmap_stats["POSITIVES"] = heatmap_stats[heatmap_stats[cols_months] > 0].count(
+        axis=1
+    )
+    heatmap_stats["NEGATIVES"] = heatmap_stats[heatmap_stats[cols_months] < 0].count(
+        axis=1
+    )
+    heatmap_stats["POS_MEAN"] = heatmap_stats[heatmap_stats[cols_months] > 0].mean(
+        axis=1
+    )
+    heatmap_stats["NEG_MEAN"] = heatmap_stats[heatmap_stats[cols_months] < 0].mean(
+        axis=1
+    )
+    heatmap_stats["MEAN"] = heatmap_stats[heatmap_stats[cols_months] != 0].mean(axis=1)
+
+    return (heatmap, heatmap_stats, years, cols)
