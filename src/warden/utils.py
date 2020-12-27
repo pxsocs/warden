@@ -310,6 +310,17 @@ def diags(e=None):
     return_dict['wallets'] = wallets_data
     return_dict['messages'] = messages
 
+    # Test Pricing Engine
+    print("---------------------------------")
+    print(" Starting Price Engine")
+    print("---------------------------------")
+    ticker = 'BTC'
+    print(f"Ticker: {ticker}")
+    print("Testing Realtime Pricing")
+    from warden_pricing_engine import price_data_rt, REALTIME_PROVIDER_PRIORITY
+    price = price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY, diags=True)
+    print(price)
+
     print(json.dumps(return_dict, indent=4, sort_keys=True))
 
     return(return_dict)

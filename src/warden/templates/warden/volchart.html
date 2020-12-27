@@ -1,0 +1,103 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+<!--  High Charts -->
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="{{url_for('warden.static', filename='js/highcharts.js')}}"></script>
+<script src="{{url_for('warden.static', filename='js/volchart.js')}}"></script>
+
+
+<div class="container-fluid">
+  <div class="content-section">
+    <div class="row">
+
+        <div class="col-9">
+
+            <div id="volchart" style="height: 670px; min-width: 80%; max-width: 95%; margin: 0 auto">
+                <span class="loadanim">&nbsp;GENERATING CHART...</span>
+            </div>
+
+        </div>
+
+        <div class="col-lg-3">
+            <text x="314" text-anchor="middle" data-z-index="4"
+                style="color:#333333;font-size:16px;font-weight:bold;text-transform:uppercase;fill:#333333;" y="22">
+                <tspan>Settings</tspan>
+            </text>
+            <hr>
+
+            <div class="input-group-sm mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">Rolling Days </span>
+                    <input type="text" id="rolling" class="form-control text-right" value="30" aria-label="Username"
+                        aria-describedby="basic-addon1">
+                </div>
+
+
+            </div>
+
+
+            <table class="table">
+                <thead class="thead-light">
+                    <tr>
+                        <th colspan="2">
+                            Portfolio Vol Stats
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>
+                            Last
+                        </th>
+                        <td id="metalast" class="text-right">
+                            <img class="mx-auto d-block" src="static/images/loading.gif" width="25" height="25"></img>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>
+                            Average
+                        </th>
+                        <td id="metamean" class="text-right">
+                            <img class="mx-auto d-block" src="static/images/loading.gif" width="25" height="25"></img>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" id="metarel" class="small text-right">
+
+                            <img class="mx-auto d-block" src="static/images/loading.gif" width="25" height="25"></img>
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>
+                            Max
+                        </th>
+                        <td id="metamax" class="text-right">
+                            <img class="mx-auto d-block" src="static/images/loading.gif" width="25" height="25"></img>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>
+                            Min
+                        </th>
+                        <td id="metamin" class="text-right">
+                            <img class="mx-auto d-block" src="static/images/loading.gif" width="25" height="25"></img>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+</div>
+</div>
+
+
+
+
+{% endblock content %}

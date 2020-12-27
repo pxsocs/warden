@@ -1,4 +1,3 @@
-from glob import glob
 
 from setuptools import setup, find_packages
 
@@ -6,7 +5,7 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-current_version = '0.6.0.7'
+current_version = '0.7.0.0'
 
 with open("src/warden/static/config/version.txt", "w") as text_file:
     print(f"{current_version}", file=text_file)

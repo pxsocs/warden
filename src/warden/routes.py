@@ -832,6 +832,91 @@ def heatmap():
         current_user=fx_rate()
     )
 
+
+@warden.route("/volchart", methods=["GET", "POST"])
+# Only returns the html - request for data is done through jQuery AJAX
+def volchart():
+    return render_template("warden/volchart.html",
+                           title="Historical Volatility Chart",
+                           current_app=current_app,
+                           current_user=fx_rate())
+
+
+@warden.route("/histvol", methods=["GET", "POST"])
+# Returns a json with data to create the vol chart
+# takes inputs from get:
+# ticker, meta (true returns only metadata), rolling (in days)
+# metadata (max, mean, etc)
+def histvol():
+    # if there's rolling variable, get it, otherwise default to 30
+    if request.method == "GET":
+        try:
+            q = int(request.args.get("rolling"))
+        except ValueError:
+            q = 30
+    else:
+        q = 30
+
+    ticker = request.args.get("ticker")
+    metadata = request.args.get("meta")
+
+    # When ticker is not sent, will calculate for portfolio
+    if not ticker:
+        data = generatenav()
+        data["vol"] = (data["NAV_fx"].pct_change().rolling(q).std() *
+                       (365**0.5) * 100)
+        # data.set_index('date', inplace=True)
+        vollist = data[["vol"]]
+        vollist.index = vollist.index.strftime("%Y-%m-%d")
+        datajson = vollist.to_json()
+
+    if ticker:
+        filename = "thewarden/historical_data/" + ticker + ".json"
+        filename = os.path.join(current_path(), filename)
+
+        try:
+            with open(filename) as data_file:
+                local_json = json.loads(data_file.read())
+                data_file.close()
+                prices = pd.DataFrame(
+                    local_json["Time Series (Digital Currency Daily)"]).T
+                prices["4b. close (USD)"] = prices["4b. close (USD)"].astype(
+                    np.float)
+                prices["vol"] = (
+                    prices["4b. close (USD)"].pct_change().rolling(q).std() *
+                    (365**0.5) * 100)
+                pricelist = prices[["vol"]]
+                datajson = pricelist.to_json()
+
+        except (FileNotFoundError, KeyError):
+            datajson = "Ticker Not Found"
+
+    if metadata is not None:
+        metatable = {}
+        metatable["mean"] = vollist.vol.mean()
+        metatable["max"] = vollist.vol.max()
+        metatable["min"] = vollist.vol.min()
+        metatable["last"] = vollist.vol[-1]
+        metatable["lastvsmean"] = (
+            (vollist.vol[-1] / vollist.vol.mean()) - 1) * 100
+        metatable = json.dumps(metatable)
+        return metatable
+
+    return datajson
+
+
+@warden.route("/mempool_json", methods=["GET", "POST"])
+def mempool_json():
+    mp_config = current_app.settings['MEMPOOL']
+    url = mp_config.get('url')
+
+    # Get recommended fees
+    mp_fee = tor_request(url + '/api/v1/fees/recommended').json()
+    mp_blocks = tor_request(url + '/api/blocks').json()
+
+    return json.dumps({'mp_fee': mp_fee, 'mp_blocks': mp_blocks, 'mp_url': url})
+
+
 # -------------------------------------------------
 #  START JINJA 2 Filters
 # -------------------------------------------------

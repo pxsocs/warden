@@ -146,12 +146,12 @@ REALTIME_PROVIDER_PRIORITY = [
     'cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock',
     'fp_realtime_stock'
 ]
-FX_RT_PROVIDER_PRIORITY = ['aa_realtime_digital', 'cc_realtime']
+FX_RT_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime_digital']
 HISTORICAL_PROVIDER_PRIORITY = [
     'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock',
     'bitmex'
 ]
-FX_PROVIDER_PRIORITY = ['aa_fx', 'cc_fx']
+FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
 
 # How to include new API providers (historical prices):
 # Step 1:
@@ -190,7 +190,7 @@ class PriceProvider:
                  ticker_field,
                  field_dict=None,
                  doc_link=None,
-                 replace_ticker=None):
+                 replace_ticker=None, diags=False):
         # field dict includes all fields to be passed to the URL
         # for example, for Alphavantage
         # name = 'Alphavantage_digital'
@@ -206,6 +206,7 @@ class PriceProvider:
         self.ticker_field = ticker_field
         self.field_dict = field_dict
         self.doc_link = doc_link
+        self.diags = diags
         if self.field_dict is not None:
             try:
                 self.url_args = "&" + urllib.parse.urlencode(field_dict)
@@ -215,7 +216,7 @@ class PriceProvider:
         self.replace_ticker = replace_ticker
 
     @MWT(timeout=300)
-    def request_data(self, ticker):
+    def request_data(self, ticker, diags=False):
         data = None
         if self.base_url is not None:
             ticker = ticker.upper()
@@ -230,9 +231,14 @@ class PriceProvider:
             # Some URLs are in the form http://www.www.www/ticker_field/extra_fields?
             if self.replace_ticker is not None:
                 globalURL = self.base_url.replace('ticker_field', ticker)
+            if diags:
+                print(f"Getting URL: {globalURL}")
             request = tor_request(globalURL)
             try:
                 data = request.json()
+                if diags:
+                    print("RESULT: ")
+                    print(data)
             except Exception:
                 try:  # Try again - some APIs return a json already
                     data = json.loads(request)
@@ -259,11 +265,12 @@ class PriceProvider:
 # btc.realtime(provider): returns realtime price (float)
 class PriceData():
     # All methods related to a ticker
-    def __init__(self, ticker, provider):
+    def __init__(self, ticker, provider, diags=False):
         # providers is a list of pricing providers
         # ex: ['alphavantage', 'Yahoo']
         self.ticker = ticker.upper()
         self.provider = provider
+        self.diags = diags
         self.filename = ("warden/" + self.ticker +
                          "_" + provider.name + ".price")
         self.filename = os.path.join(home_path(), self.filename)
@@ -466,7 +473,9 @@ class PriceData():
     def realtime(self, rt_provider):
         # This is the parser for realtime prices.
         # Data should be parsed so only the price is returned
-        price_request = rt_provider.request_data(self.ticker)
+        if self.diags:
+            print(f"Getting realtime for {self.ticker} on {rt_provider.name}")
+        price_request = rt_provider.request_data(self.ticker, self.diags)
         price = None
         if rt_provider.name == 'ccrealtime':
             try:
@@ -505,6 +514,11 @@ class PriceData():
             except Exception as e:
                 self.errors.append(e)
 
+        if self.diags:
+            print(f"Realtime Provider: {rt_provider.name} returned:")
+            print(price)
+            if self.errors:
+                print(f"ERRORS: {self.errors}")
         return price
 
 
@@ -602,13 +616,23 @@ def price_data_fx(ticker):  # BTC
 
 # Returns realtime price for a ticker using the provider list
 # Price is returned in USD
-def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY):
+def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY, diags=False):
+    if diags:
+        print("Realtime data diags mode")
+        print(ticker)
     if ticker == 'USD':
         return None
     for provider in priority_list:
-        price_data = PriceData(ticker, PROVIDER_LIST[provider])
+        if diags:
+            print(f"Trying provider: {provider}")
+        price_data = PriceData(ticker, PROVIDER_LIST[provider], diags)
         if price_data.realtime(PROVIDER_LIST[provider]) is not None:
+            if diags:
+                print(f" Provider {provider} success: {price_data.realtime(PROVIDER_LIST[provider])}")
             break
+        else:
+            if diags:
+                print(f"Provider: {provider} returned no data")
     return (price_data.realtime(PROVIDER_LIST[provider]))
 
 
@@ -785,7 +809,7 @@ def multiple_price_grab(tickers, fx):
     # tickers should be in comma sep string format like "BTC,ETH,LTC"
     baseURL = \
         "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="\
-        + tickers + "&tsyms=" + fx + "&&api_key=9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225"
+        + tickers + "&tsyms=" + fx + "&&api_key=39667965c99dfa9f5c3c368867ae776e019f46275fcba2d1d3fe3e04812842e1"
     try:
         request = tor_request(baseURL)
     except requests.exceptions.ConnectionError:
@@ -888,7 +912,7 @@ PROVIDER_LIST = {
             'allData':
             'true',
             'api_key':
-            '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
+            '39667965c99dfa9f5c3c368867ae776e019f46275fcba2d1d3fe3e04812842e1'
         },
         doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
@@ -903,7 +927,7 @@ PROVIDER_LIST = {
             'allData':
             'true',
             'api_key':
-            '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
+            '39667965c99dfa9f5c3c368867ae776e019f46275fcba2d1d3fe3e04812842e1'
         },
         doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
@@ -926,7 +950,7 @@ PROVIDER_LIST = {
             'tsyms':
             'USD',
             'api_key':
-            '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
+            '39667965c99dfa9f5c3c368867ae776e019f46275fcba2d1d3fe3e04812842e1'
         },
         doc_link=None),
     'cc_realtime_full':
@@ -938,7 +962,7 @@ PROVIDER_LIST = {
             'tsyms':
             'USD',
             'api_key':
-            '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
+            '39667965c99dfa9f5c3c368867ae776e019f46275fcba2d1d3fe3e04812842e1'
         },
         doc_link='https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'
     ),

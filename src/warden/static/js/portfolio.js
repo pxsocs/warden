@@ -46,6 +46,7 @@ $(document).ready(function () {
     run_once = true;
     realtime_table();
     getNodeInfo();
+    update_mempool();
 
     // Popover management
     // Default popover enabler from Bootstrap
@@ -317,6 +318,7 @@ $(document).ready(function () {
 
     window.setInterval(function () {
         getNodeInfo();
+        update_mempool();
     }, 60000);
 
 
@@ -372,6 +374,41 @@ $(document).ready(function () {
         }
     });
 });
+
+function update_mempool() {
+    $.ajax({
+        type: 'GET',
+        url: '/mempool_json',
+        dataType: 'json',
+        success: function (data) {
+            const currentTimeStamp = new Date().getTime();
+            $('#fastest_fee').html(formatNumber(data['mp_fee']['fastestFee'], 0, '', ' sats/Vb'));
+            $('#30min_fee').html(formatNumber(data['mp_fee']['halfHourFee'], 0, '', ' sats/Vb'));
+            $('#1hr_fee').html(formatNumber(data['mp_fee']['hourFee'], 0, '', ' sats/Vb'));
+            // Block 0
+            time_ago_0 = timeDifference(currentTimeStamp, data['mp_blocks'][0]['timestamp'] * 1000)
+            $('#time_0').html(time_ago_0);
+            $('#height_0').html(formatNumber(data['mp_blocks'][0]['height'], 0, 'block '));
+            $('#txs_0').html(formatNumber(data['mp_blocks'][0]['tx_count'], 0, '# Tx '));
+            $('#size_0').html(formatNumber(data['mp_blocks'][0]['size'] / 1000, 0, '', ' MB'));
+            // Block 1
+            time_ago_1 = timeDifference(currentTimeStamp, data['mp_blocks'][1]['timestamp'] * 1000)
+            $('#time_1').html(time_ago_1);
+            $('#height_1').html(formatNumber(data['mp_blocks'][1]['height'], 0, 'block '));
+            $('#txs_1').html(formatNumber(data['mp_blocks'][1]['tx_count'], 0, '# Tx '));
+            $('#size_1').html(formatNumber(data['mp_blocks'][1]['size'] / 1000, 0, '', ' MB'));
+            // Block 2
+            time_ago_2 = timeDifference(currentTimeStamp, data['mp_blocks'][2]['timestamp'] * 1000)
+            $('#time_2').html(time_ago_2);
+            $('#height_2').html(formatNumber(data['mp_blocks'][2]['height'], 0, 'block '));
+            $('#txs_2').html(formatNumber(data['mp_blocks'][2]['tx_count'], 0, '# Tx '));
+            $('#size_2').html(formatNumber(data['mp_blocks'][2]['size'] / 1000, 0, '', ' MB'));
+            $('#mempool_source').html('<a href=' + data['mp_url'] + '>Source : ' + data['mp_url'] + '</a>')
+        }
+    });
+}
+
+
 
 
 //  HELPER FUNCTION
@@ -441,6 +478,8 @@ function realtime_table() {
                     $('#' + key + '_F_trade_fees_fx').html(formatNumber(value.trade_fees_fx, 0, fx, ''));
                     $('#' + key + '_F_pnl_net').html(formatNumber(value.pnl_net, 0, fx, ''));
                     $('#' + key + '_F_breakeven').html(formatNumber(value.breakeven, 2, fx, '', value.small_pos));
+                    x = ((value.price / value.breakeven) - 1) * 100
+                    $('#' + key + '_perc_breakeven').html(formatNumber(x, 2, '', '%', value.small_pos));
 
                     // LIFO Table values
                     $('#' + key + '_L_position').html(formatNumber(value.position_fx, 0, fx, ''));
