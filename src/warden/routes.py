@@ -1,5 +1,5 @@
 from flask import (Blueprint, redirect, render_template, abort,
-                   flash, session, request, current_app, url_for)
+                   flash, session, request, current_app, url_for, jsonify)
 from warden_modules import (list_specter_wallets, warden_metadata, positions,
                             positions_dynamic, get_price_ondate,
                             generatenav, specter_df, check_services,
@@ -16,13 +16,14 @@ from dateutil.relativedelta import relativedelta
 import mhp as mrh
 import jinja2
 import simplejson
+import logging
 import pandas as pd
 import numpy as np
 import json
 import os
 import urllib
+import math
 import csv
-import jsonify
 
 warden = Blueprint("warden",
                    __name__,
@@ -915,6 +916,140 @@ def mempool_json():
     mp_blocks = tor_request(url + '/api/blocks').json()
 
     return json.dumps({'mp_fee': mp_fee, 'mp_blocks': mp_blocks, 'mp_url': url})
+
+
+@warden.route("/portfolio_compare", methods=["GET"])
+def portfolio_compare():
+    return render_template("warden/portfolio_compare.html",
+                           title="Portfolio Comparison",
+                           current_app=current_app,
+                           current_user=fx_rate())
+
+
+@warden.route("/portfolio_compare_json", methods=["GET"])
+# Compare portfolio performance to a list of assets
+# Takes arguments:
+# tickers  - (comma separated. ex: BTC,ETH,AAPL)
+# start    - start date in the format YYMMDD
+# end      - end date in the format YYMMDD
+# method   - "chart": returns NAV only data for charts
+#          - "all": returns all data (prices and NAV)
+#          - "meta": returns metadata information
+def portfolio_compare_json():
+    if request.method == "GET":
+        tickers = request.args.get("tickers").upper()
+        tickers = tickers.split(",")
+        start_date = request.args.get("start")
+        method = request.args.get("method")
+
+        # Check if start and end dates exist, if not assign values
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        except (ValueError, TypeError) as e:
+            logging.info(f"[portfolio_compare_json] Error: {e}, " +
+                         "setting start_date to zero")
+            start_date = 0
+
+        end_date = request.args.get("end")
+
+        try:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        except (ValueError, TypeError) as e:
+            logging.info(f"[portfolio_compare_json] Error: {e}, " +
+                         "setting end_date to now")
+            end_date = datetime.now()
+    data = {}
+
+    logging.info("[portfolio_compare_json] NAV requested in list of " +
+                 "tickers, requesting generatenav.")
+    nav = generatenav()
+    nav_only = nav["NAV_fx"]
+
+    # Now go over tickers and merge into nav_only df
+    messages = {}
+    meta_data = {}
+    for ticker in tickers:
+        if ticker == "NAV":
+            # Ticker was NAV, skipped
+            continue
+
+        # Generate price Table now for the ticker and trim to match portfolio
+        data = price_data_fx(ticker)
+        # If notification is an error, skip this ticker
+        if data is None:
+            messages = data.errors
+            return jsonify(messages)
+        data = data.rename(columns={'close_converted': ticker + '_price'})
+        data = data[ticker + '_price']
+        nav_only = pd.merge(nav_only, data, on="date", how="left")
+        nav_only[ticker + "_price"].fillna(method="bfill", inplace=True)
+        messages[ticker] = "ok"
+        logging.info(f"[portfolio_compare_json] {ticker}: Success - Merged OK")
+
+    nav_only.fillna(method="ffill", inplace=True)
+
+    # Trim this list only to start_date to end_date:
+    mask = (nav_only.index >= start_date) & (nav_only.index <= end_date)
+    nav_only = nav_only.loc[mask]
+
+    # Now create the list of normalized Returns for the available period
+    # Plus create a table with individual analysis for each ticker and NAV
+    nav_only["NAV_norm"] = (nav_only["NAV_fx"] / nav_only["NAV_fx"][0]) * 100
+    nav_only["NAV_ret"] = nav_only["NAV_norm"].pct_change()
+    table = {}
+    table["meta"] = {}
+    table["meta"]["start_date"] = (nav_only.index[0]).strftime("%m-%d-%Y")
+    table["meta"]["end_date"] = nav_only.index[-1].strftime("%m-%d-%Y")
+    table["meta"]["number_of_days"] = ((nav_only.index[-1] -
+                                        nav_only.index[0])).days
+    table["meta"]["count_of_points"] = nav_only["NAV_fx"].count().astype(float)
+    table["NAV"] = {}
+    table["NAV"]["start"] = nav_only["NAV_fx"][0]
+    table["NAV"]["end"] = nav_only["NAV_fx"][-1]
+    table["NAV"]["return"] = (nav_only["NAV_fx"][-1] /
+                              nav_only["NAV_fx"][0]) - 1
+    table["NAV"]["avg_return"] = nav_only["NAV_ret"].mean()
+    table["NAV"]["ann_std_dev"] = nav_only["NAV_ret"].std() * math.sqrt(365)
+    for ticker in tickers:
+        if messages[ticker] == "ok":
+            # Include new columns for return and normalized data
+            nav_only[ticker + "_norm"] = (nav_only[ticker + "_price"] /
+                                          nav_only[ticker + "_price"][0]) * 100
+            nav_only[ticker + "_ret"] = nav_only[ticker + "_norm"].pct_change()
+            # Create Metadata
+            table[ticker] = {}
+            table[ticker]["start"] = nav_only[ticker + "_price"][0]
+            table[ticker]["end"] = nav_only[ticker + "_price"][-1]
+            table[ticker]["return"] = (nav_only[ticker + "_price"][-1] /
+                                       nav_only[ticker + "_price"][0]) - 1
+            table[ticker]["comp2nav"] = table[ticker]["return"] - \
+                table["NAV"]["return"]
+            table[ticker]["avg_return"] = nav_only[ticker + "_ret"].mean()
+            table[ticker]["ann_std_dev"] = nav_only[
+                ticker + "_ret"].std() * math.sqrt(365)
+
+    logging.info("[portfolio_compare_json] Success")
+
+    # Create Correlation Matrix
+    filter_col = [col for col in nav_only if col.endswith("_ret")]
+    nav_matrix = nav_only[filter_col]
+    corr_matrix = nav_matrix.corr(method="pearson").round(2)
+    corr_html = corr_matrix.to_html(classes="table small text-center",
+                                    border=0,
+                                    justify="center")
+
+    # Now, let's return the data in the correct format as requested
+    if method == "chart":
+        return_data = {
+            "data": nav_only.to_json(),
+            "messages": messages,
+            "meta_data": meta_data,
+            "table": table,
+            "corr_html": corr_html,
+        }
+        return jsonify(return_data)
+
+    return nav_only.to_json()
 
 
 # -------------------------------------------------
