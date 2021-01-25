@@ -4,10 +4,11 @@ from warden_modules import (list_specter_wallets, warden_metadata, positions,
                             positions_dynamic, get_price_ondate,
                             generatenav, specter_df, check_services,
                             current_path, specter_update, regenerate_nav,
-                            home_path)
+                            home_path, clean_float)
 
 from warden_pricing_engine import (test_tor, tor_request, price_data_rt,
-                                   fx_rate, price_data_fx)
+                                   fx_rate, price_data_fx, PROVIDER_LIST,
+                                   PriceData)
 from utils import update_config, diags, load_specter, heatmap_generator
 
 from datetime import datetime, timedelta
@@ -38,6 +39,10 @@ def specter_test():
     try:
         specter = load_specter()
 
+        if 'error' in specter:
+            return_dict['specter_status'] = 'Error'
+            messages = specter
+            return (return_dict, messages)
         if specter == 'unauthorized':
             return_dict['specter_status'] = 'Unauthorized'
             messages = 'Unauthorized - check Specter login credentials'
@@ -204,6 +209,13 @@ def warden_page():
         "current_app": current_app,
     }
     return (render_template('warden/warden.html', **templateData))
+
+
+@ warden.route("/txs_json", methods=['GET'])
+def txs_json():
+    df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
+    tx_df = pd.read_pickle(df_pkl)
+    return tx_df.to_json(orient='table')
 
 
 @ warden.route("/list_transactions", methods=['GET'])
@@ -908,14 +920,17 @@ def histvol():
 
 @warden.route("/mempool_json", methods=["GET", "POST"])
 def mempool_json():
-    mp_config = current_app.settings['MEMPOOL']
-    url = mp_config.get('url')
+    try:
+        mp_config = current_app.settings['MEMPOOL']
+        url = mp_config.get('url')
 
-    # Get recommended fees
-    mp_fee = tor_request(url + '/api/v1/fees/recommended').json()
-    mp_blocks = tor_request(url + '/api/blocks').json()
+        # Get recommended fees
+        mp_fee = tor_request(url + '/api/v1/fees/recommended').json()
+        mp_blocks = tor_request(url + '/api/blocks').json()
 
-    return json.dumps({'mp_fee': mp_fee, 'mp_blocks': mp_blocks, 'mp_url': url})
+        return json.dumps({'mp_fee': mp_fee, 'mp_blocks': mp_blocks, 'mp_url': url})
+    except Exception:
+        return json.dumps({'mp_fee': '-', 'mp_blocks': '-', 'mp_url': 'Error: Retrying...'})
 
 
 @warden.route("/portfolio_compare", methods=["GET"])
@@ -1051,6 +1066,103 @@ def portfolio_compare_json():
 
     return nav_only.to_json()
 
+
+@warden.route("/price_feed", methods=["GET"])
+def price_feed():
+    return_dict = {}
+    ticker = request.args.get("ticker")
+    ticker = "BTC" if not ticker else ticker
+    ticker = ticker.upper()
+    for pr in PROVIDER_LIST:
+        provider = PROVIDER_LIST[pr]
+        price_data = PriceData(ticker, provider)
+        data = {}
+        data['provider_info'] = {
+            'name': provider.name,
+            'errors': provider.errors,
+            'base_url': provider.base_url,
+            'doc_link': provider.doc_link,
+            'field_dict': provider.field_dict,
+            'globalURL': None
+        }
+        if provider.base_url is not None:
+            globalURL = (provider.base_url + "?" + provider.ticker_field + "=" +
+                         ticker + provider.url_args)
+            # Some APIs use the ticker without a ticker field i.e. xx.xx./AAPL&...
+            # in these cases, we pass the ticker field as empty
+            if provider.ticker_field == '':
+                if provider.url_args[0] == '&':
+                    provider.url_args = provider.url_args.replace('&', '?', 1)
+                globalURL = (provider.base_url + "/" + ticker + provider.url_args)
+            # Some URLs are in the form http://www.www.www/ticker_field/extra_fields?
+            if provider.replace_ticker is not None:
+                globalURL = provider.base_url.replace('ticker_field', ticker)
+            data['provider_info']['globalURL'] = globalURL
+
+        try:
+
+            data['price_data'] = {
+                'ticker': ticker,
+                'last_update': price_data.last_update.strftime('%m/%d/%Y'),
+                'first_update': price_data.first_update.strftime('%m/%d/%Y'),
+                'last_close': float(price_data.last_close),
+                'errors': price_data.errors
+            }
+        except Exception as e:
+            data['price_data'] = {
+                'price_data_errors': price_data.errors,
+                'error': str(e)
+            }
+
+        # Try to get realtime prices
+        data['realtime'] = {
+            'price': (price_data.realtime(PROVIDER_LIST[pr])),
+            'error': price_data.errors
+        }
+
+        return_dict[provider.name] = data
+
+    return render_template("warden/price_feed.html",
+                           title="Price Feed Check",
+                           current_app=current_app,
+                           current_user=fx_rate(),
+                           return_dict=return_dict)
+
+
+@ warden.route("/test_price", methods=["GET"])
+def test_price():
+    try:
+        # Tests a price using a provider and returns price data
+        provider = PROVIDER_LIST[request.args.get("provider")]
+        rtprovider = request.args.get("rtprovider")
+        ticker = request.args.get("ticker")
+        price_data = PriceData(ticker, provider)
+        data = {}
+
+        data['provider'] = {
+            'name': provider.name,
+            'errors': provider.errors,
+            'base_url': provider.base_url,
+            'doc_link': provider.doc_link
+        }
+
+        data['price_data'] = {
+            'ticker': ticker,
+            'last_update': price_data.last_update.strftime('%m/%d/%Y'),
+            'first_update': price_data.first_update.strftime('%m/%d/%Y'),
+            'last_close': float(price_data.last_close),
+            'errors': price_data.errors
+        }
+
+        if rtprovider:
+            data['realtime'] = {
+                'price': float(price_data.realtime(PROVIDER_LIST[rtprovider]))
+            }
+
+    except Exception as e:
+        return json.dumps({"error": f"Check API keys or connection: {e}"})
+
+    return (data)
 
 # -------------------------------------------------
 #  START JINJA 2 Filters

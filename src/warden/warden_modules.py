@@ -315,8 +315,6 @@ def specter_df(save_files=False, sort_by='trade_date'):
     # Add additional columns
     df['trade_blockchain_id'] = df['txid']
 
-    # Could include blockchain fees later here
-    df['trade_fees'] = int(0)
     df['trade_account'] = df['wallet_alias']
     df['trade_currency'] = current_app.settings['PORTFOLIO']['base_fx']
     df['trade_asset_ticker'] = "BTC"
@@ -349,13 +347,22 @@ def specter_df(save_files=False, sort_by='trade_date'):
             price = 0
         return (price)
 
-    df['trade_price'] = df['date_str'].apply(btc_price)
+    df['btc_price'] = df['date_str'].apply(btc_price)
+    df['trade_price'] = df['btc_price']
+    # For some reason Specter is returning fee = 1 for some transactions
+    # So the filter below clears all fees higher than 0.10 BTC which is
+    # probably too high :)
+    df.loc[df.fee > 0.10, 'fee'] = 0
+    df['fee'] = df['fee'].fillna(0)
+    df['trade_fees'] = df['fee'] * df['btc_price']
 
     df['trade_multiplier'] = 0
     df.loc[df.trade_operation == 'B', 'trade_multiplier'] = 1
     df.loc[df.trade_operation == 'receive', 'trade_multiplier'] = 1
     df.loc[df.trade_operation == 'S', 'trade_multiplier'] = -1
     df.loc[df.trade_operation == 'send', 'trade_multiplier'] = -1
+
+    df['trade_quantity'] = df['trade_quantity'] * df['trade_multiplier']
 
     try:
         df['cash_value'] = abs(df['trade_price']) * abs(df['trade_quantity']) * df[
@@ -373,22 +380,22 @@ def specter_df(save_files=False, sort_by='trade_date'):
     # If there are changes, a notification method is started to alert user
 
     # TEST LINE ------------- Make this a new transaction forced into df
-    tester = {
-        'trade_date': datetime.now(),
-        'trade_currency': 'USD',
-        'trade_fees': 0,
-        'trade_quantity': 2,
-        'trade_multiplier': 1,
-        'trade_price': 10000,
-        'trade_asset_ticker': 'BTC',
-        'trade_operation': 'B',
-        'checksum': (5 * (10**19)),
-        'txid': 'test',
-        'address': 'test_address',
-        'amount': 2,
-        'status': 'Test_line',
-        'trade_account': 'trezor'
-    }
+    # tester = {
+    #     'trade_date': datetime.now(),
+    #     'trade_currency': 'USD',
+    #     'trade_fees': 0,
+    #     'trade_quantity': 2,
+    #     'trade_multiplier': 1,
+    #     'trade_price': 10000,
+    #     'trade_asset_ticker': 'BTC',
+    #     'trade_operation': 'B',
+    #     'checksum': (5 * (10**19)),
+    #     'txid': 'test',
+    #     'address': 'test_address',
+    #     'amount': 2,
+    #     'status': 'Test_line',
+    #     'trade_account': 'trezor'
+    # }
     # Comment / Uncomment code below for testing of including new transactions
     # Remove last 2 transactions here
     # df.drop(df.tail(2).index, inplace=True)
@@ -515,7 +522,9 @@ def transactions_fx():
 # UTILS -----------------------------------
 
 
-def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
+def clean_float(text):  # Function to clean CSV fields - leave only digits and .
+    if isinstance(text, float):
+        return (text)
     if text is None:
         return (0)
     acceptable = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "."]
@@ -523,6 +532,8 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     for char in text:
         if char in acceptable:
             str = str + char
+    if str == '':
+        return None
     str = float(str)
     return (str)
 

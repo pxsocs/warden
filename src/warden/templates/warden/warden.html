@@ -326,9 +326,9 @@
                             {{element[1]['trade_account']}}
                         </td>
                         <td class='text-right'>
-                            <a href="http://mynode.local:3002/tx/{{element[1]['trade_blockchain_id']}}" target="_blank">
-                                {{element[1]['trade_blockchain_id'][0:3]}}..{{element[1]['trade_blockchain_id'][-4:-1]}}
-                            </a>
+
+                            {{element[1]['trade_blockchain_id'][0:3]}}..{{element[1]['trade_blockchain_id'][-4:-1]}}
+
                         </td>
                         <td class='text-right'>
                             {{element[1]['confirmations'] | jformat(0)}}
@@ -456,12 +456,14 @@
                                         <tr class='text-right'>
                                             <th></th>
                                             <th class='text-left'>Date</th>
+                                            <th class='text-left'> Label </th>
                                             <th> Address </th>
                                             <th> TX id </th>
                                             <th> Confirmations </th>
                                             <th> Amount (&#8383)</th>
                                             <th> ₿ ({{current_app.fx['symbol']}})</th>
                                             <th> Cash ({{current_app.fx['symbol']}})</th>
+                                            <th> Fees ({{current_app.fx['symbol']}})</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -496,16 +498,15 @@
                                                 {{message}}
                                                 {%endif%}
                                             </td>
-                                            <td class='text-right'>
-                                                <a href="http://mynode.local:3002/address/{{tx[1]['address']}}"
-                                                    target="_blank">
-                                                    {{tx[1]['address'][0:3]}}...{{tx[1]['address'][-4:-1]}}
-                                                </a>
+                                            <td class='text-left'>
+                                                {{tx[1]['label']}}
                                             </td>
                                             <td class='text-right'>
-                                                <a href="http://mynode.local:3002/tx/{{tx[1]['txid']}}" target="_blank">
-                                                    {{tx[1]['txid'][0:3]}}...{{tx[1]['txid'][-4:-1]}}
-                                                </a>
+
+                                                {{tx[1]['address'][0:3]}}...{{tx[1]['address'][-4:-1]}}
+                                            </td>
+                                            <td class='text-right'>
+                                                {{tx[1]['txid'][0:3]}}...{{tx[1]['txid'][-4:-1]}}
                                             </td>
                                             <td class='text-right'>
                                                 {{tx[1]['confirmations'] | jformat(0)}}
@@ -518,6 +519,9 @@
                                             </td>
                                             <td class='text-right'>
                                                 {{tx[1]['cash_value'] | jformat(2)}}
+                                            </td>
+                                            <td class='text-right'>
+                                                {{tx[1]['trade_fees'] | jformat(2)}}
                                             </td>
                                         </tr>
                                         {%endfor%}

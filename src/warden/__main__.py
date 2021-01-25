@@ -101,7 +101,6 @@ def init_app(app):
     # Debug Mode?
     #  To debug the application set an environment variable:
     #  EXPORT WARDEN_STATUS=developer
-    flask_debug = False
     WARDEN_STATUS = os.environ.get("WARDEN_STATUS")
     if 'debug' in sys.argv or WARDEN_STATUS == "developer":
         print("  >> Debug is On")

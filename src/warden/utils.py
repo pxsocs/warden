@@ -19,6 +19,10 @@ from pathlib import Path
 from config import Config
 from warden_pricing_engine import tor_request
 from warden_decorators import MWT, timing
+from ansi_management import (warning, success, error, info, clear_screen, bold,
+                             muted, yellow, blue)
+
+from yaspin import yaspin
 
 import mhp as mrh
 
@@ -44,16 +48,33 @@ def update_config(config_file=Config.config_file):
         current_app.settings.write(file)
 
 
+def load_config():
+    # Load Config
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    config_file = os.path.join(basedir, 'config.ini')
+    CONFIG = configparser.ConfigParser()
+    CONFIG.read(config_file)
+    return (CONFIG)
+
+
 # Critical checks for specter
 def specter_checks():
-    specter_data = load_specter()
-    if specter_data == "unauthorized":
-        print("  Specter Login UNAUTHORIZED -- Check username and password")
-    elif specter_data['is_running']:
-        print("  Specter API is available [SUCCESS]")
-    elif not specter_data['is_running']:
-        print("  Specter API is available but Specter is not running")
-        print("  Login to Specter Server and check if it's running")
+    with yaspin(text="Checking Specter Server Status", color="cyan") as spinner:
+        try:
+            specter_data = load_specter()
+            if specter_data == "unauthorized":
+                spinner.fail("💥 ")
+                spinner.write(warning("    Specter Login UNAUTHORIZED -- Check username and password"))
+            elif specter_data['is_running']:
+                spinner.ok("✅ ")
+                spinner.write(success("    Specter API is available [SUCCESS]"))
+            elif not specter_data['is_running']:
+                spinner.fail("💥 ")
+                spinner.write(warning("    Specter is not running"))
+                print(warning("    Login to Specter Server and check if it's running"))
+        except Exception:
+            spinner.fail("💥 ")
+            spinner.write(warning("    Specter Server cannot be reached. Check if it's running."))
 
 
 @MWT(timeout=10)
@@ -73,7 +94,7 @@ def load_specter():
             r = requests.get(url + '/api/v1alpha/specter', auth=(username, password))
             specter = json.loads(r.json())
         except Exception as e:
-            return(f"Error {e}")
+            return(f"Error {str(e)}")
 
     else:
         url = url + '/api/v1alpha/specter/'

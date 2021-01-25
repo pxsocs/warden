@@ -8,6 +8,7 @@
 import json
 import os
 import urllib
+import configparser
 from datetime import datetime
 
 from warden_decorators import MWT
@@ -18,6 +19,15 @@ from time import time
 
 import pandas as pd
 import requests
+
+
+def load_config():
+    # Load Config
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    config_file = os.path.join(basedir, 'config.ini')
+    CONFIG = configparser.ConfigParser()
+    CONFIG.read(config_file)
+    return (CONFIG)
 
 
 # Returns the current application path
@@ -105,11 +115,11 @@ def tor_request(url, tor_only=True, method="get"):
     # url:       url to get or post
     # tor_only:  request will only be executed if tor is available
     # method:    'get or' 'post'
-
     global TOR
     tor_check = TOR
     if tor_check["status"] is True:
         try:
+            # This is chrome, you can set whatever browser you like
             # Activate TOR proxies
             session = requests.session()
             session.proxies = {
@@ -124,7 +134,7 @@ def tor_request(url, tor_only=True, method="get"):
         except (
                 requests.exceptions.ConnectionError,
                 requests.exceptions.ReadTimeout,
-        ) as e:
+        ):
             return "ConnectionError"
     else:
         if tor_only:
@@ -152,6 +162,7 @@ HISTORICAL_PROVIDER_PRIORITY = [
     'bitmex'
 ]
 FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
+
 
 # How to include new API providers (historical prices):
 # Step 1:
@@ -316,7 +327,7 @@ class PriceData():
                 if filetime.date() == today:
                     price_pickle = pd.read_pickle(self.filename)
                     return (price_pickle)
-            except Exception as e:
+            except Exception:
                 pass
         # File not found ot not new. Need to update the matrix
         # Cycle through the provider list until there's satisfactory data
@@ -389,7 +400,7 @@ class PriceData():
                         '5. volume': 'volume'
                     })
                 df_save = df[['close', 'open', 'high', 'low', 'volume']]
-                df.index.names = ['date']
+                df_save.index.names = ['date']
             except Exception as e:
                 self.errors.append(e)
                 df_save = None
@@ -409,7 +420,7 @@ class PriceData():
                         '5. volume': 'volume'
                     })
                 df_save = df[['close', 'open', 'high', 'low', 'volume']]
-                df.index.names = ['date']
+                df_save.index.names = ['date']
             except Exception as e:
                 self.errors.append(e)
                 df_save = None
@@ -572,6 +583,7 @@ class ApiKeys():
 # Class instance with api keys loader and saver
 api_keys_class = ApiKeys()
 api_keys = api_keys_class.loader()
+config = load_config()
 
 
 # Loop through all providers to get the first non-empty df
@@ -592,7 +604,8 @@ def price_data(ticker):
 
 
 # Returns price data in current user's currency
-def price_data_fx(ticker):  # BTC
+def price_data_fx(ticker, diags=False):
+    prices = None
     FX = fx_rate()['base']
     GBTC_PROVIDER_PRIORITY = [
         'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock', 'bitmex'
@@ -603,14 +616,22 @@ def price_data_fx(ticker):  # BTC
         provider_list = HISTORICAL_PROVIDER_PRIORITY
 
     for provider in provider_list:
-        price_data = PriceData(ticker, PROVIDER_LIST[provider])
+        price_data = PriceData(ticker, PROVIDER_LIST[provider], diags)
         if price_data.df is not None:
-            break
+            if price_data.df['close'].sum() != 0:
+                break
+
     # Loop through FX providers until a df is filled
     for provider in FX_PROVIDER_PRIORITY:
+        if diags:
+            print(f"\n     Trying provider: {provider}")
         prices = price_data.df_fx(FX, PROVIDER_LIST[provider])
         if prices is not None:
             break
+        else:
+            if diags:
+                print("    [x] Returned Empty Historical Data. Errors:")
+                print(price_data.errors)
     return (prices)
 
 
@@ -776,8 +797,9 @@ def fxsymbol(fx, output='symbol'):
 # Setting a timeout to 10 as fx rates don't change so often
 @MWT(timeout=1)
 def fx_rate():
-    with current_app.app_context():
-        FX = current_app.settings['PORTFOLIO']['base_fx']
+    from utils import load_config
+    config = load_config()
+    FX = config['PORTFOLIO']['base_fx']
 
     # This grabs the realtime current currency conversion against USD
     try:
@@ -866,7 +888,7 @@ PROVIDER_LIST = {
                   field_dict={
                       'function': 'DIGITAL_CURRENCY_DAILY',
                       'market': 'USD',
-                      'apikey': api_keys['alphavantage']['api_key']
+                      'apikey': config['API']['alphavantage']
                   },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'aa_stock':
@@ -876,7 +898,7 @@ PROVIDER_LIST = {
                   field_dict={
                       'function': 'TIME_SERIES_DAILY',
                       'outputsize': 'full',
-                      'apikey': api_keys['alphavantage']['api_key']
+                      'apikey': config['API']['alphavantage']
                   },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'fmp_stock':
@@ -886,7 +908,8 @@ PROVIDER_LIST = {
         ticker_field='',
         field_dict={
             'from': '2001-01-01',
-            'to:': '2099-12-31'
+            'to:': '2099-12-31',
+            'apikey': config['API']['fmp']
         },
         doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'
     ),
@@ -898,7 +921,7 @@ PROVIDER_LIST = {
                       'function': 'FX_DAILY',
                       'outputsize': 'full',
                       'from_symbol': 'USD',
-                      'apikey': api_keys['alphavantage']['api_key']
+                      'apikey': config['API']['alphavantage']
                   },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'cc_digital':
@@ -912,7 +935,7 @@ PROVIDER_LIST = {
             'allData':
             'true',
             'api_key':
-            '39667965c99dfa9f5c3c368867ae776e019f46275fcba2d1d3fe3e04812842e1'
+            config['API']['cryptocompare']
         },
         doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
@@ -927,7 +950,7 @@ PROVIDER_LIST = {
             'allData':
             'true',
             'api_key':
-            '39667965c99dfa9f5c3c368867ae776e019f46275fcba2d1d3fe3e04812842e1'
+            config['API']['cryptocompare']
         },
         doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
@@ -950,7 +973,7 @@ PROVIDER_LIST = {
             'tsyms':
             'USD',
             'api_key':
-            '39667965c99dfa9f5c3c368867ae776e019f46275fcba2d1d3fe3e04812842e1'
+            config['API']['cryptocompare']
         },
         doc_link=None),
     'cc_realtime_full':
@@ -962,7 +985,7 @@ PROVIDER_LIST = {
             'tsyms':
             'USD',
             'api_key':
-            '39667965c99dfa9f5c3c368867ae776e019f46275fcba2d1d3fe3e04812842e1'
+            config['API']['cryptocompare']
         },
         doc_link='https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'
     ),
@@ -973,7 +996,7 @@ PROVIDER_LIST = {
                   field_dict={
                       'function': 'CURRENCY_EXCHANGE_RATE',
                       'to_currency': 'USD',
-                      'apikey': api_keys['alphavantage']['api_key']
+                      'apikey': config['API']['alphavantage']
                   },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'aa_realtime_stock':
@@ -982,7 +1005,7 @@ PROVIDER_LIST = {
                   ticker_field='symbol',
                   field_dict={
                       'function': 'GLOBAL_QUOTE',
-                      'apikey': api_keys['alphavantage']['api_key']
+                      'apikey': config['API']['alphavantage']
                   },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'fp_realtime_stock':
@@ -990,7 +1013,7 @@ PROVIDER_LIST = {
         name='fprealtimestock',
         base_url='https://financialmodelingprep.com/api/v3/stock/real-time-price',
         ticker_field='',
-        field_dict='',
+        field_dict={'apikey': config['API']['fmp']},
         doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'
     )
 }

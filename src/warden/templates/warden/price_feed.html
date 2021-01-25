@@ -1,0 +1,145 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+
+<div class="container-fluid">
+  <div class="row" style="padding-top: 20px;">
+    <div class="col-sm-4">
+      <div class="input-group-sm mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="basic-addon1">Ticker to Test </span>
+          <input type="text" id="ticker" class="form-control text-right" value="BTC" aria-describedby="basic-addon1">
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-8">
+    </div>
+  </div>
+  <div class="row" style="padding-top: 20px;">
+    <div class="col-sm-12">
+      <table class="table tableFixHead">
+        <thead class='thead-dark'>
+          <tr>
+            <th class='text-left'>Provider ID</th>
+            <th class='text-center'>API Call</th>
+            <th class='text-center'>API Docs</th>
+            <th class='text-center'>API Key</th>
+            <th class='text-center'>Provider Errors</th>
+            <th class='text-center'>Ticker</th>
+            <th class='text-center'>Closing Price</th>
+            <th class='text-center'>Data Range</th>
+            <th class='text-center'>Feed Message</th>
+            <th class='text-center'>Realtime Price</th>
+            <th class='text-center'>Realtime Errors</th>
+          </tr>
+        </thead>
+        <tbody>
+          {%for key, value in return_dict.items()%}
+          <tr>
+            <td>{{key}}</td>
+            <td class='text-center'>
+              {%if value['provider_info']['globalURL']%}
+              <a href='{{value['provider_info']['globalURL']}}' target='_blank'>
+                <i class="fas fa-phone-square-alt fa-lg"></i>
+              </a>
+              {%endif%}
+            </td>
+
+            <td class='text-center'>
+              {%if value['provider_info']['doc_link']%}
+              <a href='{{value['provider_info']['doc_link']}}' target='_blank'>
+                <i class="fas fa-book fa-lg"></i>
+              </a>
+              {%endif%}
+            </td>
+
+            <td class='text-center'>
+              {%if value['provider_info']['field_dict']['apikey']%}
+              <button type="button" class="btn btn-sm btn-info" data-offset=-200 data-trigger="focus"
+                data-placement="right" data-toggle="popover" title="API Key"
+                data-content="{{value['provider_info']['field_dict']['apikey']}}">
+                <i class="fas fa-key"></i>
+              </button>
+              {%endif%}
+            </td>
+
+            <td class='text-center'>
+              {%if value['provider_info']['errors']%}
+              <button type="button" class="btn btn-sm btn-danger" data-offset=-200 data-trigger="focus"
+                data-placement="right" data-toggle="popover" title="API Key"
+                data-content="{{value['provider_info']['errors']}}">
+                <i class="fas fa-exclamation-circle"></i>
+              </button>
+              {%endif%}
+            </td>
+
+            <td class='text-center'>
+              {{value['price_data']['ticker']}}
+            </td>
+            <td class='text-center'>
+              {%if value['price_data']['last_close']%}
+              {{value['price_data']['last_close'] | jformat(2)}}
+              {%endif%}
+            </td>
+            <td class='text-center'>
+              {%if value['price_data']['first_update']%}
+              {{value['price_data']['first_update']}} to {{value['price_data']['last_update']}}
+              {%endif%}
+            </td>
+
+            <td class='text-center'>
+              {%if value['price_data']['errors']%}
+              <button type="button" class="btn btn-sm btn-danger" data-offset=-200 data-trigger="focus"
+                data-placement="right" data-toggle="popover" title="API Key"
+                data-content="{{value['price_data']['errors']}}">
+                <i class="fas fa-exclamation-circle"></i>
+              </button>
+              {%endif%}
+            </td>
+
+            <td class='text-center'>
+              {% if value['realtime']['price'] is number %}
+              {{value['realtime']['price'] | jformat(2)}}
+              {%else%}
+              {%if (value['realtime']['price'] != None) and ((value['realtime']['price'] | length) > 20)%}
+
+              <button type="button" class="btn btn-sm btn-success" data-offset=-200 data-trigger="focus"
+                data-placement="right" data-toggle="popover" title="Realtime data returned"
+                data-content="{{value['realtime']['price']}}">
+                <i class="fas fa-info-circle"></i>
+              </button>
+
+              {%else%}
+              {{value['realtime']['price']}}
+              {%endif%}
+              {%endif%}
+            </td>
+            <td class='text-center'>
+              {%if value['realtime']['error']%}
+              <button type="button" class="btn btn-sm btn-danger" data-offset=-200 data-trigger="focus"
+                data-placement="right" data-toggle="popover" title="API Key"
+                data-content="{{value['realtime']['error']}}">
+                <i class="fas fa-exclamation-circle"></i>
+              </button>
+              {%endif%}
+
+            </td>
+          </tr>
+          {%endfor%}
+        </tbody>
+      </table>
+
+
+    </div>
+  </div>
+</div>
+
+</br></br>
+
+<script>
+  $(function () {
+    $('[data-toggle="popover"]').popover()
+  });
+</script>
+
+{% endblock content %}
