@@ -6,7 +6,7 @@ from setuptools import setup, find_namespace_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-current_version = '0.9.0.6'
+current_version = '0.9.0.7'
 
 with open("src/alphazeta/warden/static/config/version.txt", "w") as text_file:
     print(f"{current_version}", file=text_file)

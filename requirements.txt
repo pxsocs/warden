@@ -13,3 +13,4 @@ jsonify
 yaspin
 ansi
 emoji
+beautifulsoup4

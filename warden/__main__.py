@@ -1,3 +1,5 @@
+import pkg_resources
+import subprocess
 from config import Config
 from backgroundjobs import (background_settings_update,
                             background_specter_update)
@@ -10,14 +12,12 @@ import os
 import sys
 import atexit
 import warnings
-
 from logging.handlers import RotatingFileHandler
 from flask import Flask
-
 from flask_mail import Mail
 from pathlib import Path
-
 from apscheduler.schedulers.background import BackgroundScheduler
+
 
 # Make sure current libraries are found in path
 current_path = os.path.abspath(os.path.dirname(__file__))
