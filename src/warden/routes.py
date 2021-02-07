@@ -1,15 +1,16 @@
 from flask import (Blueprint, redirect, render_template, abort,
                    flash, session, request, current_app, url_for, jsonify)
-from warden_modules import (list_specter_wallets, warden_metadata, positions,
+from warden_modules import (warden_metadata, positions,
                             positions_dynamic, get_price_ondate,
-                            generatenav, specter_df, check_services,
-                            current_path, specter_update, regenerate_nav,
-                            home_path, clean_float)
+                            generatenav, specter_df,
+                            current_path, regenerate_nav,
+                            home_path)
 
 from warden_pricing_engine import (test_tor, tor_request, price_data_rt,
                                    fx_rate, price_data_fx, PROVIDER_LIST,
                                    PriceData)
-from utils import update_config, diags, load_specter, heatmap_generator
+from utils import update_config, heatmap_generator
+from operator import itemgetter
 
 from datetime import datetime, timedelta
 from dateutil import parser
@@ -37,21 +38,12 @@ def specter_test():
     messages = None
     # Load basic specter data
     try:
-        specter = load_specter()
-
-        if 'error' in specter:
-            return_dict['specter_status'] = 'Error'
-            messages = specter
-            return (return_dict, messages)
-        if specter == 'unauthorized':
-            return_dict['specter_status'] = 'Unauthorized'
-            messages = 'Unauthorized - check Specter login credentials'
-        else:
-            return_dict['specter_isrunning'] = specter['is_running']
-            return_dict['specter_lastupdate'] = specter['last_update']
-            return_dict['specter_wallets'] = specter['wallets_names']
-            if specter['is_running'] is False:
-                messages = 'Specter Not Running'
+        specter = current_app.specter.init_session()
+        if type(specter) == str:
+            if 'Specter Error' in specter:
+                return_dict['specter_status'] = 'Error'
+                messages = specter
+                return (return_dict, messages)
 
     except Exception as e:
         return_dict['specter_status'] = 'Error'
@@ -76,33 +68,40 @@ def before_request():
         "warden.setup", "warden.testtor", "warden.gitreleases",
         "warden.realtime_btc", "warden.data_folder", "warden.testtor",
         "warden.checkservices", "warden.check_activity", "warden.warden_metadata",
-        "warden.node_info", "warden.specter_json"
+        "warden.specter_json", "warden.specter_auth"
     ]
     if request.endpoint in exclude_list:
         return
-    need_setup = False
-    txs_empty = False
+
     # Check Tor
     tor = current_app.tor
-    need_setup = not tor['status']
-    # Get Services
-    services = current_app.services
-    if services == 'loading':
-        flash("Specter still loading. Data may be outdated.", "warning")
 
+    # Create empty status dictionary
+    meta = {
+        'tor': tor,
+        'specter_reached': True,
+        'specter_auth': True
+    }
+    # Save this in Flask session
+    session['status'] = json.dumps(meta)
+
+    # Test Specter
     specter_dict, specter_messages = specter_test()
     if specter_messages:
-        abort(500, specter_messages)
+        if 'Connection refused' in specter_messages:
+            meta['specter_reached'] = False
+            flash('Having some difficulty reaching Specter Server. ' +
+                  f'Please make sure it is running at {current_app.specter.base_url}. Using cached data. Last Update: ' +
+                  current_app.specter.home_parser()['last_update'], 'warning')
+        if 'Unauthorized Login' in specter_messages:
+            meta['specter_reached'] = False
+            return redirect(url_for('warden.specter_auth'))
 
-    if need_setup:
-        meta = {
-            'tor': tor,
-            'services': services,
-            'txs': txs_empty
-        }
-        messages = json.dumps(meta)
-        session['messages'] = messages
-        return redirect(url_for("warden.setup"))
+        else:
+            abort(500, specter_messages)
+
+    # Update session status
+    session['status'] = json.dumps(meta)
 
 
 # Support method to check if donation was acknowledged
@@ -120,15 +119,8 @@ def donate_check():
     return (donated)
 
 
-# Support method to check for specter wallets
-def have_specter_wallets(load=True):
-    wallets = list_specter_wallets(load)
-    if (wallets == []) or (wallets == None):
-        return False
-    return True
-
-
 # Main page for WARden
+
 @ warden.route("/", methods=['GET'])
 @ warden.route("/warden", methods=['GET'])
 def warden_page():
@@ -138,7 +130,7 @@ def warden_page():
     # Get positions and prepare df for delivery
     df = positions()
     if df.empty:
-        msg = "No Transactions were found at Specter. Check Connections."
+        msg = "Specter has no transaction history or is down. Open Specter Server and check."
         flash(msg, "danger")
         abort(500, msg)
     if df.index.name != 'trade_asset_ticker':
@@ -186,27 +178,29 @@ def warden_page():
             with open(counter_file, 'w') as fp:
                 json.dump(counter, fp)
 
-    alerts = False
     meta = warden_metadata()
-    if not meta['warden_enabled']:
-        abort(500, 'WARden is not Enabled. Check your Connections.')
-    if isinstance(meta['old_new_df_old'], pd.DataFrame):
-        if not meta['old_new_df_old'].empty:
-            alerts = True
-    if isinstance(meta['old_new_df_new'], pd.DataFrame):
-        if not meta['old_new_df_new'].empty:
-            alerts = True
+
+    sorted_wallet_list = []
+    for wallet in current_app.specter.wallet_alias_list():
+        wallet_df = meta['full_df'].loc[meta['full_df']['wallet_alias'] == wallet]
+        if wallet_df.empty:
+            balance = 0
+        else:
+            balance = wallet_df['amount'].sum()
+        sorted_wallet_list.append((wallet, balance))
+
+    sorted_wallet_list = sorted(sorted_wallet_list, reverse=True, key=itemgetter(1))
+    sorted_wallet_list = [i[0] for i in sorted_wallet_list]
 
     templateData = {
         "title": "Portfolio Dashboard",
         "warden_metadata": meta,
-        "warden_enabled": warden_metadata()['warden_enabled'],
         "portfolio_data": df,
         "FX": current_app.settings['PORTFOLIO']['base_fx'],
         "donated": donated,
-        "alerts": alerts,
-        "specter": specter_update(),
+        "alerts": alert_activity(),
         "current_app": current_app,
+        "sorted_wallet_list": sorted_wallet_list
     }
     return (render_template('warden/warden.html', **templateData))
 
@@ -227,42 +221,6 @@ def list_transactions():
                            current_app=current_app)
 
 
-# Returns notification if no wallets were found at Specter
-@ warden.route("/setup", methods=['GET'])
-def setup():
-    need_setup = False
-    txs_empty = False
-    # Check Tor
-    tor = current_app.tor
-    need_setup = not tor['status']
-    # Get Services
-    services = current_app.services
-    need_setup = not services['specter']['running']
-    # Are Wallets Found?
-    specter_wallets = have_specter_wallets()
-    need_setup = not specter_wallets
-    # Transactions found?
-    df = positions()
-    if df.empty:
-        txs_empty = need_setup = True
-    meta = {
-        'tor': tor,
-        'services': services,
-        'specter_wallets': specter_wallets,
-        'txs': txs_empty,
-        'need_setup': need_setup,
-    }
-    messages = json.dumps(meta)
-    session['messages'] = messages
-    templateData = {
-        "title": "System Status",
-        "donated": donate_check(),
-        "messages": json.loads(session['messages']),
-        "specter": specter_update(),
-        "current_app": current_app,
-    }
-    return (render_template('warden/warden_empty.html', **templateData))
-
 # Update user fx settings in config.ini
 
 
@@ -278,56 +236,47 @@ def update_fx():
     return redirect(redir)
 
 
-# Save current folder to json
-@warden.route('/data_folder', methods=['GET', 'POST'])
-def data_folder():
+@warden.route('/specter_auth', methods=['GET', 'POST'])
+def specter_auth():
     if request.method == 'GET':
-        try:
-            return_data = current_app.settings['SPECTER']['specter_datafolder']
-        except Exception:
-            return_data = None
-        return(json.dumps(return_data))
+        templateData = {
+            "title": "Login to Specter",
+            "donated": donate_check(),
+            "status": json.loads(session['status']),
+            "current_app": current_app,
+        }
+        return (render_template('warden/specter_auth.html', **templateData))
 
     if request.method == 'POST':
-        results = request.form
-        # Test this data folder
-        try:
-            data_folder = results['data_folder']
-            # Test if can get specter data
-            specter = specter_update(load=False, data_folder=data_folder)
-            # Check Status
-            is_configured = specter.is_configured
-            is_running = specter.is_running
-            wallets = specter.wallet_manager.wallets_name
+        url = request.form.get('url')
+        if url[-1] != '/':
+            url += '/'
+        current_app.settings['SPECTER']['specter_url'] = url
+        current_app.settings['SPECTER']['specter_login'] = request.form.get('username')
+        current_app.settings['SPECTER']['specter_password'] = request.form.get('password')
+        update_config()
+        # Try these credentials
+        current_app.specter.login_payload = {
+            'username': current_app.settings['SPECTER']['specter_login'],
+            'password': current_app.settings['SPECTER']['specter_password']
+        }
+        current_app.specter.base_url = url
+        specter_dict, specter_messages = specter_test()
+        if specter_messages is not None:
+            if 'Connection refused' in specter_messages:
+                flash('Having some difficulty reaching Specter Server. ' +
+                      f'Please make sure it is running at {current_app.specter.base_url}', 'warning')
+                return redirect(url_for('warden.specter_auth'))
+            if 'Unauthorized Login' in specter_messages:
+                flash('Invalid Credentials or URL. Try again. ', 'danger')
+                return redirect(url_for('warden.specter_auth'))
 
-        except Exception as e:
-            return json.dumps({"message": "Error: " + str(e)})
-
-        message = ""
-        ok_save = True
-        if not is_configured:
-            ok_save = False
-            message += "Specter does not seem to be configured in this folder. "
-
-        if not is_running:
-            ok_save = False
-            message += "Specter does not seem to be running in this folder. "
-
-        if wallets == {}:
-            ok_save = False
-            message += "No wallets found - check folder."
-
-        if ok_save:
-            current_app.settings['SPECTER']['specter_datafolder'] = data_folder
-            update_config()
-            message += "Specter Data folder found. Saved Successfully."
-
-        return json.dumps({"message": message})
+        # Update Config
+        flash("Success. Connected to Specter Server.", "success")
+        return redirect(url_for('warden.warden_page'))
 
 
-# API End Point checks for wallet activity
-@ warden.route("/check_activity", methods=['GET'])
-def check_activity():
+def alert_activity():
     alerts = False
     ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
     with open(ack_file) as data_file:
@@ -345,9 +294,17 @@ def check_activity():
         if elapsed < EXPIRED:
             alerts = True
             regenerate_nav()
-    except Exception as e:
+    except Exception:
         alerts = False
 
+    return (alerts)
+
+# API End Point checks for wallet activity
+
+
+@ warden.route("/check_activity", methods=['GET'])
+def check_activity():
+    alerts = alert_activity()
     return (json.dumps(alerts))
 
 
@@ -422,7 +379,7 @@ def positions_json():
         dfdyn, piedata = positions_dynamic()
         btc_price = price_data_rt("BTC") * fx_rate()['fx_rate']
         dfdyn = dfdyn.to_dict(orient='index')
-    except Exception as e:
+    except Exception:
         dfdyn = piedata = None
         btc_price = 0
 
@@ -463,35 +420,12 @@ def dismiss_notification():
     return json.dumps("Done")
 
 
-# API end point to return node info
-# MyNode Bitcoin Data for front page
-@ warden.route("/node_info", methods=["GET"])
-def node_info():
-    data = specter_update(load=True)
-    status = {
-        'info': data['info'],
-        'bitcoin': data['network_info'],
-        'services': check_services(load=True),
-        'last_update': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    }
-    return simplejson.dumps(status, ignore_nan=True)
-
-
-# API end point to return service status
-@ warden.route("/services", methods=["GET"])
-def checkservices():
-    services = check_services()
-    return simplejson.dumps(services, ignore_nan=True)
-
-
 # API end point to return Specter data
 # args: ?load=True (True = loads saved json, False = refresh data)
 @ warden.route("/specter", methods=["GET"])
 def specter_json():
-    load = request.args.get("load")
-    load = True if not load else load
-    specter = specter_update(load=load)
-    return simplejson.dumps(specter, ignore_nan=True)
+    data = current_app.specter.home_parser(),
+    return simplejson.dumps(data, ignore_nan=True)
 
 
 # Latest Traceback message

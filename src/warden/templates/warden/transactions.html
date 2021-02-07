@@ -64,20 +64,14 @@
             {{transaction[1].trade_account}}
           </td>
           <td class="text-right">
-            <a
-              href="http://mynode.local:3002/address/{{transaction[1]['address']}}"
-              target="_blank"
-            >
-              {{transaction[1]['address'][0:3]}}...{{transaction[1]['address'][-4:-1]}}
-            </a>
+
+            {{transaction[1]['address'][0:3]}}...{{transaction[1]['address'][-4:-1]}}
+
           </td>
           <td class="text-right">
-            <a
-              href="http://mynode.local:3002/tx/{{transaction[1]['txid']}}"
-              target="_blank"
-            >
-              {{transaction[1]['txid'][0:3]}}...{{transaction[1]['txid'][-4:-1]}}
-            </a>
+
+            {{transaction[1]['txid'][0:3]}}...{{transaction[1]['txid'][-4:-1]}}
+
           </td>
           <td class="text-right">
             {{transaction[1]['confirmations'] | jformat(0)}}

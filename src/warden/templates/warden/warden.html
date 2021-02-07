@@ -85,19 +85,19 @@
                     <td id='latest_btc_price' class="text-center border-bottom hinumbersmall" data-toggle="tooltip"
                         data-placement="top" title="Bitcoin's Latest Price">
                         <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
-                            height="30"></img></img>
+                            height="30"></img>
                     </td>
 
                     <td id='latest_btc_block' class="text-center border-bottom hinumbersmall small"
                         data-toggle="tooltip" data-placement="top" title="Bitcoin's Latest Block">
                         <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
-                            height="30"></img></img>
+                            height="30"></img>
                     </td>
 
                     <td class="border-bottom hinumbersmall text-right small">
                         <span id="lstupd">
                             <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
-                                height="30"></img></img>
+                                height="30"></img>
                         </span>
 
                     </td>
@@ -160,7 +160,7 @@
 
                         </th>
                         <th class="text-right">
-                            Position ({{current_app.fx['symbol']}})
+                            Balance ({{current_app.fx['symbol']}})
                         </th>
                         <th class="text-right small">
                             % of total
@@ -236,7 +236,6 @@
         <!-- END Portfolio Snapshot section  -->
 
         <!-- START Address activity ALERTS -->
-
         {%if alerts%}
         {%set changes_detected = true%}
         <div class="content-section table-responsive">
@@ -285,9 +284,7 @@
                             {{element[1]['trade_account']}}
                         </td>
                         <td class='text-right'>
-                            <a href="http://mynode.local:3002/tx/{{element[1]['trade_blockchain_id']}}" target='_blank'>
-                                {{element[1]['trade_blockchain_id'][0:3]}}..{{element[1]['trade_blockchain_id'][-4:-1]}}
-                            </a>
+                            {{element[1]['trade_blockchain_id'][0:3]}}..{{element[1]['trade_blockchain_id'][-4:-1]}}
                         </td>
                         <td class='text-right'>
                             {{element[1]['amount'] | jformat(4)}}
@@ -364,20 +361,19 @@
                         <th></th>
                         <th class='text-left'> Name </th>
                         <th> Device(s) </th>
-                        <th> Position </th>
+                        <th> Balance </th>
                         <th> # </th>
                         <th> Sigs Required </th>
-                        <th> Address Type </th>
-                        <th> Pending PBSTs </th>
                         <th> Last Activity </th>
                         <th> </th>
                     </tr>
                 </thead>
                 <tbody>
-                    {%for wallet in warden_metadata['wallet_list']%}
-                    {%set wallet_alias = specter['name_alias'][wallet]%}
-                    {%if warden_metadata['txs'][wallet_alias].empty%}
-                    {%if warden_metadata['scan'][wallet_alias]%}
+
+                    {%for wallet in sorted_wallet_list%}
+                    {% set wallet_df = warden_metadata['full_df'].loc[warden_metadata['full_df']['wallet_alias'] == wallet] %}
+
+                    {%if current_app.specter.rescan_progress(wallet)['active']%}
                     <div class="alert alert-dark" role="alert"><i class="fab fa-searchengin fa-lg"></i>&nbsp;&nbsp;
                         Wallet <span style='color: darkslategray; font-weight: bold;'>{{wallet}}</span> is scanning for
                         transactions
@@ -388,54 +384,42 @@
                         </span>
                     </div>
 
-                    {%else%}
-                    <div class="alert alert-info text-small" role="alert"><i class="fas fa-info-circle"></i>&nbsp;&nbsp;
-                        No Txs Found for Wallet {{wallet}}</div>
                     {%endif%}
-                    {%else%}
-                    {%if not warden_metadata['txs'][wallet_alias].empty%}
-                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet_alias}}"
+
+                    {%if not wallet_df.empty%}
+                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet}}"
                         class="accordion-toggle">
                         <td>
                             <i class="far fa-plus-square"></i>
                         </td>
                         <td class='text-left'>
-                            {{wallet}}
+                            {{current_app.specter.home_parser()['wallet_dict'][wallet]['name']}}
                         </td>
                         <td>
-                            {%if current_app.wallets[wallet_alias][wallet_alias]['devices']%}
-                            {%for element in current_app.wallets[wallet_alias][wallet_alias]['devices']%}
-                            {{element}}<br>
+
+                            {%for device in current_app.specter.wallet_info(wallet)['devices'].keys()%}
+                            {{current_app.specter.home_parser()['device_dict'][device]['name']}}
                             {%endfor%}
-                            {%endif%}
+
                         </td>
                         <td class='text-right'>
-                            {{warden_metadata['txs'][wallet_alias]['amount'].sum() | jformat(4)}}
+                            {{wallet_df['amount'].sum() | jformat(4)}}
                         </td>
                         <td class='text-right'>
-                            {{warden_metadata['txs'][wallet_alias]['amount'].count() | jformat(0)}}
+                            {{wallet_df['amount'].count() | jformat(0)}}
                         </td>
                         <td>
-                            {{current_app.wallets[wallet_alias][wallet_alias]['sigs_required']}}
+                            {{current_app.specter.wallet_info(wallet)['subtitle']}}
                         </td>
+
                         <td>
-                            {{current_app.wallets[wallet_alias][wallet_alias]['address_type']}}
+                            {{(wallet_df.time.max() | epoch) | time_ago}}
                         </td>
-                        <td>
-                            {% if current_app.wallets[wallet_alias][wallet_alias]['pending_psbts'] == {}%}
-                            None
-                            {%else%}
-                            {{current_app.wallets[wallet_alias][wallet_alias]['pending_psbts']}}
-                            {%endif%}
-                        </td>
-                        <td>
-                            {{(warden_metadata['txs'][wallet_alias].time.max() | epoch) | time_ago}}
-                        </td>
-                        {%if current_app.wallets[wallet_alias]['scan']%}
+                        {%if current_app.specter.rescan_progress(wallet)['active']%}
                         <td class='td-part-fill'
-                            style="background-size: {{(current_app.wallets[wallet_alias]['scan'] * 100)}}% 100%">
+                            style="background-size: {{(current_app.specter.rescan_progress(wallet)['progress'] * 100)}}% 100%">
                             Scanning... (
-                            {{(current_app.wallets[wallet_alias]['scan'] * 100) | jformat(2)}}%)
+                            {{(current_app.specter.rescan_progress(wallet)['progress'] * 100) | jformat(2)}}%)
                         </td>
                         {%else%}
                         <td>
@@ -443,9 +427,9 @@
                         {%endif%}
                     </tr>
 
-                    <tr data-toggle="collapse" data-target="#txs_{{wallet_alias}}" class="accordion-toggle">
+                    <tr data-toggle="collapse" data-target="#txs_{{wallet}}" class="accordion-toggle">
                         <td colspan="10" class="hiddenRow">
-                            <div id="txs_{{wallet_alias}}" class="accordian-body collapse" style='padding-top: 15px;'>
+                            <div id="txs_{{wallet}}" class="accordian-body collapse" style='padding-top: 15px;'>
                                 <div class="alert alert-secondary" role="alert">Transactions&nbsp;<i
                                         class="fas fa-exchange-alt"></i></div>
 
@@ -467,9 +451,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {%for tx in
-                                        warden_metadata['full_df'][warden_metadata['full_df']['wallet_alias'] ==
-                                        wallet_alias].iterrows()%}
+                                        {%for tx in wallet_df.iterrows()%}
                                         {%set color=''%}
                                         {%set message=''%}
                                         {%if tx[1]['txid'] in warden_metadata['old_new_df_old']['TXID']%}
@@ -534,47 +516,37 @@
                         </td>
                     </tr>
                     {%else%}
-                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet_alias}}"
+                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet}}"
                         class="accordion-toggle">
-                        <td data-toggle="tooltip" data-placement="right"
-                            title="There was an error importing UTXOs from this wallet">
+                        <td data-toggle="tooltip" data-placement="right" title="No Transactions Found for this Wallet">
                             <i class="fas fa-exclamation-circle"></i>
                         </td>
                         <td class='text-left'>
-                            {{warden_metadata['wallet_info'][wallet]['name']}}
+                            {{current_app.specter.home_parser()['wallet_dict'][wallet]['name']}}
                         </td>
                         <td>
-                            {%for device in warden_metadata['wallet_info'][wallet]['devices']%}
-                            {{device}}&nbsp;&nbsp;
+                            {%for device in current_app.specter.wallet_info(wallet)['devices'].keys()%}
+                            {{current_app.specter.home_parser()['device_dict'][device]['name']}}
                             {%endfor%}
+
                         </td>
                         <td class='text-right'>
-                            N/A
+                            --
                         </td>
                         <td class='text-right'>
-                            {{warden_metadata['txs_count'][wallet]['info']['txcount']}}
+                            --
                         </td>
                         <td>
-                            {{warden_metadata['wallet_info'][wallet]['sigs_required']}}
+                            {{current_app.specter.wallet_info(wallet)['subtitle']}}
                         </td>
                         <td>
-                            {{warden_metadata['wallet_info'][wallet]['address_type']}}
+                            Never
                         </td>
-                        <td>
-                            {% if warden_metadata['wallet_info'][wallet]['pending_psbts'] == {}%}
-                            None
-                            {%else%}
-                            {{warden_metadata['wallet_info'][wallet]['pending_psbts']}}
-                            {%endif%}
-                        </td>
-                        <td>
-                            N/A
-                        </td>
-                        {%if specter['wallets']['wallets'][wallet]['info']['scanning']%}
+                        {%if current_app.specter.rescan_progress(wallet)['active']%}
                         <td class='td-part-fill'
-                            style="background-size: {{(specter['wallets']['wallets'][wallet]['info']['scanning']['progress'] * 100)}}% 100%">
+                            style="background-size: {{(current_app.specter.rescan_progress(wallet)['progress'] * 100)}}% 100%">
                             Scanning... (
-                            {{(specter['wallets']['wallets'][wallet]['info']['scanning']['progress'] * 100) |
+                            {{(current_app.specter.rescan_progress(wallet)['progress'] * 100) |
                             jformat(2)}}%)
                         </td>
                         {%else%}
@@ -583,7 +555,6 @@
                         </td>
                         {%endif%}
                     </tr>
-                    {%endif%}
                     {%endif%}
                     {%endfor%}
                 </tbody>
@@ -610,7 +581,7 @@
                             </th>
 
                             <th class="text-right">
-                                Position
+                                Balance
                             </th>
 
                             <th class="text-right">
@@ -849,256 +820,287 @@
         </div>
         <!-- END Market Data Section -->
 
-        <!-- START Mempool  Section -->
-        <div class="content-section table-responsive">
-            <span class="lead">Mempool Data</span>
-            <span class='float-right small' id='mempool_source'>
-            </span>
-            <div class='row'>
-                <div class='col-4'>
-                    <h6>Fee Estimates</h6>
-                    <table id="mempooltable" class="table table-sm small-text">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>
-                                    Fastest Fee
-                                </th>
-                                <td class='text-right' id='fastest_fee'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                                </th>
-                            </tr>
-                            <tr>
-                                <th>
-                                    30 min Fee
-                                </th>
-                                <td class='text-right' id='30min_fee'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                                </th>
-                            </tr>
-                            <tr>
-                                <th>
-                                    1 hour Fee
-                                </th>
-                                <td class='text-right' id='1hr_fee'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                                </th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-                <div class='col-8'>
-                    <h6>Latest Blocks</h6>
-                    <table id="mempooltable" class="table table-sm small-text">
-                        <thead class="thead-light">
-                            <tr>
-                                <th class='text-center' id='time_0'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </th>
-                                <td class='text-right' id='height_0'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                                <td class='text-right' id='txs_0'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                                <td class='text-right' id='size_0'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                                </th>
-                            </tr>
-                            <tr>
-                                <th class='text-center' id='time_1'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </th>
-                                <td class='text-right' id='height_1'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                                <td class='text-right' id='txs_1'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                                <td class='text-right' id='size_1'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                                </th>
-                            </tr>
-                            <tr>
-                                <th class='text-center' id='time_2'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </th>
-                                <td class='text-right' id='height_2'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                                <td class='text-right' id='txs_2'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                                <td class='text-right' id='size_2'>
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                                </th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-
-            </div>
-        </div>
-
-
-
-        <!-- END Mempool Data Section -->
 
         <!-- START Bitcoin Address Summary -->
-        <div class="content-section" id="bitcoin_addresses_section">
+        <div>
             <div class='row'>
                 <div class='col-6'>
-                    <span class="lead">Bitcoin Node Status</span>
-                    <span class="float-right">
-                        {% if current_app.services['mynode']['running']%}
-                        <a href="http://{{current_app.services['mynode']['connection'][0]}}:{{current_app.services['mynode']['connection'][1]}}"
-                            style="text-decoration: none; color:gray;">
-                            <i class="fas fa-external-link-square-alt fa-lg"></i>
-                        </a>
-                        {%endif%}
-                    </span>
-                    </br>
-
-                    <table id="btctable" class="table table-sm small-text">
-                        <tbody>
-                            <tr>
-                                <td>Node Status</td>
-                                <td class="text-right">
-                                    <span id='bitcoind_status'> <img src='{{url_for('warden.static',
-                                            filename='images/loading_small.gif' )}}' width="30" height="30"></img>
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Latest Block</td>
-                                <td id='current_block' class="text-right"> <img src='{{url_for('warden.static',
+                    <div class="content-section table-responsive">
+                        <span class="lead">Specter Server Status</span>
+                        <span class="float-right">
+                            <a href="{{current_app.specter.base_url}}" target="_blank"
+                                style="text-decoration: none; color:gray;">
+                                <i class="fas fa-external-link-square-alt fa-lg"></i>
+                            </a>
+                        </span>
+                        </br>
+                        <table id="btctable" class="table table-sm small-text">
+                            <tbody>
+                                <tr>
+                                    <td>Last Data Refresh</td>
+                                    <td id='specter_refresh' class="text-right"> <img src='{{url_for('warden.static',
                                         filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
-                            </tr>
-                            <tr>
-                                <td>Verification Progress</td>
-                                <td id='verificationprogress' class="text-right"> <img src='{{url_for('warden.static',
-                                        filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
-                            </tr>
+                                </tr>
 
-                            <tr>
-                                <td>Size on Disk</td>
-                                <td id='size_on_disk' class="text-right">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Difficulty</td>
-                                <td id='difficulty' class="text-right">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Bitcoin Core Version</td>
-                                <td id='core_version' class="text-right">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Connection Count</td>
-                                <td id='connection_count' class="text-right">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Mempool Size</td>
-                                <td id='mempool_size' class="text-right">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Node Uptime</td>
-                                <td id='uptime' class="text-right">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                        width="30" height="30"></img>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                </td>
-                                <td>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="content-section table-responsive">
+
+                        <span class="lead">Bitcoin Node Status</span>
+                        <span class="float-right">
+
+                        </span>
+                        </br>
+
+                        <table id="btctable" class="table table-sm small-text">
+                            <tbody>
+
+                                <tr>
+                                    <td>Latest Block</td>
+                                    <td id='current_block' class="text-right"> <img src='{{url_for('warden.static',
+                                        filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
+                                </tr>
+
+
+                                <tr>
+                                    <td>Size on Disk</td>
+                                    <td id='size_on_disk' class="text-right">
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Difficulty</td>
+                                    <td id='difficulty' class="text-right">
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Bitcoin Core Version</td>
+                                    <td id='core_version' class="text-right">
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Connection Count</td>
+                                    <td id='connection_count' class="text-right">
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Mempool Size</td>
+                                    <td id='mempool_size' class="text-right">
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Node Uptime</td>
+                                    <td id='uptime' class="text-right">
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                    </td>
+                                    <td>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class='col-6'>
-                    <span class="lead">Specter Server Status</span>
-                    <span class="float-right">
-                        {% if current_app.services['specter']['running']%}
-                        <a href="http://{{current_app.services['specter']['connection'][0]}}:{{current_app.services['specter']['connection'][1]}}"
-                            target="_blank" style="text-decoration: none; color:gray;">
-                            <i class="fas fa-external-link-square-alt fa-lg"></i>
-                        </a>
-                        {%endif%}
-                    </span>
-                    </br>
-                    <table id="btctable" class="table table-sm small-text">
-                        <tbody>
-                            <tr>
-                                <td>Status</td>
-                                <td id='specter_status' class="text-right"> <img src='{{url_for('warden.static',
-                                        filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
-                            </tr>
-                            <tr>
-                                <td>Data Folder</td>
-                                <td class="text-right">
-                                    {{specter['data_folder']}}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Wallets Folder</td>
-                                <td class="text-right">
-                                    {{specter.data_folder}}
-                                </td>
-                            </tr>
+                    <!-- START Mempool  Section -->
+                    <div class="content-section table-responsive">
+                        <span class="lead">Mempool Data</span>
+                        <span class='float-right small' id='mempool_source'>
+                        </span>
 
-                            <tr>
-                                <td>Configured?</td>
-                                <td class="text-right">
-                                    {{specter.is_configured}}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Last Data Refresh</td>
-                                <td id='specter_refresh' class="text-right"> <img src='{{url_for('warden.static',
-                                        filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
-                            </tr>
+                        <h6 style='padding-top: 10px;'>Fee Estimates</h6>
 
-                        </tbody>
-                    </table>
-                    <span id='bitcoin_check'>
-                    </span>
+                        <table id="time" class="table-condensed table-right text-right">
+                            <tbody>
+                                <tr>
+
+                                    <td id='fastest_fee' class="text-left border-bottom hinumbersmall"
+                                        data-toggle="tooltip" data-placement="top"
+                                        title="If you are in a rush, this is how much you need to pay in fees to have fast confirmation time">
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+
+                                    <td id='30min_fee' class="text-center border-bottom hinumbersmall"
+                                        data-toggle="tooltip" data-placement="top"
+                                        title="This is how much you need to pay to get your transaction confirmed in 30 min (estimate)">
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+
+                                    <td id='1hr_fee' class="text-right border-bottom hinumbersmall"
+                                        data-toggle="tooltip" data-placement="top"
+                                        title="This is how much you need to pay to get your transaction confirmed in 60 min (estimate)">
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+
+
+                                </tr>
+                                <tr>
+                                    <td class="small text-left">
+                                        Fastest Fee
+                                    </td>
+
+                                    <td class="small text-center">
+                                        30 min Fee
+                                    </td>
+
+                                    <td class="small text-right">
+                                        1 hour Fee
+                                    </td>
+
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <h6>Latest Blocks</h6>
+                        <table id="mempooltable" class="table table-sm small-text">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th class='text-center'>
+                                        Time
+                                    </th>
+                                    <td class='text-right'>
+                                        Block Height
+                                    </td>
+                                    <td class='text-right'>
+                                        # Transactions
+                                    </td>
+                                    <td class='text-right'>
+                                        Size
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <th class='text-center' id='time_0'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </th>
+                                    <td class='text-right' id='height_0'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                    <td class='text-right' id='txs_0'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                    <td class='text-right' id='size_0'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <th class='text-center' id='time_1'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </th>
+                                    <td class='text-right' id='height_1'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                    <td class='text-right' id='txs_1'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                    <td class='text-right' id='size_1'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class='text-center' id='time_2'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </th>
+                                    <td class='text-right' id='height_2'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                    <td class='text-right' id='txs_2'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                    <td class='text-right' id='size_2'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class='text-center' id='time_3'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </th>
+                                    <td class='text-right' id='height_3'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                    <td class='text-right' id='txs_3'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                    <td class='text-right' id='size_3'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class='text-center' id='time_4'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </th>
+                                    <td class='text-right' id='height_4'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                    <td class='text-right' id='txs_4'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                    <td class='text-right' id='size_4'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class='text-center' id='time_5'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </th>
+                                    <td class='text-right' id='height_5'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                    <td class='text-right' id='txs_5'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                    <td class='text-right' id='size_5'>
+                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                            width="30" height="30"></img>
+                                    </td>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <!-- END Mempool Data Section -->
+
                 </div>
             </div>
             <!-- END Bitcoin Address Summary -->

@@ -1,24 +1,21 @@
 import configparser
 from flask import current_app as app
-from warden_modules import (specter_update, wallets_update, check_services, regenerate_nav)
+from warden_modules import regenerate_nav
+from specter_importer import Specter
 from config import Config
 from warden_pricing_engine import fxsymbol
 
 
 # Start background threads
-# Get Specter tx data and updates every 30 seconds (see config.py)
-
 
 def background_specter_update():
-    app.specter = specter_update(load=False)
-
-
-def background_wallets_update():
-    app.wallets = wallets_update(load=False)
-
-
-def background_services_update():
-    app.services = check_services(load=False)
+    app.specter = Specter()
+    app.specter.refresh_txs(load=False)
+    app.specter.home_parser(load=False)
+    wallets = app.specter.wallet_alias_list(load=True)
+    for wallet in wallets:
+        app.specter.wallet_info(wallet_alias=wallet, load=False)
+        app.specter.rescan_progress(wallet_alias=wallet, load=False)
 
 
 def background_settings_update():

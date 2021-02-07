@@ -1,26 +1,18 @@
 from config import Config
-from backgroundjobs import (background_services_update,
-                            background_settings_update,
-                            background_specter_update,
-                            background_wallets_update)
-from utils import (create_config, update_config,
-                   load_specter, specter_checks,
-                   load_wallets, diags, create_specter_session)
+from backgroundjobs import (background_settings_update,
+                            background_specter_update)
+from utils import create_config, diags
 from warden_pricing_engine import fxsymbol
-from warden_modules import (check_services, specter_update, wallets_update)
+from specter_importer import Specter
 import logging
 import configparser
 import os
 import sys
 import atexit
-import json
 import warnings
-import inspect
 
-from datetime import datetime
 from logging.handlers import RotatingFileHandler
-from flask import (Flask, request, current_app,
-                   has_request_context)
+from flask import Flask
 
 from flask_mail import Mail
 from pathlib import Path
@@ -102,7 +94,7 @@ def init_app(app):
     #  To debug the application set an environment variable:
     #  EXPORT WARDEN_STATUS=developer
     WARDEN_STATUS = os.environ.get("WARDEN_STATUS")
-    if 'debug' in sys.argv or WARDEN_STATUS == "developer":
+    if ('-debug' in sys.argv or '-d' in sys.argv or WARDEN_STATUS == "developer"):
         print("  >> Debug is On")
         with app.app_context():
             app.settings['SERVER']['debug'] = 'True'
@@ -114,44 +106,11 @@ def init_app(app):
     app.register_blueprint(warden)
     app.register_blueprint(errors)
 
-    specter_login_success = False
-    print(f"\033[1;37;40m  Contacting Specter Server...")
-    while not specter_login_success:
-        # Create Specter Session
-        with app.app_context():
-            app.specter_session = create_specter_session()
-        if app.specter_session == 'API404':
-            print("\033[1;33;40m  [API 404 Error] Seems like your running version of Specter does not have API capabilities. Upgrade Specter.")
-            print("  Try opening the page /API/specter on your browser")
-            exit()
-        if app.specter_session == 'unauthorized':
-            print("\033[1;33;40m  [UNAUTHORIZED] Could not login to Specter - check username and password.")
-            input_username = (input(f"  >> Specter Username [{app.settings['SPECTER']['specter_login']}] : "))
-            input_password = (input(f"  >> Specter Password [{app.settings['SPECTER']['specter_password']}] : "))
-            if input_username:
-                app.settings['SPECTER']['specter_login'] = input_username
-            if input_password:
-                app.settings['SPECTER']['specter_password'] = input_password
-            with open(config_file, 'w') as f:
-                app.settings.write(f)
-        else:
-            print("  [OK] Authenticated and Config Updated")
-            specter_login_success = True
-
-    print("\033[1;32;40m✓ Logged in to Specter Server\033[1;37;40m")
-
-    # Check Specter
-    print("\033[1;37;40m  Checking Specter Server status ...")
-    specter_checks()
-    print("\033[1;37;40m  Loading Specter data ...")
     # For the first load, just get a saved file if available
     # The background jobs will update later
     with app.app_context():
-        app.specter = specter_update(load=True)
-
-    print("\033[1;37;40m  Loading Wallets data ...")
-    with app.app_context():
-        app.wallets = wallets_update(load=True)
+        app.specter = Specter()
+        app.specter.refresh_txs(load=True)
 
     from warden_pricing_engine import test_tor
     print("\033[1;37;40m  Testing Tor ...")
@@ -170,10 +129,6 @@ def init_app(app):
     except Exception:
         pass
 
-    print("  Checking Services Availability ...")
-    with app.app_context():
-        app.services = check_services()
-
     # Start Schedulers
     print("  Starting Background Jobs ...")
 
@@ -181,22 +136,12 @@ def init_app(app):
         with app.app_context():
             background_specter_update()
 
-    def bk_wu():
-        with app.app_context():
-            background_wallets_update()
-
-    def bk_svu():
-        with app.app_context():
-            background_services_update
-
     def bk_stu():
         with app.app_context():
             background_settings_update()
 
     scheduler = BackgroundScheduler()
     scheduler.add_job(bk_su, 'interval', seconds=30)
-    scheduler.add_job(bk_wu, 'interval', seconds=30)
-    scheduler.add_job(bk_svu, 'interval', seconds=60)
     scheduler.add_job(bk_stu, 'interval', seconds=60)
 
     scheduler.start()
@@ -233,12 +178,7 @@ def main():
     def close_running_threads():
         print(f"""
             \033[1;32;40m-----------------------------------------------------------------
-            \033[1;37;40m              Shutting Down.... Please Wait.
-            \033[1;32;40m-----------------------------------------------------------------
-            """)
-
-        print(f"""
-            \033[1;32;40m-----------------------------------------------------------------
+            \033[1;37;40m                        Goodbye
             \033[1;37;40m             Keep Stacking. Keep Verifying.
             \033[1;32;40m-----------------------------------------------------------------
             """)

@@ -6,19 +6,16 @@ import pandas as pd
 import numpy as np
 import glob
 import logging
-import configparser
 
 from datetime import datetime, timedelta
-from flask import flash, current_app, has_request_context, abort
+from flask import flash, current_app, abort
 from pathlib import Path
-
+from specter_importer import Specter
 from warden_pricing_engine import (get_price_ondate, fx_price_ondate,
                                    multiple_price_grab, price_data_rt,
                                    price_data_fx, price_data_rt_full,
-                                   price_data, fx_rate, fxsymbol)
-from warden_decorators import MWT, timing
-from utils import load_specter, load_wallets, pickle_it, load_wallet
-from config import Config
+                                   price_data, fx_rate)
+from warden_decorators import MWT
 
 
 # Returns the current application path
@@ -31,29 +28,6 @@ def current_path():
 def home_path():
     home = str(Path.home())
     return (home)
-
-
-def specter_update(load=True, session=None):
-    if load:
-        data = pickle_it(action='load', filename='specter_data.pkl')
-        if data != 'file not found':
-            return (data)
-    specter_data = load_specter()
-    pickle_it(action='save', filename='specter_data.pkl', data=specter_data)
-    logging.info(f"Finished Building Specter Class")
-    return(specter_data)
-
-
-def wallets_update(load=True):
-    if load:
-        data = pickle_it(action='load', filename='wallets_data.pkl')
-        if data != 'file not found':
-            return (data)
-    wallets_data = load_wallets()
-
-    pickle_it(action='save', filename='wallets_data.pkl', data=wallets_data)
-    logging.info(f"Finished Building Wallets Class")
-    return(wallets_data)
 
 
 # ------------------------------------
@@ -72,109 +46,27 @@ def check_server(address, port, timeout=10):
         s.close()
 
 
-# Check which services are running
-# load = True   Forcer json load
-# expiry = only loads json if data is not stale by more than n seconds
-def check_services(load=True, expiry=60):
-    if load:
-        try:
-            data = pickle_it(action='load', filename='services.pkl')
-            update_time = datetime.strptime(data['last_update'],
-                                            "%m/%d/%Y, %H:%M:%S")
-            elapsed = (datetime.now() - update_time).total_seconds()
-            if expiry:
-                if elapsed < expiry:
-                    return (data)
-            else:
-                return (data)
-        except Exception as e:
-            pass
-
-    services = {}
-    services['mynode'] = {
-        'name': 'MyNode Server',
-        # The below is a list in format [(address, port)] - include as many as needed
-        'typical_connections': [('mynode.local', 80), ('127.0.0.1', 80)],
-        'running': False,
-        'connection': None,
-        'loaded': load
-    }
-
-    services['specter'] = {
-        'name':
-        'Specter Server',
-        # The below is a list in format [(address, port)] - include as many as needed
-        'typical_connections': [('mynode.local', 25441), ('127.0.0.1', 25441),
-                                ('localhost', 25441)],
-        'running': False,
-        'connection': None
-    }
-    # Test Connections
-    for service in services:
-        running = False
-        for connection in services[service]['typical_connections']:
-            running = check_server(*connection)
-            if running:
-                services[service]['running'] = True
-                services[service]['connection'] = connection
-                break
-
-    services['last_update'] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-
-    pickle_it(action='save', filename='services.pkl', data=services)
-    return (services)
-
-
-# Gets local IP Address
-def get_local_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
-    local_ip_address = s.getsockname()[0]
-    return (local_ip_address)
-
 # End Config Variables ------------------------------------------------
 
 
-def list_specter_wallets(load=True):
-    specter_data = specter_update(load)
-    try:
-        return (specter_data['wallets_names'])
-    except Exception:
-        return None
-
 # Get all transactions of specific wallet by using alias
-
 
 def get_specter_tx(wallet_alias, sort_by='time', idx=0, load=True, session=None):
     df = pd.DataFrame()
-    specter_data = specter_update(load=load, session=session)
-    try:
-        wallet = current_app.wallets[wallet_alias]
-    except Exception:
+    wallet_list = current_app.specter.wallet_alias_list()
+    if wallet_alias not in wallet_list:
         logging.error(f"Wallet {wallet_alias}: Wallet not in current_app")
-        # Try to load it
-        try:
-            wallet = load_wallet(wallet_alias, session=session)
-            logging.info("Wallet. Loaded successfully.")
-        except Exception as e:
-            # Nope...
-            logging.error(f"Wallet {wallet_alias}: Final try to load failed. Error {e}")
-            return (df)
+        return (df)
+
     # is this scanning?
-    try:
-        scan = wallet[wallet_alias]['info']['scanning']
-    except TypeError:
-        scan = None
-    if not scan:
+    scan = current_app.specter.rescan_progress(wallet_alias)
+
+    if not scan['active']:
         logging.info(f"Wallet {wallet_alias} --- looking for txs")
     else:
-        logging.warn(f"\u001b[33mWallet {wallet_alias} being scanned {scan}\u001b[0m")
+        logging.warn(f"\u001b[33mWallet {wallet_alias} being scanned {scan['progress']}\u001b[0m")
 
-    try:
-        t = wallet['txlist']
-    except TypeError:
-        return(df)
-
+    t = current_app.specter.refresh_txs(load=True)
     df = df.append(pd.DataFrame(t))
 
     logging.info(f"Wallet {wallet_alias} --- Finished txs")
@@ -185,39 +77,12 @@ def get_specter_tx(wallet_alias, sort_by='time', idx=0, load=True, session=None)
     return (df)
 
 
-# This returns all the important metadata to create the Warden Status Page
+# This returns data to create the Warden Status Page
 def warden_metadata():
-    specter_data = specter_update(load=True)
     meta = {}
-    meta['wallet_list'] = list_specter_wallets()
-    if not meta['wallet_list']:
-        abort(500, "Specter Server could not be reached. Check that it's running.")
-
-    # Check if there are specter wallet files, if not do not enable WARden
-    if len(meta['wallet_list']) == 0:
-        meta['warden_enabled'] = False
-        return (meta)
-    else:
-        meta['warden_enabled'] = True
-
-    meta['wallet_info'] = list_specter_wallets()
-
-    meta['txs'] = {}
-    meta['scan'] = {}
-    for alias in specter_data['wallets_alias']:
-        # Line below throws an error when specter is not loaded yet
-        meta['txs'][alias] = get_specter_tx(alias)
-        try:
-            meta['scan'][alias] = current_app.wallets[alias]['scan']
-        except TypeError:
-            meta['scan'][alias] = None
 
     meta['full_df'] = specter_df()
-
-    meta['node_info'] = {
-        'info': specter_data['info'],
-        'network_info': specter_data['network_info']
-    }
+    meta['wallet_list'] = current_app.specter.wallet_alias_list()
 
     # Load pickle with previous checkpoint df
     df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
@@ -264,7 +129,7 @@ def warden_metadata():
 class Trades():
     def __init__(self):
         self.id = None
-        self.user_id = "mynode"
+        self.user_id = "specter_user"
         self.trade_inputon = None
         self.trade_date = None
         self.trade_currency = FX
@@ -285,25 +150,8 @@ class Trades():
 
 def specter_df(save_files=False, sort_by='trade_date'):
     df = pd.DataFrame()
-    items = None
-    specter_data = specter_update(load=True)
-    if not specter_data:
-        return df
-    try:
-        items = current_app.wallets.items()
-    except Exception:
-        items = None
-    if not items:
-        items = wallets_update()
-    if not items:
-        return df
-
-    for key, value in current_app.wallets.items():
-        wallet_json = value
-        t = wallet_json['txlist']
-        df_tmp = pd.DataFrame(t)
-        df_tmp['wallet_alias'] = key
-        df = df.append(df_tmp)
+    t = current_app.specter.refresh_txs(load=True)['txlist']
+    df = df.append(t)
 
     # Check if txs exists
     if df.empty:
@@ -313,13 +161,15 @@ def specter_df(save_files=False, sort_by='trade_date'):
     df['trade_date'] = pd.to_datetime(df['time'], unit='s')
 
     # Add additional columns
+    if 'fee' not in df:
+        df['fee'] = 0
     df['trade_blockchain_id'] = df['txid']
 
     df['trade_account'] = df['wallet_alias']
     df['trade_currency'] = current_app.settings['PORTFOLIO']['base_fx']
     df['trade_asset_ticker'] = "BTC"
     df['trade_quantity'] = (df['amount'])
-    df['trade_notes'] = 'Imported from Specter Wallet using MyNode'
+    df['trade_notes'] = 'Imported from Specter Wallet'
     df['trade_reference_id'] = ""
 
     def trade_operation(value):
@@ -363,6 +213,7 @@ def specter_df(save_files=False, sort_by='trade_date'):
     df.loc[df.trade_operation == 'send', 'trade_multiplier'] = -1
 
     df['trade_quantity'] = df['trade_quantity'] * df['trade_multiplier']
+    df['amount'] = df['trade_quantity']
 
     try:
         df['cash_value'] = abs(df['trade_price']) * abs(df['trade_quantity']) * df[
@@ -1012,7 +863,7 @@ def regenerate_nav():
         clear_memory()
         MWT()._caches = {}
         MWT()._timeouts = {}
-        generatenav('mynode', force=True)
+        generatenav('specter_user', force=True)
     except Exception:
         return
 
