@@ -154,8 +154,13 @@ class Specter():
                 return (data)
         url = self.base_url + 'about'
         metadata = {}
-        session = self.init_session()
-        page = session.get(url)
+        try:
+            session = self.init_session()
+            page = session.get(url)
+        except Exception as e:
+            metadata['error'] = str(e)
+            return (metadata)
+
         soup = BeautifulSoup(page.text, 'html.parser')
         # Get Specter Version
         try:
