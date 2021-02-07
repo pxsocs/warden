@@ -1,6 +1,7 @@
 {% extends "warden/warden_layout.html" %}
 {% block content %}
 
+
 <div class="row">
     <div class="col-sm-2">
 
@@ -10,10 +11,10 @@
 
     <div class="col-sm-8">
         <h1>
-            500 Server ERROR
+            {{error}}
         </h1>
         <hr>
-        <hr>
+
         <h4>
             Seems like there is a bug in the Matrix. </h4>
         <h5>Did you take your red pills today?
@@ -23,7 +24,8 @@
             <p class="mb-0">You take the blue pill: the story ends, you wake up in your bed and believe whatever you
                 want to believe.</p>
             <p> You take the red pill: you stay in Wonderland, and I show you how deep the rabbit
-                hole goes. Remember: all I'm offering is the truth. Nothing more.</p>
+                hole goes. </p>
+            <p>Remember: all I'm offering is the truth. Nothing more.</p>
             <footer class="blockquote-footer">Morpheus</footer>
         </blockquote>
         <br>
@@ -31,11 +33,8 @@
             Please report this error at the <a href='https://github.com/pxsocs/specter_warden/issues'>Github repository
                 issues page</a>.
             <br>
-            <div class='content-section'>
-                Message:
-                <hr>
-                {{error}}
-            </div>
+
+
 
 
             <div class='content-section'>
@@ -47,6 +46,5 @@
     </div>
 
 </div>
-
 
 {% endblock content %}

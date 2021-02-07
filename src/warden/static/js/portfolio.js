@@ -12,6 +12,7 @@ $(document).ready(function () {
     red_green()
     $('.lifo_costtable').toggle();
 
+
     $('#dismiss_balances').click(function () {
         $('#dismiss_balances').html('Please wait...');
         $('#dismiss_balances').prop('disabled', true);
@@ -46,6 +47,7 @@ $(document).ready(function () {
     run_once = true;
     realtime_table();
     getNodeInfo();
+    update_mempool();
 
     // Popover management
     // Default popover enabler from Bootstrap
@@ -317,6 +319,7 @@ $(document).ready(function () {
 
     window.setInterval(function () {
         getNodeInfo();
+        update_mempool();
     }, 60000);
 
 
@@ -372,6 +375,62 @@ $(document).ready(function () {
         }
     });
 });
+
+function update_mempool() {
+    $.ajax({
+        type: 'GET',
+        url: '/mempool_json',
+        dataType: 'json',
+        success: function (data) {
+            const currentTimeStamp = new Date().getTime();
+            $('#fastest_fee').html(formatNumber(data['mp_fee']['fastestFee'], 0, '', ' sats/Vb'));
+            $('#30min_fee').html(formatNumber(data['mp_fee']['halfHourFee'], 0, '', ' sats/Vb'));
+            $('#1hr_fee').html(formatNumber(data['mp_fee']['hourFee'], 0, '', ' sats/Vb'));
+            // Block 0
+            time_ago_0 = timeDifference(currentTimeStamp, data['mp_blocks'][0]['timestamp'] * 1000)
+            $('#time_0').html(time_ago_0);
+            $('#height_0').html(formatNumber(data['mp_blocks'][0]['height'], 0, ''));
+            $('#txs_0').html(formatNumber(data['mp_blocks'][0]['tx_count'], 0, ''));
+            $('#size_0').html(formatNumber(data['mp_blocks'][0]['size'] / 1000, 0, '', ' MB'));
+            // Block 1
+            time_ago_1 = timeDifference(currentTimeStamp, data['mp_blocks'][1]['timestamp'] * 1000)
+            $('#time_1').html(time_ago_1);
+            $('#height_1').html(formatNumber(data['mp_blocks'][1]['height'], 0, ''));
+            $('#txs_1').html(formatNumber(data['mp_blocks'][1]['tx_count'], 0, ''));
+            $('#size_1').html(formatNumber(data['mp_blocks'][1]['size'] / 1000, 0, '', ' MB'));
+            // Block 2
+            time_ago_2 = timeDifference(currentTimeStamp, data['mp_blocks'][2]['timestamp'] * 1000)
+            $('#time_2').html(time_ago_2);
+            $('#height_2').html(formatNumber(data['mp_blocks'][2]['height'], 0, ''));
+            $('#txs_2').html(formatNumber(data['mp_blocks'][2]['tx_count'], 0, ''));
+            $('#size_2').html(formatNumber(data['mp_blocks'][2]['size'] / 1000, 0, '', ' MB'));
+            // Block 3
+            time_ago_3 = timeDifference(currentTimeStamp, data['mp_blocks'][3]['timestamp'] * 1000)
+            $('#time_3').html(time_ago_3);
+            $('#height_3').html(formatNumber(data['mp_blocks'][3]['height'], 0, ''));
+            $('#txs_3').html(formatNumber(data['mp_blocks'][3]['tx_count'], 0, ''));
+            $('#size_3').html(formatNumber(data['mp_blocks'][3]['size'] / 1000, 0, '', ' MB'));
+            // Block 4
+            time_ago_4 = timeDifference(currentTimeStamp, data['mp_blocks'][4]['timestamp'] * 1000)
+            $('#time_4').html(time_ago_4);
+            $('#height_4').html(formatNumber(data['mp_blocks'][4]['height'], 0, ''));
+            $('#txs_4').html(formatNumber(data['mp_blocks'][4]['tx_count'], 0, ''));
+            $('#size_4').html(formatNumber(data['mp_blocks'][4]['size'] / 1000, 0, '', ' MB'));
+            // Block 5
+            time_ago_5 = timeDifference(currentTimeStamp, data['mp_blocks'][5]['timestamp'] * 1000)
+            $('#time_5').html(time_ago_5);
+            $('#height_5').html(formatNumber(data['mp_blocks'][5]['height'], 0, ''));
+            $('#txs_5').html(formatNumber(data['mp_blocks'][5]['tx_count'], 0, ''));
+            $('#size_5').html(formatNumber(data['mp_blocks'][5]['size'] / 1000, 0, '', ' MB'));
+
+
+
+            $('#mempool_source').html('<a href=' + data['mp_url'] + '>Source : ' + data['mp_url'] + '</a>')
+        }
+    });
+}
+
+
 
 
 //  HELPER FUNCTION
@@ -441,6 +500,8 @@ function realtime_table() {
                     $('#' + key + '_F_trade_fees_fx').html(formatNumber(value.trade_fees_fx, 0, fx, ''));
                     $('#' + key + '_F_pnl_net').html(formatNumber(value.pnl_net, 0, fx, ''));
                     $('#' + key + '_F_breakeven').html(formatNumber(value.breakeven, 2, fx, '', value.small_pos));
+                    x = ((value.price / value.breakeven) - 1) * 100
+                    $('#' + key + '_perc_breakeven').html(formatNumber(x, 2, '', '%', value.small_pos));
 
                     // LIFO Table values
                     $('#' + key + '_L_position').html(formatNumber(value.position_fx, 0, fx, ''));
@@ -512,41 +573,19 @@ function getNodeInfo() {
     // GET latest Bitcoin Block Height
     $.ajax({
         type: 'GET',
-        url: '/node_info',
+        url: '/specter',
         dataType: 'json',
         success: function (data) {
-            if (data['services']['specter']['running'] == true) {
-                specter = '✓ Running'
-                specter_color = 'green'
-            } else {
-                specter = '✗ Stopped'
-                specter_color = 'orange'
-            }
-
-            if (data['bitcoin']['networkactive'] == true) {
-                bitcoin = '✓ Running'
-                bitcoin_color = 'green'
-            } else {
-                bitcoin = '✗ Stopped'
-                bitcoin_color = 'orange'
-            }
-
-            // Add Background color fill to progress
-            $('#verificationprogress').addClass('td-part-fill')
-            $('#verificationprogress').css('background-size', data['info']['verificationprogress'] * 100 + "% 100%")
-            $('#verificationprogress').html(formatNumber(data['info']['verificationprogress'] * 100, 2, '', '%'))
-
-            $('#bitcoind_status').html("<span style='color:" + bitcoin_color + "'>" + bitcoin + "</span>");
-            $('#specter_status').html("<span style='color:" + specter_color + "'>" + specter + "</span>");
-            $('#latest_btc_block').html(data['info']['blocks'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 0, minimumFractionDigits: 0 }));
-            $('#current_block').html(data['info']['blocks'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 0, minimumFractionDigits: 0 }));
-            $('#size_on_disk').html(formatNumber(data['info']['size_on_disk'] / 1000000000, 2, '', ' GB'));
-            $('#difficulty').html(formatNumber(data['info']['difficulty'] / 1000000000000, 2, '', ' x 10^12'));
-            $('#specter_refresh').html(data['services']['last_update']);
-            $('#core_version').html(data['bitcoin']['subversion']);
-            $('#connection_count').html(formatNumber(data['bitcoin']['connections'], 0, '', ''));
-            $('#mempool_size').html(formatNumber(data['info']['mempool_info']['size'], 0, '', ''));
-            $('#uptime').html(formatNumber(data['info']['uptime'] / 3600, 0, '', ' hours'));
+            console.log(data)
+            $('#latest_btc_block').html(data[0]['bitcoin_core_data']['Blocks count']);
+            $('#current_block').html(data[0]['bitcoin_core_data']['Blocks count']);
+            $('#size_on_disk').html(data[0]['bitcoin_core_data']['Size on disk']);
+            $('#difficulty').html(data[0]['bitcoin_core_data']['Difficulty']);
+            $('#specter_refresh').html(data[0]['last_update']);
+            $('#core_version').html(data[0]['bitcoin_core_data']['Bitcoin Core Version']);
+            $('#connection_count').html(data[0]['bitcoin_core_data']['Connections count']);
+            $('#mempool_size').html(data[0]['bitcoin_core_data']['Mempool Size']);
+            $('#uptime').html(data[0]['bitcoin_core_data']['Node uptime']);
 
         },
         error: function (xhr, status, error) {

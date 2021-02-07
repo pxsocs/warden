@@ -9,4 +9,4 @@ PySocks
 requests
 urllib3
 simplejson
-
+jsonify

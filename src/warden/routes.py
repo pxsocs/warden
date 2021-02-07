@@ -1,23 +1,30 @@
-from flask import (Blueprint, redirect, render_template,
-                   flash, session, request, current_app, url_for)
-from warden_modules import (list_specter_wallets, warden_metadata, positions,
+from flask import (Blueprint, redirect, render_template, abort,
+                   flash, session, request, current_app, url_for, jsonify)
+from warden_modules import (warden_metadata, positions,
                             positions_dynamic, get_price_ondate,
-                            generatenav, specter_df, check_services,
-                            current_path, specter_update, regenerate_nav)
+                            generatenav, specter_df,
+                            current_path, regenerate_nav,
+                            home_path)
 
-from warden.warden_pricing_engine import (test_tor, tor_request, price_data_rt,
-                                          fx_rate)
-from utils import update_config
+from warden_pricing_engine import (test_tor, tor_request, price_data_rt,
+                                   fx_rate, price_data_fx, PROVIDER_LIST,
+                                   PriceData)
+from utils import update_config, heatmap_generator
+from operator import itemgetter
 
-from datetime import datetime
+from datetime import datetime, timedelta
+from dateutil import parser
 from dateutil.relativedelta import relativedelta
+import mhp as mrh
 import jinja2
 import simplejson
+import logging
 import pandas as pd
 import numpy as np
 import json
 import os
 import urllib
+import math
 import csv
 
 warden = Blueprint("warden",
@@ -26,6 +33,24 @@ warden = Blueprint("warden",
                    static_folder='static')
 
 
+def specter_test():
+    return_dict = {}
+    messages = None
+    # Load basic specter data
+    try:
+        specter = current_app.specter.init_session()
+        if type(specter) == str:
+            if 'Specter Error' in specter:
+                return_dict['specter_status'] = 'Error'
+                messages = specter
+                return (return_dict, messages)
+
+    except Exception as e:
+        return_dict['specter_status'] = 'Error'
+        messages = str(e)
+
+    return (return_dict, messages)
+
 # START WARDEN ROUTES ----------------------------------------
 # Things to check before each request:
 # 1. Is Tor running? It's a requirement.
@@ -33,6 +58,8 @@ warden = Blueprint("warden",
 # 2.5 If running, is there a balance?
 # 3. Found MyNode? Not a requirement but enables added functions.
 # 4. Found Bitcoin Node? Not a requirement but enables added functions.
+
+
 @warden.before_request
 def before_request():
     # Ignore check for some pages - these are mostly methods that need
@@ -41,39 +68,46 @@ def before_request():
         "warden.setup", "warden.testtor", "warden.gitreleases",
         "warden.realtime_btc", "warden.data_folder", "warden.testtor",
         "warden.checkservices", "warden.check_activity", "warden.warden_metadata",
-        "warden.node_info", "warden.specter_json"
+        "warden.specter_json", "warden.specter_auth"
     ]
     if request.endpoint in exclude_list:
         return
-    need_setup = False
+
     # Check Tor
     tor = current_app.tor
-    need_setup = not tor['status']
-    # Get Services
-    services = current_app.services
-    need_setup = not services['specter']['running']
-    # Are Wallets Found?
-    specter_wallets = have_specter_wallets(load=False)
-    need_setup = not specter_wallets
-    # Transactions found?
-    df = positions()
-    need_setup = df.empty
-    if need_setup:
-        meta = {
-            'tor': tor,
-            'services': services,
-            'specter_wallets': specter_wallets,
-            'txs': df.empty
-        }
-        messages = json.dumps(meta)
-        session['messages'] = messages
-        return redirect(url_for("warden.setup"))
+
+    # Create empty status dictionary
+    meta = {
+        'tor': tor,
+        'specter_reached': True,
+        'specter_auth': True
+    }
+    # Save this in Flask session
+    session['status'] = json.dumps(meta)
+
+    # Test Specter
+    specter_dict, specter_messages = specter_test()
+    if specter_messages:
+        if 'Connection refused' in specter_messages:
+            meta['specter_reached'] = False
+            flash('Having some difficulty reaching Specter Server. ' +
+                  f'Please make sure it is running at {current_app.specter.base_url}. Using cached data. Last Update: ' +
+                  current_app.specter.home_parser()['last_update'], 'warning')
+        if 'Unauthorized Login' in specter_messages:
+            meta['specter_reached'] = False
+            return redirect(url_for('warden.specter_auth'))
+
+        else:
+            abort(500, specter_messages)
+
+    # Update session status
+    session['status'] = json.dumps(meta)
 
 
 # Support method to check if donation was acknowledged
 def donate_check():
-    counter_file = os.path.join(current_path(),
-                                'static/json_files/counter.json')
+    counter_file = os.path.join(home_path(),
+                                'warden/counter.json')
     donated = False
     try:
         with open(counter_file) as data_file:
@@ -85,15 +119,8 @@ def donate_check():
     return (donated)
 
 
-# Support method to check for specter wallets
-def have_specter_wallets(load=True):
-    wallets = list_specter_wallets(load)
-    if (wallets == []) or (wallets == None):
-        return False
-    return True
-
-
 # Main page for WARden
+
 @ warden.route("/", methods=['GET'])
 @ warden.route("/warden", methods=['GET'])
 def warden_page():
@@ -102,14 +129,17 @@ def warden_page():
     # and refresh speed.
     # Get positions and prepare df for delivery
     df = positions()
+    if df.empty:
+        msg = "Specter has no transaction history or is down. Open Specter Server and check."
+        flash(msg, "danger")
+        abort(500, msg)
     if df.index.name != 'trade_asset_ticker':
         df.set_index('trade_asset_ticker', inplace=True)
     df = df[df['is_currency'] == 0].sort_index(ascending=True)
     df = df.to_dict(orient='index')
-
     # Open Counter, increment, send data
-    counter_file = os.path.join(current_path(),
-                                'static/json_files/counter.json')
+    counter_file = os.path.join(home_path(),
+                                'warden/counter.json')
     donated = False
     try:
         with open(counter_file) as data_file:
@@ -148,29 +178,38 @@ def warden_page():
             with open(counter_file, 'w') as fp:
                 json.dump(counter, fp)
 
-    alerts = False
     meta = warden_metadata()
-    if not meta['warden_enabled']:
-        abort(500, 'WARden is not Enabled. Check your Connections.')
-    if isinstance(meta['old_new_df_old'], pd.DataFrame):
-        if not meta['old_new_df_old'].empty:
-            alerts = True
-    if isinstance(meta['old_new_df_new'], pd.DataFrame):
-        if not meta['old_new_df_new'].empty:
-            alerts = True
+
+    sorted_wallet_list = []
+    for wallet in current_app.specter.wallet_alias_list():
+        wallet_df = meta['full_df'].loc[meta['full_df']['wallet_alias'] == wallet]
+        if wallet_df.empty:
+            balance = 0
+        else:
+            balance = wallet_df['amount'].sum()
+        sorted_wallet_list.append((wallet, balance))
+
+    sorted_wallet_list = sorted(sorted_wallet_list, reverse=True, key=itemgetter(1))
+    sorted_wallet_list = [i[0] for i in sorted_wallet_list]
 
     templateData = {
         "title": "Portfolio Dashboard",
         "warden_metadata": meta,
-        "warden_enabled": warden_metadata()['warden_enabled'],
         "portfolio_data": df,
         "FX": current_app.settings['PORTFOLIO']['base_fx'],
         "donated": donated,
-        "alerts": alerts,
-        "specter": specter_update(),
-        "current_app": current_app
+        "alerts": alert_activity(),
+        "current_app": current_app,
+        "sorted_wallet_list": sorted_wallet_list
     }
     return (render_template('warden/warden.html', **templateData))
+
+
+@ warden.route("/txs_json", methods=['GET'])
+def txs_json():
+    df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
+    tx_df = pd.read_pickle(df_pkl)
+    return tx_df.to_json(orient='table')
 
 
 @ warden.route("/list_transactions", methods=['GET'])
@@ -182,40 +221,6 @@ def list_transactions():
                            current_app=current_app)
 
 
-# Returns notification if no wallets were found at Specter
-@ warden.route("/setup", methods=['GET'])
-def setup():
-    need_setup = False
-    # Check Tor
-    tor = test_tor()
-    need_setup = not tor['status']
-    # Get Services
-    services = check_services()
-    need_setup = not services['specter']['running']
-    # Are Wallets Found?
-    specter_wallets = have_specter_wallets()
-    need_setup = not specter_wallets
-    # Transactions found?
-    df = positions()
-    need_setup = not df.empty
-    meta = {
-        'tor': tor,
-        'services': services,
-        'specter_wallets': specter_wallets,
-        'txs': not df.empty,
-        'need_setup': need_setup,
-    }
-    messages = json.dumps(meta)
-    session['messages'] = messages
-    templateData = {
-        "title": "System Status",
-        "donated": donate_check(),
-        "messages": json.loads(session['messages']),
-        "specter": specter_update(),
-        "current_app": current_app,
-    }
-    return (render_template('warden/warden_empty.html', **templateData))
-
 # Update user fx settings in config.ini
 
 
@@ -224,78 +229,82 @@ def update_fx():
     fx = request.args.get("code")
     current_app.settings['PORTFOLIO']['base_fx'] = fx
     update_config()
-    from warden.warden_pricing_engine import fxsymbol as fxs
+    from warden_pricing_engine import fxsymbol as fxs
     current_app.fx = fxs(fx, 'all')
     regenerate_nav()
     redir = request.args.get("redirect")
     return redirect(redir)
 
 
-# Save current folder to json
-@warden.route('/data_folder', methods=['GET', 'POST'])
-def data_folder():
-    data_file = os.path.join(current_path(),
-                             'static/json_files/specter_data_folder.json')
-
+@warden.route('/specter_auth', methods=['GET', 'POST'])
+def specter_auth():
     if request.method == 'GET':
-        try:
-            with open(data_file) as data_file:
-                return_data = json.loads(data_file.read())
-        except Exception as e:
-            return_data = str(e)
-        return(json.dumps(return_data))
+        templateData = {
+            "title": "Login to Specter",
+            "donated": donate_check(),
+            "status": json.loads(session['status']),
+            "current_app": current_app,
+        }
+        return (render_template('warden/specter_auth.html', **templateData))
 
     if request.method == 'POST':
-        results = request.form
-        # Test this data folder
-        try:
-            data_folder = results['data_folder']
-            # Test if can get specter data
-            specter = specter_update(load=False, data_folder=data_folder)
-            # Check Status
-            is_configured = specter['is_configured']
-            is_running = specter['is_running']
-            wallets = specter['wallets']['wallets']
+        url = request.form.get('url')
+        if url[-1] != '/':
+            url += '/'
+        current_app.settings['SPECTER']['specter_url'] = url
+        current_app.settings['SPECTER']['specter_login'] = request.form.get('username')
+        current_app.settings['SPECTER']['specter_password'] = request.form.get('password')
+        update_config()
+        # Try these credentials
+        current_app.specter.login_payload = {
+            'username': current_app.settings['SPECTER']['specter_login'],
+            'password': current_app.settings['SPECTER']['specter_password']
+        }
+        current_app.specter.base_url = url
+        specter_dict, specter_messages = specter_test()
+        if specter_messages is not None:
+            if 'Connection refused' in specter_messages:
+                flash('Having some difficulty reaching Specter Server. ' +
+                      f'Please make sure it is running at {current_app.specter.base_url}', 'warning')
+                return redirect(url_for('warden.specter_auth'))
+            if 'Unauthorized Login' in specter_messages:
+                flash('Invalid Credentials or URL. Try again. ', 'danger')
+                return redirect(url_for('warden.specter_auth'))
 
-        except Exception as e:
-            return json.dumps({"message": "Error: " + str(e)})
+        # Update Config
+        flash("Success. Connected to Specter Server.", "success")
+        return redirect(url_for('warden.warden_page'))
 
-        message = ""
-        ok_save = True
-        if not is_configured:
-            ok_save = False
-            message += "Specter does not seem to be configured in this folder. "
 
-        if not is_running:
-            ok_save = False
-            message += "Specter does not seem to be running in this folder. "
+def alert_activity():
+    alerts = False
+    ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
+    with open(ack_file) as data_file:
+        tx_list = json.loads(data_file.read())
+        data_file.close()
 
-        if wallets == {}:
-            ok_save = False
-            message += "No wallets found - check folder."
+    try:
+        last_changes = parser.parse(tx_list['changes_detected_on'])
+        elapsed = datetime.now() - last_changes
+        elapsed = elapsed.seconds
 
-        if ok_save:
-            with open(data_file, 'w') as fp:
-                json.dump(results, fp)
-            message += "Specter Data folder found. Saved Successfully."
+        # Limit of 60 seconds = if changes happened in the last minute or less, flag it
+        EXPIRED = 60
 
-        return json.dumps({"message": message})
+        if elapsed < EXPIRED:
+            alerts = True
+            regenerate_nav()
+    except Exception:
+        alerts = False
 
+    return (alerts)
 
 # API End Point checks for wallet activity
+
+
 @ warden.route("/check_activity", methods=['GET'])
 def check_activity():
-    alerts = False
-    meta = warden_metadata()
-    if meta['warden_enabled']:
-        if isinstance(meta['old_new_df_old'], pd.DataFrame):
-            if not meta['old_new_df_old'].empty:
-                alerts = True
-                regenerate_nav()
-        if isinstance(meta['old_new_df_new'], pd.DataFrame):
-            if not meta['old_new_df_new'].empty:
-                alerts = True
-                regenerate_nav()
+    alerts = alert_activity()
     return (json.dumps(alerts))
 
 
@@ -330,8 +339,8 @@ def metadata_json():
 # Donation Thank you Page
 @ warden.route("/donated", methods=['GET'])
 def donated():
-    counter_file = os.path.join(current_path(),
-                                'static/json_files/counter.json')
+    counter_file = os.path.join(home_path(),
+                                'warden/counter.json')
     templateData = {"title": "Thank You!", "donated": donate_check(), "current_app": current_app}
     with open(counter_file, 'w') as fp:
         json.dump("donated", fp)
@@ -366,14 +375,23 @@ def gitreleases():
 def positions_json():
     # Get all transactions and cost details
     # This serves the main page
-    dfdyn, piedata = positions_dynamic()
-    dfdyn = dfdyn.to_dict(orient='index')
+    try:
+        dfdyn, piedata = positions_dynamic()
+        btc_price = price_data_rt("BTC") * fx_rate()['fx_rate']
+        dfdyn = dfdyn.to_dict(orient='index')
+    except Exception:
+        dfdyn = piedata = None
+        btc_price = 0
+
+    btc = price_data_rt("BTC")
+    if not btc:
+        btc = 0
 
     json_dict = {
         'positions': dfdyn,
         'piechart': piedata,
         'user': current_app.fx,
-        'btc': price_data_rt("BTC") * fx_rate()['fx_rate']
+        'btc': btc_price
     }
     return simplejson.dumps(json_dict, ignore_nan=True)
 
@@ -383,10 +401,13 @@ def positions_json():
 # Please note that the default is to update every 20s (MWT(20) above)
 @ warden.route("/realtime_btc", methods=["GET"])
 def realtime_btc():
-    fx_details = fx_rate()
-    fx_r = {'cross': fx_details['symbol'], 'fx_rate': fx_details['fx_rate']}
-    fx_r['btc_usd'] = price_data_rt("BTC")
-    fx_r['btc_fx'] = fx_r['btc_usd'] * fx_r['fx_rate']
+    try:
+        fx_details = fx_rate()
+        fx_r = {'cross': fx_details['symbol'], 'fx_rate': fx_details['fx_rate']}
+        fx_r['btc_usd'] = price_data_rt("BTC")
+        fx_r['btc_fx'] = fx_r['btc_usd'] * fx_r['fx_rate']
+    except Exception:
+        fx_r = 0
     return json.dumps(fx_r)
 
 
@@ -399,35 +420,12 @@ def dismiss_notification():
     return json.dumps("Done")
 
 
-# API end point to return node info
-# MyNode Bitcoin Data for front page
-@ warden.route("/node_info", methods=["GET"])
-def node_info():
-    data = specter_update(load=True)
-    status = {
-        'info': data.info,
-        'bitcoin': data.network_info,
-        'services': check_services(load=True),
-        'last_update': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    }
-    return simplejson.dumps(status, ignore_nan=True)
-
-
-# API end point to return service status
-@ warden.route("/services", methods=["GET"])
-def checkservices():
-    services = check_services()
-    return simplejson.dumps(services, ignore_nan=True)
-
-
 # API end point to return Specter data
 # args: ?load=True (True = loads saved json, False = refresh data)
 @ warden.route("/specter", methods=["GET"])
 def specter_json():
-    load = request.args.get("load")
-    load = True if not load else load
-    specter = specter_update(load=load)
-    return simplejson.dumps(specter, ignore_nan=True)
+    data = current_app.specter.home_parser(),
+    return simplejson.dumps(data, ignore_nan=True)
 
 
 # Latest Traceback message
@@ -562,6 +560,7 @@ def navchart():
                            fx=current_app.settings['PORTFOLIO']['base_fx'],
                            current_user=fx_rate(),
                            donated=donate_check(),
+                           data=data,
                            current_app=current_app)
 
 
@@ -658,12 +657,455 @@ def fx_list():
     return list
 
 
+@warden.route("/heatmapbenchmark_json", methods=["GET"])
+# Return Monthly returns for Benchmark and Benchmark difference from NAV
+# Takes arguments:
+# ticker   - single ticker for filter
+def heatmapbenchmark_json():
+
+    # Get portfolio data first
+    heatmap_gen, heatmap_stats, years, cols = heatmap_generator()
+
+    # Now get the ticker information and run comparison
+    if request.method == "GET":
+        ticker = request.args.get("ticker")
+        # Defaults to king BTC
+        if not ticker:
+            ticker = "BTC"
+
+    # Gather the first trade date in portfolio and store
+    # used to match the matrixes later
+    # Panda dataframe with transactions
+    df = specter_df()
+    # Filter the df acccoring to filter passed as arguments
+    df["trade_date"] = pd.to_datetime(df["trade_date"])
+    start_date = df["trade_date"].min()
+    start_date -= timedelta(days=1)  # start on t-1 of first trade
+
+    # Generate price Table now for the ticker and trim to match portfolio
+    data = price_data_fx(ticker)
+    mask = data.index >= start_date
+    data = data.loc[mask]
+
+    # If notification is an error, skip this ticker
+    if data is None:
+        messages = data.errors
+        return jsonify(messages)
+
+    data = data.rename(columns={'close_converted': ticker + '_price'})
+    data = data[[ticker + '_price']]
+    data.sort_index(ascending=True, inplace=True)
+    data["pchange"] = (data / data.shift(1)) - 1
+    # Run the mrh function to generate heapmap table
+    heatmap = mrh.get(data["pchange"], eoy=True)
+    heatmap_stats = heatmap
+    cols = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+        "eoy",
+    ]
+    cols_months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    years = heatmap.index.tolist()
+    # Create summary stats for the Ticker
+    heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(
+        axis=1)
+    heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(
+        axis=1)
+    heatmap_stats["POSITIVES"] = heatmap_stats[
+        heatmap_stats[cols_months] > 0].count(axis=1)
+    heatmap_stats["NEGATIVES"] = heatmap_stats[
+        heatmap_stats[cols_months] < 0].count(axis=1)
+    heatmap_stats["POS_MEAN"] = heatmap_stats[
+        heatmap_stats[cols_months] > 0].mean(axis=1)
+    heatmap_stats["NEG_MEAN"] = heatmap_stats[
+        heatmap_stats[cols_months] < 0].mean(axis=1)
+    heatmap_stats["MEAN"] = heatmap_stats[
+        heatmap_stats[cols_months] != 0].mean(axis=1)
+
+    # Create the difference between the 2 df - Pandas is cool!
+    heatmap_difference = heatmap_gen - heatmap
+
+    # return (heatmap, heatmap_stats, years, cols, ticker, heatmap_diff)
+    return simplejson.dumps(
+        {
+            "heatmap": heatmap.to_dict(),
+            "heatmap_stats": heatmap_stats.to_dict(),
+            "cols": cols,
+            "years": years,
+            "ticker": ticker,
+            "heatmap_diff": heatmap_difference.to_dict(),
+        },
+        ignore_nan=True,
+        default=datetime.isoformat,
+    )
+
+
+@warden.route("/heatmap")
+# Returns a monthly heatmap of returns and statistics
+def heatmap():
+    heatmap_gen, heatmap_stats, years, cols = heatmap_generator()
+
+    return render_template(
+        "warden/heatmap.html",
+        title="Monthly Returns HeatMap",
+        heatmap=heatmap_gen,
+        heatmap_stats=heatmap_stats,
+        years=years,
+        cols=cols,
+        current_app=current_app,
+        current_user=fx_rate()
+    )
+
+
+@warden.route("/volchart", methods=["GET", "POST"])
+# Only returns the html - request for data is done through jQuery AJAX
+def volchart():
+    return render_template("warden/volchart.html",
+                           title="Historical Volatility Chart",
+                           current_app=current_app,
+                           current_user=fx_rate())
+
+
+@warden.route("/histvol", methods=["GET", "POST"])
+# Returns a json with data to create the vol chart
+# takes inputs from get:
+# ticker, meta (true returns only metadata), rolling (in days)
+# metadata (max, mean, etc)
+def histvol():
+    # if there's rolling variable, get it, otherwise default to 30
+    if request.method == "GET":
+        try:
+            q = int(request.args.get("rolling"))
+        except ValueError:
+            q = 30
+    else:
+        q = 30
+
+    ticker = request.args.get("ticker")
+    metadata = request.args.get("meta")
+
+    # When ticker is not sent, will calculate for portfolio
+    if not ticker:
+        data = generatenav()
+        data["vol"] = (data["NAV_fx"].pct_change().rolling(q).std() *
+                       (365**0.5) * 100)
+        # data.set_index('date', inplace=True)
+        vollist = data[["vol"]]
+        vollist.index = vollist.index.strftime("%Y-%m-%d")
+        datajson = vollist.to_json()
+
+    if ticker:
+        filename = "thewarden/historical_data/" + ticker + ".json"
+        filename = os.path.join(current_path(), filename)
+
+        try:
+            with open(filename) as data_file:
+                local_json = json.loads(data_file.read())
+                data_file.close()
+                prices = pd.DataFrame(
+                    local_json["Time Series (Digital Currency Daily)"]).T
+                prices["4b. close (USD)"] = prices["4b. close (USD)"].astype(
+                    np.float)
+                prices["vol"] = (
+                    prices["4b. close (USD)"].pct_change().rolling(q).std() *
+                    (365**0.5) * 100)
+                pricelist = prices[["vol"]]
+                datajson = pricelist.to_json()
+
+        except (FileNotFoundError, KeyError):
+            datajson = "Ticker Not Found"
+
+    if metadata is not None:
+        metatable = {}
+        metatable["mean"] = vollist.vol.mean()
+        metatable["max"] = vollist.vol.max()
+        metatable["min"] = vollist.vol.min()
+        metatable["last"] = vollist.vol[-1]
+        metatable["lastvsmean"] = (
+            (vollist.vol[-1] / vollist.vol.mean()) - 1) * 100
+        metatable = json.dumps(metatable)
+        return metatable
+
+    return datajson
+
+
+@warden.route("/mempool_json", methods=["GET", "POST"])
+def mempool_json():
+    try:
+        mp_config = current_app.settings['MEMPOOL']
+        url = mp_config.get('url')
+
+        # Get recommended fees
+        mp_fee = tor_request(url + '/api/v1/fees/recommended').json()
+        mp_blocks = tor_request(url + '/api/blocks').json()
+
+        return json.dumps({'mp_fee': mp_fee, 'mp_blocks': mp_blocks, 'mp_url': url})
+    except Exception:
+        return json.dumps({'mp_fee': '-', 'mp_blocks': '-', 'mp_url': 'Error: Retrying...'})
+
+
+@warden.route("/portfolio_compare", methods=["GET"])
+def portfolio_compare():
+    return render_template("warden/portfolio_compare.html",
+                           title="Portfolio Comparison",
+                           current_app=current_app,
+                           current_user=fx_rate())
+
+
+@warden.route("/portfolio_compare_json", methods=["GET"])
+# Compare portfolio performance to a list of assets
+# Takes arguments:
+# tickers  - (comma separated. ex: BTC,ETH,AAPL)
+# start    - start date in the format YYMMDD
+# end      - end date in the format YYMMDD
+# method   - "chart": returns NAV only data for charts
+#          - "all": returns all data (prices and NAV)
+#          - "meta": returns metadata information
+def portfolio_compare_json():
+    if request.method == "GET":
+        tickers = request.args.get("tickers").upper()
+        tickers = tickers.split(",")
+        start_date = request.args.get("start")
+        method = request.args.get("method")
+
+        # Check if start and end dates exist, if not assign values
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        except (ValueError, TypeError) as e:
+            logging.info(f"[portfolio_compare_json] Error: {e}, " +
+                         "setting start_date to zero")
+            start_date = 0
+
+        end_date = request.args.get("end")
+
+        try:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        except (ValueError, TypeError) as e:
+            logging.info(f"[portfolio_compare_json] Error: {e}, " +
+                         "setting end_date to now")
+            end_date = datetime.now()
+    data = {}
+
+    logging.info("[portfolio_compare_json] NAV requested in list of " +
+                 "tickers, requesting generatenav.")
+    nav = generatenav()
+    nav_only = nav["NAV_fx"]
+
+    # Now go over tickers and merge into nav_only df
+    messages = {}
+    meta_data = {}
+    for ticker in tickers:
+        if ticker == "NAV":
+            # Ticker was NAV, skipped
+            continue
+
+        # Generate price Table now for the ticker and trim to match portfolio
+        data = price_data_fx(ticker)
+        # If notification is an error, skip this ticker
+        if data is None:
+            messages = data.errors
+            return jsonify(messages)
+        data = data.rename(columns={'close_converted': ticker + '_price'})
+        data = data[ticker + '_price']
+        nav_only = pd.merge(nav_only, data, on="date", how="left")
+        nav_only[ticker + "_price"].fillna(method="bfill", inplace=True)
+        messages[ticker] = "ok"
+        logging.info(f"[portfolio_compare_json] {ticker}: Success - Merged OK")
+
+    nav_only.fillna(method="ffill", inplace=True)
+
+    # Trim this list only to start_date to end_date:
+    mask = (nav_only.index >= start_date) & (nav_only.index <= end_date)
+    nav_only = nav_only.loc[mask]
+
+    # Now create the list of normalized Returns for the available period
+    # Plus create a table with individual analysis for each ticker and NAV
+    nav_only["NAV_norm"] = (nav_only["NAV_fx"] / nav_only["NAV_fx"][0]) * 100
+    nav_only["NAV_ret"] = nav_only["NAV_norm"].pct_change()
+    table = {}
+    table["meta"] = {}
+    table["meta"]["start_date"] = (nav_only.index[0]).strftime("%m-%d-%Y")
+    table["meta"]["end_date"] = nav_only.index[-1].strftime("%m-%d-%Y")
+    table["meta"]["number_of_days"] = ((nav_only.index[-1] -
+                                        nav_only.index[0])).days
+    table["meta"]["count_of_points"] = nav_only["NAV_fx"].count().astype(float)
+    table["NAV"] = {}
+    table["NAV"]["start"] = nav_only["NAV_fx"][0]
+    table["NAV"]["end"] = nav_only["NAV_fx"][-1]
+    table["NAV"]["return"] = (nav_only["NAV_fx"][-1] /
+                              nav_only["NAV_fx"][0]) - 1
+    table["NAV"]["avg_return"] = nav_only["NAV_ret"].mean()
+    table["NAV"]["ann_std_dev"] = nav_only["NAV_ret"].std() * math.sqrt(365)
+    for ticker in tickers:
+        if messages[ticker] == "ok":
+            # Include new columns for return and normalized data
+            nav_only[ticker + "_norm"] = (nav_only[ticker + "_price"] /
+                                          nav_only[ticker + "_price"][0]) * 100
+            nav_only[ticker + "_ret"] = nav_only[ticker + "_norm"].pct_change()
+            # Create Metadata
+            table[ticker] = {}
+            table[ticker]["start"] = nav_only[ticker + "_price"][0]
+            table[ticker]["end"] = nav_only[ticker + "_price"][-1]
+            table[ticker]["return"] = (nav_only[ticker + "_price"][-1] /
+                                       nav_only[ticker + "_price"][0]) - 1
+            table[ticker]["comp2nav"] = table[ticker]["return"] - \
+                table["NAV"]["return"]
+            table[ticker]["avg_return"] = nav_only[ticker + "_ret"].mean()
+            table[ticker]["ann_std_dev"] = nav_only[
+                ticker + "_ret"].std() * math.sqrt(365)
+
+    logging.info("[portfolio_compare_json] Success")
+
+    # Create Correlation Matrix
+    filter_col = [col for col in nav_only if col.endswith("_ret")]
+    nav_matrix = nav_only[filter_col]
+    corr_matrix = nav_matrix.corr(method="pearson").round(2)
+    corr_html = corr_matrix.to_html(classes="table small text-center",
+                                    border=0,
+                                    justify="center")
+
+    # Now, let's return the data in the correct format as requested
+    if method == "chart":
+        return_data = {
+            "data": nav_only.to_json(),
+            "messages": messages,
+            "meta_data": meta_data,
+            "table": table,
+            "corr_html": corr_html,
+        }
+        return jsonify(return_data)
+
+    return nav_only.to_json()
+
+
+@warden.route("/price_feed", methods=["GET"])
+def price_feed():
+    return_dict = {}
+    ticker = request.args.get("ticker")
+    ticker = "BTC" if not ticker else ticker
+    ticker = ticker.upper()
+    for pr in PROVIDER_LIST:
+        provider = PROVIDER_LIST[pr]
+        price_data = PriceData(ticker, provider)
+        data = {}
+        data['provider_info'] = {
+            'name': provider.name,
+            'errors': provider.errors,
+            'base_url': provider.base_url,
+            'doc_link': provider.doc_link,
+            'field_dict': provider.field_dict,
+            'globalURL': None
+        }
+        if provider.base_url is not None:
+            globalURL = (provider.base_url + "?" + provider.ticker_field + "=" +
+                         ticker + provider.url_args)
+            # Some APIs use the ticker without a ticker field i.e. xx.xx./AAPL&...
+            # in these cases, we pass the ticker field as empty
+            if provider.ticker_field == '':
+                if provider.url_args[0] == '&':
+                    provider.url_args = provider.url_args.replace('&', '?', 1)
+                globalURL = (provider.base_url + "/" + ticker + provider.url_args)
+            # Some URLs are in the form http://www.www.www/ticker_field/extra_fields?
+            if provider.replace_ticker is not None:
+                globalURL = provider.base_url.replace('ticker_field', ticker)
+            data['provider_info']['globalURL'] = globalURL
+
+        try:
+
+            data['price_data'] = {
+                'ticker': ticker,
+                'last_update': price_data.last_update.strftime('%m/%d/%Y'),
+                'first_update': price_data.first_update.strftime('%m/%d/%Y'),
+                'last_close': float(price_data.last_close),
+                'errors': price_data.errors
+            }
+        except Exception as e:
+            data['price_data'] = {
+                'price_data_errors': price_data.errors,
+                'error': str(e)
+            }
+
+        # Try to get realtime prices
+        data['realtime'] = {
+            'price': (price_data.realtime(PROVIDER_LIST[pr])),
+            'error': price_data.errors
+        }
+
+        return_dict[provider.name] = data
+
+    return render_template("warden/price_feed.html",
+                           title="Price Feed Check",
+                           current_app=current_app,
+                           current_user=fx_rate(),
+                           return_dict=return_dict)
+
+
+@ warden.route("/test_price", methods=["GET"])
+def test_price():
+    try:
+        # Tests a price using a provider and returns price data
+        provider = PROVIDER_LIST[request.args.get("provider")]
+        rtprovider = request.args.get("rtprovider")
+        ticker = request.args.get("ticker")
+        price_data = PriceData(ticker, provider)
+        data = {}
+
+        data['provider'] = {
+            'name': provider.name,
+            'errors': provider.errors,
+            'base_url': provider.base_url,
+            'doc_link': provider.doc_link
+        }
+
+        data['price_data'] = {
+            'ticker': ticker,
+            'last_update': price_data.last_update.strftime('%m/%d/%Y'),
+            'first_update': price_data.first_update.strftime('%m/%d/%Y'),
+            'last_close': float(price_data.last_close),
+            'errors': price_data.errors
+        }
+
+        if rtprovider:
+            data['realtime'] = {
+                'price': float(price_data.realtime(PROVIDER_LIST[rtprovider]))
+            }
+
+    except Exception as e:
+        return json.dumps({"error": f"Check API keys or connection: {e}"})
+
+    return (data)
+
 # -------------------------------------------------
 #  START JINJA 2 Filters
 # -------------------------------------------------
 # Jinja2 filter to format time to a nice string
 # Formating function, takes self +
 # number of decimal places + a divisor
+
+
 @ jinja2.contextfilter
 @ warden.app_template_filter()
 def jformat(context, n, places, divisor=1):

@@ -1,0 +1,180 @@
+{% extends "warden/warden_layout.html" %} {% block content %}
+<!--  High Charts -->
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="{{url_for('warden.static', filename='js/highcharts.js')}}"></script>
+<script src="https://code.highcharts.com/modules/histogram-bellcurve.js"></script>
+<script src="{{url_for('warden.static', filename='js/heatmap.js')}}"></script>
+
+<div id="alerts" class="container"></div>
+
+<div class="container-fluid">
+  <div class="content-section large-table">
+    <p class="lead">
+      Portfolio Monthly Returns in {{current_user['name_plural']}}<sup>1</sup>
+    </p>
+    <table class="table table-condensed">
+      <thead class="thead-light">
+        <tr class="table-active">
+          <th></th>
+          {% for col in cols %}
+          <th class="text-center">
+            {%if col == 'eoy' %} Year {% else %} {{col}} {% endif %}
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for year in years | reverse %}
+        <tr>
+          <th class="table-active">{{year}}</th>
+          {% for col in cols %} {% if col=='eoy' %}
+          <td class="text-right table-secondary redgreen">
+            {{"{:,.1f}".format(heatmap[col][year]*100)}}% {% else %} {% if
+            heatmap[col][year] != 0 %}
+          </td>
+
+          <td class="text-right heatmap">
+            {{"{:,.1f}".format(heatmap[col][year]*100)}}% {% else %}
+          </td>
+
+          <td class="text-center emptycell">{% endif %} {% endif %}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <div class="content-section large-table">
+    <div class="row">
+      <div class="col-sm-8">
+        <p class="lead">Monthly Returns vs Benchmark</p>
+      </div>
+      <div class="col-sm-4 text-right">
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon1"
+              >Benchmark Ticker</span
+            >
+          </div>
+          <input
+            id="b_ticker"
+            type="text"
+            class="form-control text-right change_monitor"
+            value="BTC"
+            aria-label="Username"
+            aria-describedby="basic-addon1"
+          />
+        </div>
+      </div>
+    </div>
+
+    <h6>
+      Benchmark Monthly Returns in {{current_user['name_plural']}}<sup>1</sup>
+    </h6>
+    <div id="bench_table">
+      <div class="spinner-border text-secondary" role="status">
+        <span class="sr-only">Loading...</span>
+      </div>
+    </div>
+
+    <hr />
+    <h6>Portfolio difference from benchmark</h6>
+
+    <div id="bench_diff_table">
+      <div class="spinner-border text-secondary" role="status">
+        <span class="sr-only">Loading...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <div class="content-section large-table">
+    <p class="lead">
+      Portfolio Returns Statistics in {{current_user['name_plural']}}<sup
+        >1</sup
+      >
+    </p>
+    <table class="table small table-condensed" style="width: 100%">
+      <thead class="thead-light">
+        <tr class="table-active">
+          <th></th>
+          <th class="text-center">Year Return</th>
+          <th class="text-center">Best Month</th>
+          <th class="text-center">Worst Month</th>
+          <th class="text-center">
+            Positive<br />
+            Months
+          </th>
+          <th class="text-center">
+            Negative<br />
+            Months
+          </th>
+          <th class="text-center">
+            Average<br />
+            Positive Month
+          </th>
+          <th class="text-center">
+            Average<br />
+            Negative Month
+          </th>
+          <th class="text-center">
+            Average<br />
+            Monthly Return
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for year in years | reverse %}
+        <tr>
+          <th class="table-active">{{year}}</th>
+          <td class="text-center table-secondary redgreen">
+            {{"{:,.1f}".format(heatmap_stats['eoy'][year]*100)}}%
+          </td>
+          <td class="text-center redgreen">
+            {{"{:,.1f}".format(heatmap_stats['MAX'][year]*100)}}%
+          </td>
+          <td class="text-center redgreen">
+            {{"{:,.1f}".format(heatmap_stats['MIN'][year]*100)}}%
+          </td>
+          <td class="text-center table-secondary">
+            {{"{:,.0f}".format(heatmap_stats['POSITIVES'][year])}}
+          </td>
+          <td class="text-center table-secondary">
+            {{"{:,.0f}".format(heatmap_stats['NEGATIVES'][year])}}
+          </td>
+          <td class="text-center redgreen">
+            {{"{:,.1f}".format(heatmap_stats['POS_MEAN'][year]*100)}}%
+          </td>
+          <td class="text-center redgreen">
+            {{"{:,.1f}".format(heatmap_stats['NEG_MEAN'][year]*100)}}%
+          </td>
+          <td class="text-center table-secondary redgreen">
+            {{"{:,.1f}".format(heatmap_stats['MEAN'][year]*100)}}%
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="row">
+  <div class="container-fluid">
+    <sup>1</sup> All returns in this page are in
+    {{current_user['name_plural']}}.
+    <br />
+    {%if current_user['name'] != 'US Dollar'%} This means that the returns
+    include the asset returns plus the currency return in the period.
+    <br />For example, if Bitcoin in USD is up 5% and the
+    {{current_user['name']}} is up 1%, the return will be 6.05% in
+    {{current_user['name_plural']}}. {%endif%}
+  </div>
+</div>
+
+{% endblock content %}

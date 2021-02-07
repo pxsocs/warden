@@ -4,6 +4,7 @@
 
 <head>
     <!-- Style Sheets -->
+
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/bootstrap/css/bootstrap.min.css')}}">
     <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/font-awesome/css/all.css')}}">
@@ -42,7 +43,6 @@
 
     <header>
         <nav class="navbar navbar-dark bg-steel navbar-expand-lg navbar-font justify-content-end">
-
             <a class="navbar-brand" href="/"> <img src="{{url_for('warden.static', filename='images/logo_flat.png')}}"
                     width="180" height="40" alt="Home">
             </a>
@@ -117,9 +117,18 @@
                     <a class="sidebar-subitem" href="/list_transactions"><i
                             class="fas fa-list fa-lg"></i>&nbsp;&nbsp;All Transactions</a>
 
-                    <a class="sidebar-subitem" href="/setup"><i
-                            class="fas fa-satellite-dish fa-lg"></i>&nbsp;&nbsp;System
-                        Status</a>
+                    <a class="sidebar-subitem" href="/heatmap" )>
+                        <i class="fas fa-fire fa-lg"></i>&nbsp;&nbsp;Monthly HeatMap</a>
+
+                    <a class="sidebar-subitem" href="/portfolio_compare"><i
+                            class="fas fa-check-double fa-lg"></i>&nbsp;&nbsp;Compare Performance</a>
+
+
+                    <a class="sidebar-subitem" href="/volchart"><i
+                            class="fas fa-cloud-sun-rain fa-lg"></i>&nbsp;&nbsp;Volatility Chart</a>
+
+                    <a class="sidebar-subitem" href="/specter_auth"><i
+                            class="fas fa-ghost fa-lg"></i>&nbsp;&nbsp;Specter Credentials</a>
 
 
                 </div>
@@ -133,22 +142,24 @@
                             </span>
                         </span>
 
-                        {%if current_app.services['mynode']['running']%}
-                        <a href="{{current_app.services['mynode']['connection'][0]}}:{{current_app.services['mynode']['connection'][1]}}""
-                    target='_blank' class=" btn btn-secondary btn-block" role="button" class="btn btn-light btn-sm">
-                            Powered by
-                            <img src='{{url_for('warden.static', filename='images/logo.png')}}' height="20">
+
+
+                        {%if session['status']['specter_reached'] == False%}
+                        <a href="{{current_app.specter.base_url}}""
+                    target='_blank' class=" btn btn-danger btn-block" role="button" class="btn btn-light btn-sm">
+
+                            Specter Server Disconnected
+
                         </a>
-                        {%endif%}
-
-                        {%if current_app.services['specter']['running']%}
-                        <a href="http://{{current_app.services['specter']['connection'][0]}}:{{current_app.services['specter']['connection'][1]}}""
+                        {%else%}
+                        <a href="{{current_app.specter.base_url}}""
                     target='_blank' class=" btn btn-secondary btn-block" role="button" class="btn btn-light btn-sm">
-
-                            Connected to Specter Wallet
                             <img src='{{url_for('warden.static', filename='images/specter_icon.png')}}' width="20">
+                            Connected to Specter Server
                         </a>
+
                         {%endif%}
+
                     </div>
                 </li>
 
@@ -174,6 +185,11 @@
 
                     </div>
 
+                </li>
+                <li class="text-center">
+                    <div style='color: #8c91a0; padding-left: 10px; padding-top: 40px;'>
+                        <h6>Version {{current_app.version}}</h6>
+                    </div>
                 </li>
 
             </ul>
@@ -218,30 +234,28 @@
 
         <!-- Footer -->
         <footer class="site-footer bg-steel small fixed-bottom">
-            <div class="container text-right text-light align-middle">
 
-                <div class="row" style="vertical-align: bottom;">
-                    <div class="col-sm-6 text-left">
-                        <span class="text-white">
-                            <br>
-                            <i class="fab fa-github fa-2x" style="vertical-align: middle;"></i>
-                            &nbsp;&nbsp;<a style="text-decoration : none"
-                                href='https://github.com/pxsocs/specter_warden/' class='text-white'>
-                                Open Source code available at GitHub</a>
-                        </span>
-                    </div>
-
-                    <div class="col-sm-6 text-right">
-                        <a style="text-decoration : none" href="https://twitter.com/alphaazeta"> <i
-                                class="text-white fab fa-twitter fa-xlg"></i>
-                            <span class="text-white">@AlphaaZeta&nbsp;</span></a><br>
-                        <i class="fab fa-bitcoin fa-xlg"></i> #StackingSats
-                        #NotYourKeysNotYourCoins
-                        <br><br>
-                    </div>
+            <div class="row text-white">
+                <div class="col-sm-4 text-left float-left">
+                    <i class="fab fa-github fa-lg text-white"></i>
+                    &nbsp;&nbsp;<a class='text-white' style="text-decoration : none"
+                        href='https://github.com/pxsocs/specter_warden/'>
+                        Open Source code available at GitHub</a>
                 </div>
 
+                <div class="col-sm-4 text-center">
+                    <i class="fab fa-bitcoin fa-lg text-white"></i>
+                    Not Your Keys Not Your Coins | Si vis pacem, para bellum
+                </div>
+
+                <div class="col-sm-4 text-center float-right">
+                    <a class='text-white' style="text-decoration : none" href="https://twitter.com/alphaazeta"> <i
+                            class="fab fa-twitter fa-lg"></i>
+                        <span class="text-white">@AlphaaZeta&nbsp;</span></a>
+                </div>
             </div>
+
+
         </footer>
 
         <!-- END OF WRAPPER -->

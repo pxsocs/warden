@@ -8,9 +8,11 @@
 import json
 import os
 import urllib
+import configparser
 from datetime import datetime
 
-from warden.warden_decorators import MWT
+from warden_decorators import MWT
+
 from flask import current_app
 
 from time import time
@@ -19,10 +21,26 @@ import pandas as pd
 import requests
 
 
+def load_config():
+    # Load Config
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    config_file = os.path.join(basedir, 'config.ini')
+    CONFIG = configparser.ConfigParser()
+    CONFIG.read(config_file)
+    return (CONFIG)
+
+
 # Returns the current application path
 def current_path():
     application_path = os.path.dirname(os.path.abspath(__file__))
     return (application_path)
+
+
+# Returns the home path
+def home_path():
+    from pathlib import Path
+    home = str(Path.home())
+    return (home)
 
 
 @MWT(timeout=60)
@@ -97,11 +115,11 @@ def tor_request(url, tor_only=True, method="get"):
     # url:       url to get or post
     # tor_only:  request will only be executed if tor is available
     # method:    'get or' 'post'
-
     global TOR
     tor_check = TOR
     if tor_check["status"] is True:
         try:
+            # This is chrome, you can set whatever browser you like
             # Activate TOR proxies
             session = requests.session()
             session.proxies = {
@@ -116,7 +134,7 @@ def tor_request(url, tor_only=True, method="get"):
         except (
                 requests.exceptions.ConnectionError,
                 requests.exceptions.ReadTimeout,
-        ) as e:
+        ):
             return "ConnectionError"
     else:
         if tor_only:
@@ -138,12 +156,13 @@ REALTIME_PROVIDER_PRIORITY = [
     'cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock',
     'fp_realtime_stock'
 ]
-FX_RT_PROVIDER_PRIORITY = ['aa_realtime_digital', 'cc_realtime']
+FX_RT_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime_digital']
 HISTORICAL_PROVIDER_PRIORITY = [
     'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock',
     'bitmex'
 ]
-FX_PROVIDER_PRIORITY = ['aa_fx', 'cc_fx']
+FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
+
 
 # How to include new API providers (historical prices):
 # Step 1:
@@ -182,7 +201,7 @@ class PriceProvider:
                  ticker_field,
                  field_dict=None,
                  doc_link=None,
-                 replace_ticker=None):
+                 replace_ticker=None, diags=False):
         # field dict includes all fields to be passed to the URL
         # for example, for Alphavantage
         # name = 'Alphavantage_digital'
@@ -198,6 +217,7 @@ class PriceProvider:
         self.ticker_field = ticker_field
         self.field_dict = field_dict
         self.doc_link = doc_link
+        self.diags = diags
         if self.field_dict is not None:
             try:
                 self.url_args = "&" + urllib.parse.urlencode(field_dict)
@@ -207,7 +227,7 @@ class PriceProvider:
         self.replace_ticker = replace_ticker
 
     @MWT(timeout=300)
-    def request_data(self, ticker):
+    def request_data(self, ticker, diags=False):
         data = None
         if self.base_url is not None:
             ticker = ticker.upper()
@@ -222,9 +242,14 @@ class PriceProvider:
             # Some URLs are in the form http://www.www.www/ticker_field/extra_fields?
             if self.replace_ticker is not None:
                 globalURL = self.base_url.replace('ticker_field', ticker)
+            if diags:
+                print(f"Getting URL: {globalURL}")
             request = tor_request(globalURL)
             try:
                 data = request.json()
+                if diags:
+                    print("RESULT: ")
+                    print(data)
             except Exception:
                 try:  # Try again - some APIs return a json already
                     data = json.loads(request)
@@ -251,14 +276,15 @@ class PriceProvider:
 # btc.realtime(provider): returns realtime price (float)
 class PriceData():
     # All methods related to a ticker
-    def __init__(self, ticker, provider):
+    def __init__(self, ticker, provider, diags=False):
         # providers is a list of pricing providers
         # ex: ['alphavantage', 'Yahoo']
         self.ticker = ticker.upper()
         self.provider = provider
-        self.filename = ("warden/pricing_engine/pricing_data/" + self.ticker +
+        self.diags = diags
+        self.filename = ("warden/" + self.ticker +
                          "_" + provider.name + ".price")
-        self.filename = os.path.join(current_path(), self.filename)
+        self.filename = os.path.join(home_path(), self.filename)
         self.errors = []
         # makesure file path exists
         try:
@@ -301,7 +327,7 @@ class PriceData():
                 if filetime.date() == today:
                     price_pickle = pd.read_pickle(self.filename)
                     return (price_pickle)
-            except Exception as e:
+            except Exception:
                 pass
         # File not found ot not new. Need to update the matrix
         # Cycle through the provider list until there's satisfactory data
@@ -374,7 +400,7 @@ class PriceData():
                         '5. volume': 'volume'
                     })
                 df_save = df[['close', 'open', 'high', 'low', 'volume']]
-                df.index.names = ['date']
+                df_save.index.names = ['date']
             except Exception as e:
                 self.errors.append(e)
                 df_save = None
@@ -394,7 +420,7 @@ class PriceData():
                         '5. volume': 'volume'
                     })
                 df_save = df[['close', 'open', 'high', 'low', 'volume']]
-                df.index.names = ['date']
+                df_save.index.names = ['date']
             except Exception as e:
                 self.errors.append(e)
                 df_save = None
@@ -458,7 +484,9 @@ class PriceData():
     def realtime(self, rt_provider):
         # This is the parser for realtime prices.
         # Data should be parsed so only the price is returned
-        price_request = rt_provider.request_data(self.ticker)
+        if self.diags:
+            print(f"Getting realtime for {self.ticker} on {rt_provider.name}")
+        price_request = rt_provider.request_data(self.ticker, self.diags)
         price = None
         if rt_provider.name == 'ccrealtime':
             try:
@@ -497,6 +525,11 @@ class PriceData():
             except Exception as e:
                 self.errors.append(e)
 
+        if self.diags:
+            print(f"Realtime Provider: {rt_provider.name} returned:")
+            print(price)
+            if self.errors:
+                print(f"ERRORS: {self.errors}")
         return price
 
 
@@ -505,14 +538,13 @@ class ApiKeys():
     # returns current stored keys in the api_keys.conf file
     # makesure file path exists
     def __init__(self):
-        self.filename = 'warden/pricing_engine/api_keys.conf'
+        self.filename = 'warden/api_keys.conf'
+        self.filename = os.path.join(home_path(), self.filename)
         try:
             os.makedirs(os.path.dirname(self.filename))
         except OSError as e:
             if e.errno != 17:
                 raise
-
-        self.filename = os.path.join(current_path(), self.filename)
 
     def loader(self):
         if os.path.exists(self.filename):
@@ -551,6 +583,7 @@ class ApiKeys():
 # Class instance with api keys loader and saver
 api_keys_class = ApiKeys()
 api_keys = api_keys_class.loader()
+config = load_config()
 
 
 # Loop through all providers to get the first non-empty df
@@ -571,7 +604,8 @@ def price_data(ticker):
 
 
 # Returns price data in current user's currency
-def price_data_fx(ticker):  # BTC
+def price_data_fx(ticker, diags=False):
+    prices = None
     FX = fx_rate()['base']
     GBTC_PROVIDER_PRIORITY = [
         'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock', 'bitmex'
@@ -582,26 +616,44 @@ def price_data_fx(ticker):  # BTC
         provider_list = HISTORICAL_PROVIDER_PRIORITY
 
     for provider in provider_list:
-        price_data = PriceData(ticker, PROVIDER_LIST[provider])
+        price_data = PriceData(ticker, PROVIDER_LIST[provider], diags)
         if price_data.df is not None:
-            break
+            if price_data.df['close'].sum() != 0:
+                break
+
     # Loop through FX providers until a df is filled
     for provider in FX_PROVIDER_PRIORITY:
+        if diags:
+            print(f"\n     Trying provider: {provider}")
         prices = price_data.df_fx(FX, PROVIDER_LIST[provider])
         if prices is not None:
             break
+        else:
+            if diags:
+                print("    [x] Returned Empty Historical Data. Errors:")
+                print(price_data.errors)
     return (prices)
 
 
 # Returns realtime price for a ticker using the provider list
 # Price is returned in USD
-def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY):
+def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY, diags=False):
+    if diags:
+        print("Realtime data diags mode")
+        print(ticker)
     if ticker == 'USD':
         return None
     for provider in priority_list:
-        price_data = PriceData(ticker, PROVIDER_LIST[provider])
+        if diags:
+            print(f"Trying provider: {provider}")
+        price_data = PriceData(ticker, PROVIDER_LIST[provider], diags)
         if price_data.realtime(PROVIDER_LIST[provider]) is not None:
+            if diags:
+                print(f" Provider {provider} success: {price_data.realtime(PROVIDER_LIST[provider])}")
             break
+        else:
+            if diags:
+                print(f"Provider: {provider} returned no data")
     return (price_data.realtime(PROVIDER_LIST[provider]))
 
 
@@ -745,8 +797,9 @@ def fxsymbol(fx, output='symbol'):
 # Setting a timeout to 10 as fx rates don't change so often
 @MWT(timeout=1)
 def fx_rate():
-    with current_app.app_context():
-        FX = current_app.settings['PORTFOLIO']['base_fx']
+    from utils import load_config
+    config = load_config()
+    FX = config['PORTFOLIO']['base_fx']
 
     # This grabs the realtime current currency conversion against USD
     try:
@@ -778,7 +831,7 @@ def multiple_price_grab(tickers, fx):
     # tickers should be in comma sep string format like "BTC,ETH,LTC"
     baseURL = \
         "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="\
-        + tickers + "&tsyms=" + fx + "&&api_key=9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225"
+        + tickers + "&tsyms=" + fx + "&&api_key=39667965c99dfa9f5c3c368867ae776e019f46275fcba2d1d3fe3e04812842e1"
     try:
         request = tor_request(baseURL)
     except requests.exceptions.ConnectionError:
@@ -835,7 +888,7 @@ PROVIDER_LIST = {
                   field_dict={
                       'function': 'DIGITAL_CURRENCY_DAILY',
                       'market': 'USD',
-                      'apikey': api_keys['alphavantage']['api_key']
+                      'apikey': config['API']['alphavantage']
                   },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'aa_stock':
@@ -845,7 +898,7 @@ PROVIDER_LIST = {
                   field_dict={
                       'function': 'TIME_SERIES_DAILY',
                       'outputsize': 'full',
-                      'apikey': api_keys['alphavantage']['api_key']
+                      'apikey': config['API']['alphavantage']
                   },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'fmp_stock':
@@ -855,7 +908,8 @@ PROVIDER_LIST = {
         ticker_field='',
         field_dict={
             'from': '2001-01-01',
-            'to:': '2099-12-31'
+            'to:': '2099-12-31',
+            'apikey': config['API']['fmp']
         },
         doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'
     ),
@@ -867,7 +921,7 @@ PROVIDER_LIST = {
                       'function': 'FX_DAILY',
                       'outputsize': 'full',
                       'from_symbol': 'USD',
-                      'apikey': api_keys['alphavantage']['api_key']
+                      'apikey': config['API']['alphavantage']
                   },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'cc_digital':
@@ -881,7 +935,7 @@ PROVIDER_LIST = {
             'allData':
             'true',
             'api_key':
-            '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
+            config['API']['cryptocompare']
         },
         doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
@@ -896,7 +950,7 @@ PROVIDER_LIST = {
             'allData':
             'true',
             'api_key':
-            '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
+            config['API']['cryptocompare']
         },
         doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
@@ -919,7 +973,7 @@ PROVIDER_LIST = {
             'tsyms':
             'USD',
             'api_key':
-            '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
+            config['API']['cryptocompare']
         },
         doc_link=None),
     'cc_realtime_full':
@@ -931,7 +985,7 @@ PROVIDER_LIST = {
             'tsyms':
             'USD',
             'api_key':
-            '9863dbe4217d98738f4ab58137007d24d70da92031584ba31de78137e0576225'
+            config['API']['cryptocompare']
         },
         doc_link='https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'
     ),
@@ -942,7 +996,7 @@ PROVIDER_LIST = {
                   field_dict={
                       'function': 'CURRENCY_EXCHANGE_RATE',
                       'to_currency': 'USD',
-                      'apikey': api_keys['alphavantage']['api_key']
+                      'apikey': config['API']['alphavantage']
                   },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'aa_realtime_stock':
@@ -951,7 +1005,7 @@ PROVIDER_LIST = {
                   ticker_field='symbol',
                   field_dict={
                       'function': 'GLOBAL_QUOTE',
-                      'apikey': api_keys['alphavantage']['api_key']
+                      'apikey': config['API']['alphavantage']
                   },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'fp_realtime_stock':
@@ -959,7 +1013,7 @@ PROVIDER_LIST = {
         name='fprealtimestock',
         base_url='https://financialmodelingprep.com/api/v3/stock/real-time-price',
         ticker_field='',
-        field_dict='',
+        field_dict={'apikey': config['API']['fmp']},
         doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'
     )
 }

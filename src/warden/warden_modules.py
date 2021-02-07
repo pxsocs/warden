@@ -6,64 +6,28 @@ import pandas as pd
 import numpy as np
 import glob
 import logging
-import configparser
 
 from datetime import datetime, timedelta
-from flask import flash, current_app, has_request_context
+from flask import flash, current_app, abort
 from pathlib import Path
+from specter_importer import Specter
+from warden_pricing_engine import (get_price_ondate, fx_price_ondate,
+                                   multiple_price_grab, price_data_rt,
+                                   price_data_fx, price_data_rt_full,
+                                   price_data, fx_rate)
+from warden_decorators import MWT
 
-from warden.warden_pricing_engine import (get_price_ondate, fx_price_ondate,
-                                          multiple_price_grab, price_data_rt,
-                                          price_data_fx, price_data_rt_full,
-                                          price_data, fx_rate, fxsymbol)
-from warden.warden_decorators import MWT, timing
-from warden.config import Config
-
-try:
-    from cryptoadvance.specter.specter import Specter
-    from cryptoadvance.specter.config import DATA_FOLDER
-except Exception:
-    print("Specter Libraries could not be imported...")
-    print("Will search other paths...")
-    pass
 
 # Returns the current application path
-
-
 def current_path():
     application_path = os.path.dirname(os.path.abspath(__file__))
     return (application_path)
 
 
-# Start background threads
-# Get Specter tx data and updates every 30 seconds (see config.py)
-def background_jobs():
-    current_app.specter = specter_update(load=False)
-    current_app.services = check_services(load=False)
-    # Reload config
-    config_file = Config.config_file
-    config_settings = configparser.ConfigParser()
-    config_settings.read(config_file)
-    current_app.settings = config_settings
-    current_app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
-    # Regenerare_nav
-    from warden_modules import regenerate_nav
-    regenerate_nav()
-    return (current_app)
-
-
-def specter_update(load=True, data_folder=None, idx=0):
-    if load:
-        with current_app.app_context():
-            data = current_app.specter
-        return (data)
-    if not data_folder:
-        with current_app.app_context():
-            data_folder = current_app.settings['SPECTER']['specter_datafolder']
-    specter_data = Specter(data_folder=data_folder)
-    logging.info(f"Finished Building Specter Class from data_folder: {data_folder}")
-
-    return(specter_data)
+# Returns the home path
+def home_path():
+    home = str(Path.home())
+    return (home)
 
 
 # ------------------------------------
@@ -82,119 +46,30 @@ def check_server(address, port, timeout=10):
         s.close()
 
 
-# Check which services are running
-# load = True   Forcer json load
-# expiry = only loads json if data is not stale by more than n seconds
-def check_services(load=True, expiry=60):
-    if load:
-        try:
-            data = current_app.services
-            update_time = datetime.strptime(data['last_update'],
-                                            "%m/%d/%Y, %H:%M:%S")
-            elapsed = (datetime.now() - update_time).total_seconds()
-            if expiry:
-                if elapsed < expiry:
-                    return (data)
-            else:
-                return (data)
-        except Exception as e:
-            pass
-
-    services = {}
-    services['mynode'] = {
-        'name': 'MyNode Server',
-        # The below is a list in format [(address, port)] - include as many as needed
-        'typical_connections': [('mynode.local', 80), ('127.0.0.1', 80)],
-        'running': False,
-        'connection': None
-    }
-
-    try:
-        import cryptoadvance.specter
-        pip_path = os.path.abspath(cryptoadvance.specter.__file__)
-    except Exception:
-        pip_path = None
-
-    services['specter'] = {
-        'name':
-        'Specter Server',
-        # The below is a list in format [(address, port)] - include as many as needed
-        'typical_connections': [('mynode.local', 25441), ('127.0.0.1', 25441),
-                                ('localhost', 25441)],
-        'running': False,
-        'connection': None,
-        'pip_path': pip_path,
-    }
-    # Test Connections
-    for service in services:
-        running = False
-        for connection in services[service]['typical_connections']:
-            running = check_server(*connection)
-            if running:
-                services[service]['running'] = True
-                services[service]['connection'] = connection
-                break
-
-    # Test if specter is running in this machine or remote
-    if services['specter']['running']:
-        connection = (get_local_ip(), 25441)
-        services['specter']['running_on_same_machine'] = check_server(
-            *connection)
-        # Try again on localhost
-        if not services['specter']['running_on_same_machine']:
-            connection = ('localhost', 25441)
-            services['specter']['running_on_same_machine'] = check_server(
-                *connection)
-
-    services['last_update'] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-
-    if has_request_context:
-        current_app.services = services
-
-    return (services)
-
-
-# Gets local IP Address
-def get_local_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
-    local_ip_address = s.getsockname()[0]
-    return (local_ip_address)
-
 # End Config Variables ------------------------------------------------
 
 
-def list_specter_wallets(load=True):
-    specter_data = specter_update(load)
-    return(specter_data.wallet_manager.wallets_names)
-
-
 # Get all transactions of specific wallet by using alias
-@ MWT(timeout=60)
-def get_specter_tx(wallet, sort_by='time', idx=0):
+
+def get_specter_tx(wallet_alias, sort_by='time', idx=0, load=True, session=None):
     df = pd.DataFrame()
-    specter_data = specter_update(load=True)
-    specter_data.check()
-    wallet = specter_data.wallet_manager.wallets[wallet]
-    wallet.get_info()
+    wallet_list = current_app.specter.wallet_alias_list()
+    if wallet_alias not in wallet_list:
+        logging.error(f"Wallet {wallet_alias}: Wallet not in current_app")
+        return (df)
+
     # is this scanning?
-    scan = wallet.rescan_progress
+    scan = current_app.specter.rescan_progress(wallet_alias)
 
-    if not scan:
-        logging.info(f"Wallet {wallet} --- looking for txs")
-        tx_data = [
-            wallet.txlist(idx)
-            for idx in range(0, idx + 1)
-        ]
-        logging.info(f"Wallet {wallet} --- Finished txs")
-        # Merge list of lists into one single list
-        validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
-        tx_data = wallet.txlist(idx, validate_merkle_proofs=validate_merkle_proofs)
+    if not scan['active']:
+        logging.info(f"Wallet {wallet_alias} --- looking for txs")
     else:
-        tx_data = []
-        logging.warn(f"\u001b[33mWallet {wallet} being scanned {scan}\u001b[0m")
+        logging.warn(f"\u001b[33mWallet {wallet_alias} being scanned {scan['progress']}\u001b[0m")
 
-    df = df.append(tx_data, ignore_index=True)
+    t = current_app.specter.refresh_txs(load=True)
+    df = df.append(pd.DataFrame(t))
+
+    logging.info(f"Wallet {wallet_alias} --- Finished txs")
 
     # Sort df
     if not df.empty:
@@ -202,42 +77,22 @@ def get_specter_tx(wallet, sort_by='time', idx=0):
     return (df)
 
 
-# This returns all the important metadata to create the Warden Status Page
+# This returns data to create the Warden Status Page
 def warden_metadata():
-    specter_data = specter_update(load=True)
     meta = {}
-    meta['wallet_list'] = list_specter_wallets()
-
-    # Check if there are specter wallet files, if not do not enable WARden
-    if len(meta['wallet_list']) == 0:
-        meta['warden_enabled'] = False
-        return (meta)
-    else:
-        meta['warden_enabled'] = True
-
-    meta['wallet_info'] = list_specter_wallets()
-
-    meta['txs'] = {}
-    for name in meta['wallet_info']:
-        # Line below throws an error when specter is not loaded yet
-        meta['txs'][name] = get_specter_tx(name)
 
     meta['full_df'] = specter_df()
-
-    meta['node_info'] = {
-        'info': specter_data.info,
-        'network_info': specter_data.network_info
-    }
+    meta['wallet_list'] = current_app.specter.wallet_alias_list()
 
     # Load pickle with previous checkpoint df
-    df_pkl = os.path.join(current_path(), 'static/json_files/txs_pf.pkl')
+    df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
     try:
         meta['df_old'] = pd.read_pickle(df_pkl)
     except IOError:
         meta['df_old'] = None
 
     # load difference / changes in addresses from file
-    ack_file = os.path.join(current_path(), 'static/json_files/txs_ack.json')
+    ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
     meta['old_new_df_old'] = None
     meta['old_new_df_new'] = None
     try:
@@ -274,7 +129,7 @@ def warden_metadata():
 class Trades():
     def __init__(self):
         self.id = None
-        self.user_id = "mynode"
+        self.user_id = "specter_user"
         self.trade_inputon = None
         self.trade_date = None
         self.trade_currency = FX
@@ -293,19 +148,10 @@ class Trades():
         return (vars(self))
 
 
-@ MWT(timeout=60)
-def specter_df(save_files=False, sort_by='trade_date', idx=0):
-    specter_data = specter_update(load=True)
-    validate_merkle_proofs = specter_data.config['validate_merkle_proofs']
+def specter_df(save_files=False, sort_by='trade_date'):
     df = pd.DataFrame()
-    idx_l = idx
-    tx_list = []
-    # Get all txs under every idx
-    tx_a = specter_data.wallet_manager.full_txlist(idx_l, validate_merkle_proofs)
-    while tx_a != []:
-        tx_a = specter_data.wallet_manager.full_txlist(idx_l, validate_merkle_proofs)
-        df = df.append(tx_a)
-        idx_l += 1
+    t = current_app.specter.refresh_txs(load=True)['txlist']
+    df = df.append(t)
 
     # Check if txs exists
     if df.empty:
@@ -315,23 +161,23 @@ def specter_df(save_files=False, sort_by='trade_date', idx=0):
     df['trade_date'] = pd.to_datetime(df['time'], unit='s')
 
     # Add additional columns
+    if 'fee' not in df:
+        df['fee'] = 0
     df['trade_blockchain_id'] = df['txid']
 
-    # Could include blockchain fees later here
-    df['trade_fees'] = int(0)
     df['trade_account'] = df['wallet_alias']
     df['trade_currency'] = current_app.settings['PORTFOLIO']['base_fx']
     df['trade_asset_ticker'] = "BTC"
-    df['trade_quantity'] = df['amount']
-    df['trade_notes'] = 'Imported from Specter Wallet using MyNode'
+    df['trade_quantity'] = (df['amount'])
+    df['trade_notes'] = 'Imported from Specter Wallet'
     df['trade_reference_id'] = ""
 
     def trade_operation(value):
         # Get Bitcoin price on each Date
         try:
-            if value == 'receive':
+            if value.lower() == 'receive':
                 return ("B")
-            if value == 'send':
+            if value.lower() == 'send':
                 return ("S")
         except Exception:
             return ("")
@@ -347,17 +193,30 @@ def specter_df(save_files=False, sort_by='trade_date', idx=0):
             fx = fx_price_ondate("USD", current_app.fx['code'], get_date)
             price = (get_price_ondate("BTC", get_date).close) * fx
         except Exception as e:
-            price = "Not Found. Error: " + str(e)
+            logging.error("Not Found. Error: " + str(e))
+            price = 0
         return (price)
 
-    df['trade_price'] = df['date_str'].apply(btc_price)
+    df['btc_price'] = df['date_str'].apply(btc_price)
+    df['trade_price'] = df['btc_price']
+    # For some reason Specter is returning fee = 1 for some transactions
+    # So the filter below clears all fees higher than 0.10 BTC which is
+    # probably too high :)
+    df.loc[df.fee > 0.10, 'fee'] = 0
+    df['fee'] = df['fee'].fillna(0)
+    df['trade_fees'] = df['fee'] * df['btc_price']
 
     df['trade_multiplier'] = 0
     df.loc[df.trade_operation == 'B', 'trade_multiplier'] = 1
+    df.loc[df.trade_operation == 'receive', 'trade_multiplier'] = 1
     df.loc[df.trade_operation == 'S', 'trade_multiplier'] = -1
+    df.loc[df.trade_operation == 'send', 'trade_multiplier'] = -1
+
+    df['trade_quantity'] = df['trade_quantity'] * df['trade_multiplier']
+    df['amount'] = df['trade_quantity']
 
     try:
-        df['cash_value'] = df['trade_price'] * df['trade_quantity'] * df[
+        df['cash_value'] = abs(df['trade_price']) * abs(df['trade_quantity']) * df[
             'trade_multiplier']
     except Exception:
         df['cash_value'] = 0
@@ -372,22 +231,22 @@ def specter_df(save_files=False, sort_by='trade_date', idx=0):
     # If there are changes, a notification method is started to alert user
 
     # TEST LINE ------------- Make this a new transaction forced into df
-    tester = {
-        'trade_date': datetime.now(),
-        'trade_currency': 'USD',
-        'trade_fees': 0,
-        'trade_quantity': 2,
-        'trade_multiplier': 1,
-        'trade_price': 10000,
-        'trade_asset_ticker': 'BTC',
-        'trade_operation': 'B',
-        'checksum': (5 * (10**19)),
-        'txid': 'test',
-        'address': 'test_address',
-        'amount': 2,
-        'status': 'Test_line',
-        'trade_account': 'trezor'
-    }
+    # tester = {
+    #     'trade_date': datetime.now(),
+    #     'trade_currency': 'USD',
+    #     'trade_fees': 0,
+    #     'trade_quantity': 2,
+    #     'trade_multiplier': 1,
+    #     'trade_price': 10000,
+    #     'trade_asset_ticker': 'BTC',
+    #     'trade_operation': 'B',
+    #     'checksum': (5 * (10**19)),
+    #     'txid': 'test',
+    #     'address': 'test_address',
+    #     'amount': 2,
+    #     'status': 'Test_line',
+    #     'trade_account': 'trezor'
+    # }
     # Comment / Uncomment code below for testing of including new transactions
     # Remove last 2 transactions here
     # df.drop(df.tail(2).index, inplace=True)
@@ -397,10 +256,10 @@ def specter_df(save_files=False, sort_by='trade_date', idx=0):
     # END TEST LINE ----------------------------------------------------
 
     # Files ----------------------------------
-    checksum_file = os.path.join(current_path(),
-                                 'static/json_files/txs_checksum.json')
-    ack_file = os.path.join(current_path(), 'static/json_files/txs_ack.json')
-    df_pkl = os.path.join(current_path(), 'static/json_files/txs_pf.pkl')
+    checksum_file = os.path.join(home_path(),
+                                 'warden/txs_checksum.json')
+    ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
+    df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
     # -----------------------------------------
 
     # Create checksum
@@ -479,7 +338,9 @@ def transactions_fx():
     # Get all transactions from Specter and format
 
     df = specter_df()
+
     if df.empty:
+        logging.warning("Transactions_FX - No txs found")
         return df
 
     df['trade_date'] = pd.to_datetime(df['trade_date'])
@@ -512,7 +373,9 @@ def transactions_fx():
 # UTILS -----------------------------------
 
 
-def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
+def clean_float(text):  # Function to clean CSV fields - leave only digits and .
+    if isinstance(text, float):
+        return (text)
     if text is None:
         return (0)
     acceptable = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "."]
@@ -520,6 +383,8 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     for char in text:
         if char in acceptable:
             str = str + char
+    if str == '':
+        return None
     str = float(str)
     return (str)
 
@@ -558,6 +423,7 @@ def positions():
     # Get all transactions & group by ticker name and operation
     df = transactions_fx()
     if df.empty:
+        logging.warn("No Transactions Found")
         return df
 
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[[
@@ -606,6 +472,8 @@ def positions_dynamic():
     # should be called from an AJAX request at the front page in order
     # to reduce loading time.
     df = positions()
+    if df.empty:
+        return(df)
     # Drop all currencies from table
     df = df[df['is_currency'] == False]
     # check if trade_asset_ticker is set as index. If so, move to column
@@ -760,7 +628,7 @@ def positions_dynamic():
 
 
 @ MWT(timeout=10)
-def generatenav(user='mynode', force=False, filter=None):
+def generatenav(user='warden', force=False, filter=None):
     PORTFOLIO_MIN_SIZE_NAV = 1
     RENEW_NAV = 10
     FX = current_app.settings['PORTFOLIO']['base_fx']
@@ -777,8 +645,8 @@ def generatenav(user='mynode', force=False, filter=None):
     # will be used.
     # Unless force is true, then a rebuild is done regardless
     # Local files are  saved under a hash of username.
-    filename = "thewarden/nav_data/" + user + FX + ".nav"
-    filename = os.path.join(current_path(), filename)
+    filename = "warden/" + user + FX + ".nav"
+    filename = os.path.join(home_path(), filename)
     if force:
         # Since this function can be run as a thread, it's safer to delete
         # the current NAV file if it exists. This avoids other tasks reading
@@ -955,8 +823,8 @@ def generatenav(user='mynode', force=False, filter=None):
 
     # Save NAV Locally as Pickle
     if save_nav:
-        filename = "thewarden/nav_data/" + user + FX + ".nav"
-        filename = os.path.join(current_path(), filename)
+        filename = "warden/" + user + FX + ".nav"
+        filename = os.path.join(home_path(), filename)
         # makesure file path exists
         try:
             os.makedirs(os.path.dirname(filename))
@@ -984,18 +852,18 @@ def regenerate_nav():
     # Check if there any trades in the database. If not, skip.
     try:
         # Delete all pricing history
-        filename = os.path.join(current_path(),
-                                'thewarden/pricing_engine/pricing_data/*.*')
+        filename = os.path.join(home_path(),
+                                'warden/*.nav')
         aa_files = glob.glob(filename)
         [os.remove(x) for x in aa_files]
-        filename = os.path.join(current_path(), 'thewarden/nav_data/*.*')
+        filename = os.path.join(home_path(), 'warden/*.nav')
         nav_files = glob.glob(filename)
         [os.remove(x) for x in nav_files]
         # Clear memory, cache
         clear_memory()
         MWT()._caches = {}
         MWT()._timeouts = {}
-        generatenav('mynode', force=True)
+        generatenav('specter_user', force=True)
     except Exception:
         return
 

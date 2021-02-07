@@ -29,6 +29,12 @@ Log in to your computer running Specter, open Terminal and type:
 pip3 install alphazeta.warden
 ```
 
+_You may need to allow port 25442 (this is the port WARden uses to connect):_
+
+```bash
+sudo ufw allow 25442
+```
+
 Then run the WARden server:
 
 ```bash

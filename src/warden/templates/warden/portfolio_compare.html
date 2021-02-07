@@ -1,0 +1,169 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+<!--  High Charts -->
+<script src="https://code.highcharts.com/stock/highstock.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="{{url_for('warden.static', filename='js/highcharts.js')}}"></script>
+
+<!-- Basic Style for Tags Input -->
+<link rel="stylesheet" type="text/css" href="{{url_for('warden.static', filename='css/tagsinput.css')}}">
+<!-- Suggest Tags Js -->
+<script type="text/javascript" src="{{url_for('warden.static', filename='js/tagsinput.js')}}"></script>
+
+<div class="row">
+    <div id="alerts" class="col-sm-12">
+    </div>
+</div>
+
+
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="row">
+
+            <div class="col-sm-8">
+                <div class="content-section">
+                    <div class="input-group mb-3">
+                        <label for="tickers">Tickers to benchmark against portfolio</label>
+                        <input id="tickers" type="text" class="change_monitor" data-role="tagsinput" value="BTC">
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-4">
+                <div class="content-section">
+
+                    <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="start-addon1">Start Date</span>
+                        </div>
+                        <input id="start_date" type="date" class="form-control change_monitor"
+                            aria-describedby="start-addon1">
+                    </div>
+
+                    <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="end-addon1">End Date&nbsp;&nbsp;</span>
+                        </div>
+                        <input id="end_date" type="date" class="form-control change_monitor"
+                            aria-describedby="end-addon1">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div id="compchart" style="height: 500px; min-width: 80%; max-width: 95%; margin: 0 auto">
+                    <span class="loadanim">&nbsp;GENERATING CHART AND TABLES. PLEASE HOLD...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <table class="table table-striped small">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>
+                                    Ticker
+                                </th>
+                                <th class='text-center'>
+                                    Return (period)
+                                </th>
+                                <th class='text-center'>
+                                    Compared to Portfolio
+                                </th>
+                                <th class='text-center'>
+                                    Ann Std Dev
+                                </th>
+                                <th class='text-center'>
+                                    Ret / Stdev
+                                </th>
+                                <th class='text-center'>
+                                    Avg daily ret
+                                </th>
+                                <th class='text-right'>
+                                    Start Value
+                                </th>
+                                <th class='text-right'>
+                                    Final Value
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="table_body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row">
+
+                <!-- Start Date -->
+                <div class="col-sm-4">
+                    <ul class="list-group small text-center">
+                        <li class="list-group-item list-group-item-dark">Start Date</li>
+                        <li class="list-group-item disabled" id="table_start"></li>
+                    </ul>
+                </div>
+                <!-- End Date -->
+                <div class="col-sm-4">
+                    <ul class="list-group small text-center">
+                        <li class="list-group-item list-group-item-dark">End Date</li>
+                        <li class="list-group-item disabled" id="table_end"></li>
+                    </ul>
+                </div>
+                <!-- Days (data points) -->
+                <div class="col-sm-4">
+                    <ul class="list-group small text-center">
+                        <li class="list-group-item list-group-item-dark"># of days (datapoints)</li>
+                        <li class="list-group-item disabled" id="table_days"></li>
+                    </ul>
+                </div>
+
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-12">
+
+        <div class="content-section">
+            <span class='lead small'>Correlation Matrix</span>
+            <div class="row">
+
+                <div class="col-sm-12" id="corr_table">
+
+                </div>
+            </div>
+        </div>
+
+        <div class='row'>
+            <div class="container-fluid">
+                <div class="content-section small">
+                    <sup>1</sup> All returns in this page are in {{current_user['name_plural']}}.
+                    <br>
+                    {%if current_user['name'] != 'US Dollar'%}
+                    This means that the returns include the asset returns plus the currency return in the period.
+                    <br>For example, if Bitcoin in USD is up 5% and the {{current_user['name']}} is up 1%,
+                    the
+                    return will be 6.05% in {{current_user['name_plural']}}.
+                    {%endif%}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{url_for('warden.static', filename='js/portfolio_compare.js')}}"></script>
+
+{% endblock content %}

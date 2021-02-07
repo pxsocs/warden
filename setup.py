@@ -1,33 +1,43 @@
-from glob import glob
 
-from setuptools import find_packages, setup
+from setuptools import setup, find_packages
 
-with open("requirements.txt") as f:
-    install_reqs = f.read().strip().split("\n")
-
-
-reqs = [str(ir) for ir in install_reqs if not ir.startswith("#")]
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-add_reqs = [
-    'flask', 'flask_apscheduler'
+current_version = '0.7.0.0'
+
+with open("src/warden/static/config/version.txt", "w") as text_file:
+    print(f"{current_version}", file=text_file)
+
+reqs = [
+    'Flask-Login',
+    'flask_apscheduler',
+    'flask_mail',
+    'libusb1',
+    'pandas',
+    'numpy',
+    'PySocks',
+    'requests',
+    'urllib3',
+    'simplejson',
+    'jsonify'
 ]
 
 setup(
     name="alphazeta.warden",
-    version="0.5.1",
+    version=current_version,
     author="Alpha Zeta",
     author_email="alphaazeta@protonmail.com",
     description="Private Portfolio Tool - Specter Server Edition",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/pxsocs/specter_warden",
-    packages=find_packages("src"),
-    package_dir={"": "src"},
     include_package_data=True,
-    install_requires=reqs.append(add_reqs),
+    package_dir={"": "src"},
+    packages=find_packages(),
+    install_requires=reqs,
+    setup_requires=reqs,
     zip_safe=False,
     classifiers=[
         "Programming Language :: Python :: 3",
