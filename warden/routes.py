@@ -137,7 +137,7 @@ def warden_page():
     df = positions()
     if df.empty:
         msg = "Specter has no transaction history or is down. Open Specter Server and check."
-        flash(msg, "danger")
+        flash(msg, "warning")
         abort(500, msg)
     if df.index.name != 'trade_asset_ticker':
         df.set_index('trade_asset_ticker', inplace=True)
