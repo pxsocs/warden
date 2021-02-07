@@ -1,8 +1,6 @@
 import pkg_resources
 import subprocess
 from config import Config
-from backgroundjobs import (background_settings_update,
-                            background_specter_update)
 from utils import create_config, diags
 from warden_pricing_engine import fxsymbol
 from specter_importer import Specter
@@ -131,6 +129,9 @@ def init_app(app):
 
     # Start Schedulers
     print("  Starting Background Jobs ...")
+
+    from backgroundjobs import (background_settings_update,
+                                background_specter_update)
 
     def bk_su():
         with app.app_context():

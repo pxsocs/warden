@@ -28,12 +28,19 @@ Log in to your computer running Specter, open Terminal and type:
 ```bash
 git clone https://github.com/pxsocs/specter_warden
 cd specter_warden
+pip3 install -r requirements.txt
 ```
 
 Then run the WARden server:
 
 ```bash
 python3 warden
+```
+
+Upgrade:
+
+```bash
+git pull origin master
 ```
 
 Open your browser and navigate to:
