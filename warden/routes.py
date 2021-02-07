@@ -93,9 +93,13 @@ def before_request():
     if specter_messages:
         if 'Connection refused' in str(specter_messages):
             meta['specter_reached'] = False
-            flash('Having some difficulty reaching Specter Server. ' +
-                  f'Please make sure it is running at {current_app.specter.base_url}. Using cached data. Last Update: ' +
-                  current_app.specter.home_parser()['last_update'], 'warning')
+            try:
+                flash('Having some difficulty reaching Specter Server. ' +
+                      f'Please make sure it is running at {current_app.specter.base_url}. Using cached data. Last Update: ' +
+                      current_app.specter.home_parser()['last_update'], 'warning')
+            except KeyError:
+                flash('Looks like your first time running the WARden. Welcome.', 'info')
+                return redirect(url_for('warden.specter_auth'))
         elif 'Unauthorized Login' in str(specter_messages):
             meta['specter_reached'] = False
             return redirect(url_for('warden.specter_auth'))
