@@ -150,11 +150,11 @@ class Trades():
 
 def specter_df(save_files=False, sort_by='trade_date'):
     df = pd.DataFrame()
-    t = current_app.specter.refresh_txs(load=True)['txlist']
-    df = df.append(t)
-
-    # Check if txs exists
-    if df.empty:
+    try:
+        t = current_app.specter.refresh_txs(load=True)['txlist']
+        df = df.append(t)
+    except Exception:
+        # Check if txs exists
         return df
 
     # Clean Date String
