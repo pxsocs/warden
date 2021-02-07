@@ -2,7 +2,6 @@ import pkg_resources
 import subprocess
 from config import Config
 from utils import create_config, diags
-from warden_pricing_engine import fxsymbol
 from specter_importer import Specter
 import logging
 import configparser
@@ -84,6 +83,7 @@ def init_app(app):
         app.settings = config_settings
     with app.app_context():
         try:
+            from warden_pricing_engine import fxsymbol
             app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
         except KeyError:  # Problem with this config, reset
             print("\033[1;33;40m  [!] Config File needs to be rebuilt")
