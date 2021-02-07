@@ -10,3 +10,6 @@ requests
 urllib3
 simplejson
 jsonify
+yaspin
+ansi
+emoji
