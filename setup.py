@@ -1,14 +1,16 @@
 
-from setuptools import setup, find_packages
+import os
+from setuptools import setup, find_namespace_packages
 
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-current_version = '0.7.0.0'
+current_version = '0.9.0.6'
 
-with open("src/warden/static/config/version.txt", "w") as text_file:
+with open("src/alphazeta/warden/static/config/version.txt", "w") as text_file:
     print(f"{current_version}", file=text_file)
+
 
 reqs = [
     'Flask-Login',
@@ -35,10 +37,8 @@ setup(
     url="https://github.com/pxsocs/specter_warden",
     include_package_data=True,
     package_dir={"": "src"},
-    packages=find_packages(),
     install_requires=reqs,
     setup_requires=reqs,
-    zip_safe=False,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

@@ -26,31 +26,18 @@ Installation instructions for Specter can be found [here](https://github.com/cry
 Log in to your computer running Specter, open Terminal and type:
 
 ```bash
-pip3 install alphazeta.warden
-```
-
-_You may need to allow port 25442 (this is the port WARden uses to connect):_
-
-```bash
-sudo ufw allow 25442
+git clone https://github.com/pxsocs/specter_warden
+cd specter_warden
 ```
 
 Then run the WARden server:
 
 ```bash
-python3 -m warden
+python3 warden
 ```
 
 Open your browser and navigate to:
-`http://localhost:25442/`
-
-## Upgrade
-
-From the WARden directory, type:
-
-```bash
- pip3 install alphazeta.warden --upgrade
-```
+`http://localhost:5000/`
 
 ## This is an Open Source project
 
