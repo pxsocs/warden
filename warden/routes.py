@@ -86,17 +86,19 @@ def before_request():
     session['status'] = json.dumps(meta)
 
     # Test Specter
-    specter_dict, specter_messages = specter_test()
+    try:
+        specter_dict, specter_messages = specter_test()
+    except Exception as e:
+        specter_messages = str(e)
     if specter_messages:
-        if 'Connection refused' in specter_messages:
+        if 'Connection refused' in str(specter_messages):
             meta['specter_reached'] = False
             flash('Having some difficulty reaching Specter Server. ' +
                   f'Please make sure it is running at {current_app.specter.base_url}. Using cached data. Last Update: ' +
                   current_app.specter.home_parser()['last_update'], 'warning')
-        if 'Unauthorized Login' in specter_messages:
+        elif 'Unauthorized Login' in str(specter_messages):
             meta['specter_reached'] = False
             return redirect(url_for('warden.specter_auth'))
-
         else:
             abort(500, specter_messages)
 
