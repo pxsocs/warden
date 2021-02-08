@@ -171,7 +171,9 @@ def specter_df(save_files=False, sort_by='trade_date'):
     df['trade_account'] = df['wallet_alias']
     df['trade_currency'] = current_app.settings['PORTFOLIO']['base_fx']
     df['trade_asset_ticker'] = "BTC"
-    df['trade_quantity'] = (df['amount'])
+    portfolio_divisor = current_app.settings['PORTFOLIO'].getfloat('divisor')
+    df['amount'] = df['amount'] / portfolio_divisor
+    df['trade_quantity'] = df['amount']
     df['trade_notes'] = 'Imported from Specter Wallet'
     df['trade_reference_id'] = ""
 
