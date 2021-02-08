@@ -1,5 +1,3 @@
-import pkg_resources
-import subprocess
 from config import Config
 from utils import create_config, diags
 from specter_importer import Specter
@@ -9,6 +7,7 @@ import os
 import sys
 import atexit
 import warnings
+import socket
 from logging.handlers import RotatingFileHandler
 from flask import Flask
 from flask_mail import Mail
@@ -151,6 +150,8 @@ def init_app(app):
 
     print("\033[1;32;40m✓ Application startup is complete\033[1;37;40m")
 
+    # print(f"\033[1;32;40m✓ Running at: {request.host_url}\033[1;37;40m")
+
     return app
 
 
@@ -161,14 +162,18 @@ def create_and_init():
     return app
 
 
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
+    local_ip_address = s.getsockname()[0]
+    return (local_ip_address)
+
+
 def main():
     # Make sure current libraries are found in path
     current_path = os.path.abspath(os.path.dirname(__file__))
     # CLS + Welcome
     print("\033[1;32;40m")
-    for _ in range(50):
-        print("")
-
     print("\033[1;37;40m  Welcome to the WARden <> Launching Application ...")
     print(f"  [i] Running from: {current_path}")
     app = create_app()
@@ -189,14 +194,7 @@ def main():
 
     print("  Launching Server ...")
     print("\033[1;32;40m✓ WARden Server is Ready\033[1;37;40m")
-    try:
-        debug = app.settings['SERVER']['debug']
-    except:
-        debug = False
-
     print("\033[1;32;40m")
-    for _ in range(50):
-        print("")
     print(f"""
     \033[1;32;40m
     -----------------------------------------------------------------
@@ -210,19 +208,19 @@ def main():
     \033[1;37;40m       Privacy Focused Portfolio & Bitcoin Address Tracker
     \033[1;32;40m-----------------------------------------------------------------
     \033[1;37;40m                      Application Loaded
-    \033[1;32;40m-----------------------------------------------------------------
-    \033[1;37;40m                Open your browser and navigate to:
-    \033[1;37;40m
-    \033[1;37;40m                     http://localhost:5000/
-    \033[1;37;40m                               or
-    \033[1;37;40m                     http://127.0.0.1:5000/
+
+    \033[1;37;40m  Open your browser and navigate to one of these addresses:
+    \033[1;32;40m  http://localhost:5000/
+    \033[1;32;40m  http://127.0.0.1:5000/
+    \033[1;37;40m  Or through your network at address:
+    \033[1;32;40m  http://{get_local_ip()}:5000/
     \033[1;32;40m-----------------------------------------------------------------
     \033[1;37;40m                     CTRL + C to quit server
     \033[1;32;40m-----------------------------------------------------------------
     \033[1;37;40m
     """)
 
-    app.run(debug=debug,
+    app.run(debug=False,
             threaded=True,
             host='0.0.0.0',
             port=5000,
