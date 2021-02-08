@@ -87,19 +87,20 @@ def init_app(app):
     # Can be accessed like a dictionary like:
     # app.settings['PORTFOLIO']['RENEW_NAV']
     # --------------------------------------------
-    print("  Getting Config ...")
     config_file = Config.config_file
     os.path.isfile(config_file)
     # create empty instance
     config_settings = configparser.ConfigParser()
     if os.path.isfile(config_file):
         config_settings.read(config_file)
+        print(success("✅ Config Loaded from config.ini - edit it for customization"))
     else:
         print(error("  Config File could not be loaded, created a new one with default values..."))
         create_config(config_file)
         config_settings.read(config_file)
 
     # Get Version
+    print("")
     try:
         version_file = Config.version_file
         with open(version_file, 'r') as file:
@@ -109,7 +110,8 @@ def init_app(app):
     with app.app_context():
         app.version = version
 
-    print(f"  Running version: {version}")
+    print(f"   [i] Running version: {version}")
+    print("")
 
     with app.app_context():
         app.settings = config_settings
@@ -119,6 +121,7 @@ def init_app(app):
             app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
         except KeyError:  # Problem with this config, reset
             print(error("  [!] Config File needs to be rebuilt"))
+            print("")
             create_config(config_file)
 
     from routes import warden
@@ -144,8 +147,6 @@ def init_app(app):
         pass
 
     # Start Schedulers
-    print("  Starting Background Jobs ...")
-
     from backgroundjobs import (background_settings_update,
                                 background_specter_update)
 
@@ -162,7 +163,8 @@ def init_app(app):
     scheduler.add_job(bk_stu, 'interval', seconds=60)
 
     scheduler.start()
-
+    print(success("✅ Background jobs running"))
+    print("")
     app.app_context().push()
 
     print(success("✅ Application startup is complete"))
@@ -188,15 +190,17 @@ def main():
     # Make sure current libraries are found in path
     current_path = os.path.abspath(os.path.dirname(__file__))
     # CLS + Welcome
-    print("  Welcome to the WARden <> Launching Application ...")
+    print(yellow("  Welcome to the WARden <> Launching Application ..."))
+    print("")
     print(f"  [i] Running from: {current_path}")
+    print("")
     app = create_app()
     app.app_context().push()
     app = init_app(app)
     app.app_context().push()
 
     def close_running_threads():
-        print(f"""
+        print("""
             -----------------------------------------------------------------
                                     Goodbye
                          Keep Stacking. Keep Verifying.
@@ -206,8 +210,9 @@ def main():
     # Register the def above to run at close
     atexit.register(close_running_threads)
 
-    print("  Launching Server ...")
-    print(success("✅ WARden Server is Ready"))
+    print("")
+    print(success("✅ WARden Server is Ready... Launch cool ASCII logo!"))
+    print("")
 
     print(f"""
 
@@ -216,7 +221,7 @@ def main():
         | __| '_ \ / _ \  \ \ /\ / / _ \ | |_) / _` |/ _ \ '_  |
         | |_| | | |  __/   \ V  V / ___ \|  _ < (_| |  __/ | | |
          \__|_| |_|\___|    \_/\_/_/   \_\_| \_\__,_|\___|_| |_|
-                                    Specter Server Edition {emoji.emojize(':key: :ghost:')}
+                                    {yellow("Specter Server Edition")} {emoji.emojize(':key: :ghost:')}
 
            Privacy Focused Portfolio & Bitcoin Address Tracker
     -----------------------------------------------------------------
