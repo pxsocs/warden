@@ -46,6 +46,10 @@ git pull origin master
 Open your browser and navigate to:
 `http://localhost:5000/`
 
+## Screenshot
+
+![Screenshot](https://raw.githubusercontent.com/pxsocs/specter_warden/master/warden/static/images/Screen%20Shot%202021-02-08%20at%209.19.28%20AM.png)
+
 ## This is an Open Source project
 
 [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
