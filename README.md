@@ -6,6 +6,8 @@
 
 This is a light weight version of the original WARden designed for integration with Specter Server.
 
+_Requirement: Specter 1.1.0 or later 👻_
+
 Transactions will be imported automatically from Specter.
 
 This app was built with a couple of goals:
