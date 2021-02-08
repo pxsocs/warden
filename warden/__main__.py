@@ -1,19 +1,22 @@
-import pkg_resources
-import subprocess
 from config import Config
 from utils import create_config, diags
 from specter_importer import Specter
+from yaspin import yaspin
 import logging
 import configparser
 import os
 import sys
 import atexit
 import warnings
+import socket
+import emoji
 from logging.handlers import RotatingFileHandler
 from flask import Flask
 from flask_mail import Mail
 from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
+from ansi_management import (warning, success, error, info, clear_screen, bold,
+                             muted, yellow, blue)
 
 
 # Make sure current libraries are found in path
@@ -41,6 +44,35 @@ def create_app():
     return app
 
 
+def create_tor():
+    # ----------------------------------------------
+    #                 Test Tor
+    # ----------------------------------------------
+    with yaspin(text="Testing Tor", color="cyan") as spinner:
+        from warden_pricing_engine import test_tor
+        tor = test_tor()
+        if tor['status']:
+            logging.info(success("Tor Connected"))
+            spinner.ok("✅ ")
+            spinner.write(success("    Tor Connected [Success]"))
+            print("")
+            return (tor)
+        else:
+            logging.error(error("Could not connect to Tor"))
+            spinner.fail("💥 ")
+            spinner.write(warning("    Tor NOT connected [ERROR]"))
+            print(
+                error(
+                    "    Could not connect to Tor. WARden requires Tor to run. Quitting..."
+                ))
+            print(
+                info(
+                    "    Download Tor at: https://www.torproject.org/download/"
+                ))
+            print("")
+            exit()
+
+
 # ------------------------------------
 # Application Factory
 def init_app(app):
@@ -63,7 +95,7 @@ def init_app(app):
     if os.path.isfile(config_file):
         config_settings.read(config_file)
     else:
-        print("\033[1;36;40m  Config File could not be loaded, created a new one with default values...\033[1;37;40m")
+        print(error("  Config File could not be loaded, created a new one with default values..."))
         create_config(config_file)
         config_settings.read(config_file)
 
@@ -77,7 +109,7 @@ def init_app(app):
     with app.app_context():
         app.version = version
 
-    print(f"\033[1;37;40m  Running version: {version}\033[1;37;40m")
+    print(f"  Running version: {version}")
 
     with app.app_context():
         app.settings = config_settings
@@ -86,18 +118,8 @@ def init_app(app):
             from warden_pricing_engine import fxsymbol
             app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
         except KeyError:  # Problem with this config, reset
-            print("\033[1;33;40m  [!] Config File needs to be rebuilt")
+            print(error("  [!] Config File needs to be rebuilt"))
             create_config(config_file)
-    # Debug Mode?
-    #  To debug the application set an environment variable:
-    #  EXPORT WARDEN_STATUS=developer
-    WARDEN_STATUS = os.environ.get("WARDEN_STATUS")
-    if ('-debug' in sys.argv or '-d' in sys.argv or WARDEN_STATUS == "developer"):
-        print("  >> Debug is On")
-        with app.app_context():
-            app.settings['SERVER']['debug'] = 'True'
-        logging.getLogger().setLevel(logging.DEBUG)
-        logging.info("DEBUG MODE is on")
 
     from routes import warden
     from errors.handlers import errors
@@ -110,14 +132,8 @@ def init_app(app):
         app.specter = Specter()
         app.specter.refresh_txs(load=True)
 
-    from warden_pricing_engine import test_tor
-    print("\033[1;37;40m  Testing Tor ...")
     with app.app_context():
-        app.tor = test_tor()
-    if app.tor:
-        print("\033[1;32;40m✓ Tor Running\033[1;37;40m")
-    else:
-        print("\033[1;33;40m  Tor disabled - check your connection or Tor browser")
+        app.tor = create_tor()
 
     # Check if home folder exists, if not create
     home = str(Path.home())
@@ -149,7 +165,7 @@ def init_app(app):
 
     app.app_context().push()
 
-    print("\033[1;32;40m✓ Application startup is complete\033[1;37;40m")
+    print(success("✅ Application startup is complete"))
 
     return app
 
@@ -161,15 +177,18 @@ def create_and_init():
     return app
 
 
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
+    local_ip_address = s.getsockname()[0]
+    return (local_ip_address)
+
+
 def main():
     # Make sure current libraries are found in path
     current_path = os.path.abspath(os.path.dirname(__file__))
     # CLS + Welcome
-    print("\033[1;32;40m")
-    for _ in range(50):
-        print("")
-
-    print("\033[1;37;40m  Welcome to the WARden <> Launching Application ...")
+    print("  Welcome to the WARden <> Launching Application ...")
     print(f"  [i] Running from: {current_path}")
     app = create_app()
     app.app_context().push()
@@ -178,51 +197,43 @@ def main():
 
     def close_running_threads():
         print(f"""
-            \033[1;32;40m-----------------------------------------------------------------
-            \033[1;37;40m                        Goodbye
-            \033[1;37;40m             Keep Stacking. Keep Verifying.
-            \033[1;32;40m-----------------------------------------------------------------
+            -----------------------------------------------------------------
+                                    Goodbye
+                         Keep Stacking. Keep Verifying.
+            -----------------------------------------------------------------
             """)
 
     # Register the def above to run at close
     atexit.register(close_running_threads)
 
     print("  Launching Server ...")
-    print("\033[1;32;40m✓ WARden Server is Ready\033[1;37;40m")
-    try:
-        debug = app.settings['SERVER']['debug']
-    except:
-        debug = False
+    print(success("✅ WARden Server is Ready"))
 
-    print("\033[1;32;40m")
-    for _ in range(50):
-        print("")
     print(f"""
-    \033[1;32;40m
-    -----------------------------------------------------------------
+
          _   _           __        ___    ____     _
         | |_| |__   ___  \ \      / / \  |  _ \ __| | ___ _ __
         | __| '_ \ / _ \  \ \ /\ / / _ \ | |_) / _` |/ _ \ '_  |
         | |_| | | |  __/   \ V  V / ___ \|  _ < (_| |  __/ | | |
          \__|_| |_|\___|    \_/\_/_/   \_\_| \_\__,_|\___|_| |_|
-                                          Specter Server Edition
+                                    Specter Server Edition {emoji.emojize(':key: :ghost:')}
+
+           Privacy Focused Portfolio & Bitcoin Address Tracker
     -----------------------------------------------------------------
-    \033[1;37;40m       Privacy Focused Portfolio & Bitcoin Address Tracker
-    \033[1;32;40m-----------------------------------------------------------------
-    \033[1;37;40m                      Application Loaded
-    \033[1;32;40m-----------------------------------------------------------------
-    \033[1;37;40m                Open your browser and navigate to:
-    \033[1;37;40m
-    \033[1;37;40m                     http://localhost:5000/
-    \033[1;37;40m                               or
-    \033[1;37;40m                     http://127.0.0.1:5000/
-    \033[1;32;40m-----------------------------------------------------------------
-    \033[1;37;40m                     CTRL + C to quit server
-    \033[1;32;40m-----------------------------------------------------------------
-    \033[1;37;40m
+                          Application Loaded
+
+      Open your browser and navigate to one of these addresses:
+      {yellow('http://localhost:5000/')}
+      {yellow('http://127.0.0.1:5000/')}
+      Or through your network at address:
+      {yellow('http://')}{yellow(get_local_ip())}{yellow(':5000/')}
+    -----------------------------------------------------------------
+                         CTRL + C to quit server
+    -----------------------------------------------------------------
+
     """)
 
-    app.run(debug=debug,
+    app.run(debug=False,
             threaded=True,
             host='0.0.0.0',
             port=5000,

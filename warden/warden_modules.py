@@ -157,6 +157,9 @@ def specter_df(save_files=False, sort_by='trade_date'):
         # Check if txs exists
         return df
 
+    if df.empty:
+        return df
+
     # Clean Date String
     df['trade_date'] = pd.to_datetime(df['time'], unit='s')
 
