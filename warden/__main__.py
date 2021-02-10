@@ -3,6 +3,7 @@ from utils import create_config, diags
 from specter_importer import Specter
 from yaspin import yaspin
 import logging
+import subprocess
 import configparser
 import os
 import sys
@@ -189,6 +190,15 @@ def get_local_ip():
 def main():
     # Make sure current libraries are found in path
     current_path = os.path.abspath(os.path.dirname(__file__))
+    # Try to start Tor if in docker container
+    try:
+        _ = subprocess.run("service tor start",
+                           shell=True,
+                           stderr=subprocess.DEVNULL,
+                           stdout=subprocess.DEVNULL)
+    except Exception:
+        pass
+
     # CLS + Welcome
     print(yellow("  Welcome to the WARden <> Launching Application ..."))
     print("")
