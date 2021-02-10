@@ -15,6 +15,7 @@ from operator import itemgetter
 from datetime import datetime, timedelta
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
+from random import randrange
 import mhp as mrh
 import jinja2
 import simplejson
@@ -90,6 +91,11 @@ def before_request():
         specter_dict, specter_messages = specter_test()
     except Exception as e:
         specter_messages = str(e)
+
+    if current_app.specter.wallet_alias_list() is None:
+        meta['specter_reached'] = False
+        specter_messages = 'Having trouble finding Specter transactions. Check Specter Server'
+
     if specter_messages:
         if 'Connection refused' in str(specter_messages):
             meta['specter_reached'] = False
@@ -97,6 +103,7 @@ def before_request():
                 flash('Having some difficulty reaching Specter Server. ' +
                       f'Please make sure it is running at {current_app.specter.base_url}. Using cached data. Last Update: ' +
                       current_app.specter.home_parser()['last_update'], 'warning')
+                return redirect(url_for('warden.specter_auth'))
             except KeyError:
                 flash('Looks like your first time running the WARden. Welcome.', 'info')
                 return redirect(url_for('warden.specter_auth'))
@@ -227,9 +234,25 @@ def list_transactions():
                            current_app=current_app)
 
 
+@ warden.route("/satoshi_quotes_json", methods=['GET'])
+def satoshi_quotes_json():
+    url = 'https://raw.githubusercontent.com/NakamotoInstitute/nakamotoinstitute.org/0bf08c48cd21655c76e8db06da39d16036a88594/data/quotes.json'
+    try:
+        quotes = tor_request(url).json()
+    except Exception:
+        return (json.dumps(' >> Error contacting server. Retrying... '))
+    quote = quotes[randrange(len(quotes))]
+    return (quote)
+
+
+@ warden.route("/satoshi_quotes", methods=['GET'])
+def satoshi_quotes():
+    return render_template("warden/satoshi_quotes.html",
+                           title="Satoshi Wisdom",
+                           current_app=current_app)
+
+
 # Update user fx settings in config.ini
-
-
 @warden.route('/update_fx', methods=['GET', 'POST'])
 def update_fx():
     fx = request.args.get("code")

@@ -74,6 +74,7 @@ $(document).ready(function () {
         updateModal(this_var);
     });
 
+
     // Main function to update the Modal with some cost calculations
     function updateModal(this_var) {
         ticker = (this_var.data('ticker'));
