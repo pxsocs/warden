@@ -222,6 +222,8 @@ def main():
         | |_| | | |  __/   \ V  V / ___ \|  _ < (_| |  __/ | | |
          \__|_| |_|\___|    \_/\_/_/   \_\_| \_\__,_|\___|_| |_|
                                     {yellow("Specter Server Edition")} {emoji.emojize(':key: :ghost:')}
+                                    {yellow("Powered by NgU technology")} {emoji.emojize(':rocket:')}
+
 
            Privacy Focused Portfolio & Bitcoin Address Tracker
     -----------------------------------------------------------------

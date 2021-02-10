@@ -1,0 +1,40 @@
+{% extends "warden/warden_layout.html" %} {% block content %}
+
+<script src="{{url_for('warden.static', filename='js/satoshi_quotes.js')}}"></script>
+
+<div class="row">
+    <div class="col-10">
+
+        <span id='loading' class="loadanim">Loading. Please Wait...</span>
+
+        <span id='quote_section'>
+            <div class='content-section'>
+                <h3>The Quotable Satoshi</h3>
+                <h6>Subject: <span id='subject'>...</span>
+                    <hr>
+
+                    <blockquote class="blockquote" style='padding-top: 30px; line-height: 2; text-align: justify;'>
+                        <i class="fas fa-quote-left fa-2x"></i><br>
+                        <lead id='load_quote'>Loading please wait...</lead>
+
+                        <footer style='padding-top: 20px;' class="blockquote-footer">Satoshi Nakamoto in <cite
+                                id='load_source' title="Source Title">...</cite>
+                        </footer>
+                        <footer class="blockquote-footer"><cite id='load_date'>...</cite>
+                        </footer>
+                        <small>
+                            Source: <a
+                                href='https://raw.githubusercontent.com/NakamotoInstitute/nakamotoinstitute.org/0bf08c48cd21655c76e8db06da39d16036a88594/data/quotes.json'
+                                target='_blank'>Nakamoto Institute</a>
+                        </small>
+                    </blockquote>
+
+                    <span class='float-right' style='padding-top: 50px;'>
+                        <button id="refresh_button" type="button" class="btn btn-dark">Refresh</button>
+                    </span>
+            </div>
+        </span>
+    </div>
+</div>
+
+{% endblock content %}

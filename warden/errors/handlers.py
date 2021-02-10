@@ -19,6 +19,11 @@ def page_not_found_403(error):
 @errors.app_errorhandler(500)
 # abort(500) will call this function
 def page_not_found_500(error):
+    # Clean messages
+    clean_list = ['500 Internal Server Error:']
+    for item in clean_list:
+        if item in error:
+            error.replace(item, '')
     # get latest traceback info
     import traceback
     trace = traceback.format_exc()
