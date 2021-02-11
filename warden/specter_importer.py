@@ -6,10 +6,13 @@ import json
 import re
 from datetime import datetime
 
-from requests.sessions import merge_cookies
-
 from bs4 import BeautifulSoup
 from utils import pickle_it, load_config
+
+# Store TOR Status here to avoid having to check on all http requests
+from warden_pricing_engine import test_tor
+tor_test = test_tor()
+TOR = tor_test
 
 
 class Specter():
@@ -67,6 +70,12 @@ class Specter():
 
     def init_session(self):
         with requests.session() as session:
+            if "onion" in self.base_url:
+                global TOR
+                session.proxies = {
+                    "http": "socks5h://localhost:" + TOR['port'],
+                    "https": "socks5h://localhost:" + TOR['port'],
+                }
             response = session.post(
                 self.login_url,
                 data=self.login_payload,

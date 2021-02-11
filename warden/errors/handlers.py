@@ -22,8 +22,11 @@ def page_not_found_500(error):
     # Clean messages
     clean_list = ['500 Internal Server Error:']
     for item in clean_list:
-        if item in error:
-            error.replace(item, '')
+        try:
+            if item in error:
+                error.replace(item, '')
+        except Exception:
+            pass
     # get latest traceback info
     import traceback
     trace = traceback.format_exc()

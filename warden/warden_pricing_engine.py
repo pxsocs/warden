@@ -110,7 +110,7 @@ TOR = tor_test
 
 
 @MWT(timeout=10)
-def tor_request(url, tor_only=True, method="get"):
+def tor_request(url, tor_only=True, method="get", payload=None):
     # Tor requests takes arguments:
     # url:       url to get or post
     # tor_only:  request will only be executed if tor is available
@@ -119,7 +119,6 @@ def tor_request(url, tor_only=True, method="get"):
     tor_check = TOR
     if tor_check["status"] is True:
         try:
-            # This is chrome, you can set whatever browser you like
             # Activate TOR proxies
             session = requests.session()
             session.proxies = {
@@ -129,7 +128,7 @@ def tor_request(url, tor_only=True, method="get"):
             if method == "get":
                 request = session.get(url, timeout=15)
             if method == "post":
-                request = session.post(url, timeout=15)
+                request = session.post(url, timeout=15, data=payload)
 
         except (
                 requests.exceptions.ConnectionError,
@@ -143,7 +142,7 @@ def tor_request(url, tor_only=True, method="get"):
             if method == "get":
                 request = requests.get(url, timeout=10)
             if method == "post":
-                request = requests.post(url, timeout=10)
+                request = requests.post(url, timeout=10, data=payload)
 
         except requests.exceptions.ConnectionError:
             return "ConnectionError"

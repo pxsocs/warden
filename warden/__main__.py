@@ -12,6 +12,7 @@ import warnings
 import socket
 import emoji
 from logging.handlers import RotatingFileHandler
+from ansi.colour import fg
 from flask import Flask
 from flask_mail import Mail
 from pathlib import Path
@@ -70,6 +71,8 @@ def create_tor():
                 info(
                     "    Download Tor at: https://www.torproject.org/download/"
                 ))
+            print("    [i] Tor Diagnostic:")
+            print(tor)
             print("")
             exit()
 
@@ -114,6 +117,7 @@ def init_app(app):
     print(f"   [i] Running version: {version}")
     print("")
 
+    # Check if config.ini exists
     with app.app_context():
         app.settings = config_settings
     with app.app_context():
@@ -132,9 +136,26 @@ def init_app(app):
 
     # For the first load, just get a saved file if available
     # The background jobs will update later
+    print("  Checking if Specter Server was configured...")
+    print("")
     with app.app_context():
         app.specter = Specter()
         app.specter.refresh_txs(load=True)
+
+    print("  Checking if running inside a docker container...")
+    print("")
+    with app.app_context():
+        from utils import runningInDocker, determine_docker_host_ip_address
+        app.runningInDocker = runningInDocker()
+        if app.runningInDocker:
+            print(success(f"✅ Running inside docker container {emoji.emojize(':whale:')}"))
+            ip_docker_host = determine_docker_host_ip_address()
+            print(yellow(f"[i] Docker Container IP address is: {ip_docker_host}"))
+            # Try to start Tor if in docker container
+            print(yellow(f"[i] {emoji.emojize(':whale:')} Docker launch Tor Service"))
+            _ = subprocess.run("service tor start",
+                               shell=True)
+            print("")
 
     with app.app_context():
         app.tor = create_tor()
@@ -190,14 +211,6 @@ def get_local_ip():
 def main():
     # Make sure current libraries are found in path
     current_path = os.path.abspath(os.path.dirname(__file__))
-    # Try to start Tor if in docker container
-    try:
-        _ = subprocess.run("service tor start",
-                           shell=True,
-                           stderr=subprocess.DEVNULL,
-                           stdout=subprocess.DEVNULL)
-    except Exception:
-        pass
 
     # CLS + Welcome
     print(yellow("  Welcome to the WARden <> Launching Application ..."))
@@ -224,13 +237,24 @@ def main():
     print(success("✅ WARden Server is Ready... Launch cool ASCII logo!"))
     print("")
 
-    print(f"""
+    def local_network_string():
+        if app.runningInDocker:
+            return ('')
+        else:
+            return (f"""
+      Or through your network at address:
+      {yellow('http://')}{yellow(get_local_ip())}{yellow(':5000/')}
+                """)
 
-         _   _           __        ___    ____     _
-        | |_| |__   ___  \ \      / / \  |  _ \ __| | ___ _ __
-        | __| '_ \ / _ \  \ \ /\ / / _ \ | |_) / _` |/ _ \ '_  |
-        | |_| | | |  __/   \ V  V / ___ \|  _ < (_| |  __/ | | |
-         \__|_| |_|\___|    \_/\_/_/   \_\_| \_\__,_|\___|_| |_|
+    print(
+        fg.brightgreen("""
+        _   _           __        ___    ____     _
+       | |_| |__   ___  \ \      / / \  |  _ \ __| | ___ _ __
+       | __| '_ \ / _ \  \ \ /\ / / _ \ | |_) / _` |/ _ \ '_  |
+       | |_| | | |  __/   \ V  V / ___ \|  _ < (_| |  __/ | | |
+        \__|_| |_|\___|    \_/\_/_/   \_\_| \_\__,_|\___|_| |_|"""))
+
+    print(f"""
                                     {yellow("Specter Server Edition")} {emoji.emojize(':key: :ghost:')}
                                     {yellow("Powered by NgU technology")} {emoji.emojize(':rocket:')}
 
@@ -242,11 +266,10 @@ def main():
       Open your browser and navigate to one of these addresses:
       {yellow('http://localhost:5000/')}
       {yellow('http://127.0.0.1:5000/')}
-      Or through your network at address:
-      {yellow('http://')}{yellow(get_local_ip())}{yellow(':5000/')}
-    -----------------------------------------------------------------
+      {local_network_string()}
+    ----------------------------------------------------------------
                          CTRL + C to quit server
-    -----------------------------------------------------------------
+    ----------------------------------------------------------------
 
     """)
 

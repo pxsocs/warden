@@ -279,6 +279,11 @@ def specter_df(save_files=False, sort_by='trade_date'):
             data_file.close()
 
         if json_all_hash != all_hash:
+            print("Hashes didn't match")
+            print("json hash:")
+            print(json_all_hash)
+            print("All Hash:")
+            print(all_hash)
             # Let's find which checksums are different and compile a list - save this list
             # so it can be used on main page to highlight changes
             with open(checksum_file) as data_file:
@@ -291,7 +296,11 @@ def specter_df(save_files=False, sort_by='trade_date'):
             old_list = [int(n) for n in old_list]
             new_list = [int(n) for n in new_list]
             deleted_addresses = list(set(old_list).difference(new_list))
+            print("deleted:")
+            print(deleted_addresses)
             added_addresses = list(set(new_list).difference(old_list))
+            print("Added")
+            print(added_addresses)
 
             # Save these to a file
             json_save = {

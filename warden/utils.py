@@ -162,3 +162,25 @@ def heatmap_generator():
     heatmap_stats["MEAN"] = heatmap_stats[heatmap_stats[cols_months] != 0].mean(axis=1)
 
     return (heatmap, heatmap_stats, years, cols)
+
+
+def determine_docker_host_ip_address():
+    cmd = "ip route show"
+    import subprocess
+    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    return str(output).split(' ')[2]
+
+
+def runningInDocker():
+    try:
+        with open('/proc/self/cgroup', 'r') as procfile:
+            for line in procfile:
+                fields = line.strip().split('/')
+                if 'docker' in fields:
+                    return True
+
+        return False
+
+    except Exception:
+        return False
