@@ -1,5 +1,5 @@
 from config import Config
-from utils import create_config, diags
+from utils import (create_config, diags, runningInDocker)
 from specter_importer import Specter
 from yaspin import yaspin
 import logging
@@ -11,6 +11,7 @@ import atexit
 import warnings
 import socket
 import emoji
+import time
 from logging.handlers import RotatingFileHandler
 from ansi.colour import fg
 from flask import Flask
@@ -56,13 +57,13 @@ def create_tor():
         if tor['status']:
             logging.info(success("Tor Connected"))
             spinner.ok("✅ ")
-            spinner.write(success("    Tor Connected [Success]"))
+            spinner.text = success("    Tor Connected [Success]")
             print("")
             return (tor)
         else:
             logging.error(error("Could not connect to Tor"))
             spinner.fail("💥 ")
-            spinner.write(warning("    Tor NOT connected [ERROR]"))
+            spinner.text(warning("    Tor NOT connected [ERROR]"))
             print(
                 error(
                     "    Could not connect to Tor. WARden requires Tor to run. Quitting..."
@@ -82,8 +83,8 @@ def create_tor():
 def init_app(app):
     warnings.filterwarnings('ignore')
     # Create the empty Mail instance
-    mail = Mail()
-    mail.init_app(app)
+    # mail = Mail()
+    # mail.init_app(app)
 
     # Load config.ini into app
     # --------------------------------------------
@@ -114,7 +115,7 @@ def init_app(app):
     with app.app_context():
         app.version = version
 
-    print(f"   [i] Running version: {version}")
+    print(f"  [i] Running version: {version}")
     print("")
 
     # Check if config.ini exists
@@ -131,31 +132,21 @@ def init_app(app):
 
     from routes import warden
     from errors.handlers import errors
+    from api.routes import api
     app.register_blueprint(warden)
     app.register_blueprint(errors)
+    app.register_blueprint(api)
 
     # For the first load, just get a saved file if available
     # The background jobs will update later
-    print("  Checking if Specter Server was configured...")
+    print("  [i] Checking if Specter Server was configured...")
     print("")
     with app.app_context():
         app.specter = Specter()
         app.specter.refresh_txs(load=True)
 
-    print("  Checking if running inside a docker container...")
-    print("")
     with app.app_context():
-        from utils import runningInDocker, determine_docker_host_ip_address
         app.runningInDocker = runningInDocker()
-        if app.runningInDocker:
-            print(success(f"✅ Running inside docker container {emoji.emojize(':whale:')}"))
-            ip_docker_host = determine_docker_host_ip_address()
-            print(yellow(f"[i] Docker Container IP address is: {ip_docker_host}"))
-            # Try to start Tor if in docker container
-            print(yellow(f"[i] {emoji.emojize(':whale:')} Docker launch Tor Service"))
-            _ = subprocess.run("service tor start",
-                               shell=True)
-            print("")
 
     with app.app_context():
         app.tor = create_tor()
@@ -209,14 +200,23 @@ def get_local_ip():
 
 
 def main():
+
     # Make sure current libraries are found in path
     current_path = os.path.abspath(os.path.dirname(__file__))
 
     # CLS + Welcome
+    print("")
+    print("")
     print(yellow("  Welcome to the WARden <> Launching Application ..."))
     print("")
-    print(f"  [i] Running from: {current_path}")
+    print(f"  [i] Running from directory: {current_path}")
     print("")
+
+    if runningInDocker():
+        print(success(f"✅ Running inside docker container {emoji.emojize(':whale:')}"))
+        # Try to start Tor if in docker container
+        print("")
+
     app = create_app()
     app.app_context().push()
     app = init_app(app)

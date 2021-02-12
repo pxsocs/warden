@@ -47,6 +47,7 @@ def home_path():
 def test_tor():
     response = {}
     session = requests.session()
+
     try:
         time_before = time()  # Save Ping time to compare
         r = session.get("http://httpbin.org/ip")
@@ -61,8 +62,8 @@ def test_tor():
     # Activate TOR proxies
     for PORT in PORTS:
         session.proxies = {
-            "http": "socks5h://localhost:" + PORT,
-            "https": "socks5h://localhost:" + PORT,
+            "http": "socks5h://0.0.0.0:" + PORT,
+            "https": "socks5h://0.0.0.0:" + PORT,
         }
         try:
             failed = False
@@ -122,8 +123,8 @@ def tor_request(url, tor_only=True, method="get", payload=None):
             # Activate TOR proxies
             session = requests.session()
             session.proxies = {
-                "http": "socks5h://localhost:" + TOR['port'],
-                "https": "socks5h://localhost:" + TOR['port'],
+                "http": "socks5h://0.0.0.0:" + TOR['port'],
+                "https": "socks5h://0.0.0.0:" + TOR['port'],
             }
             if method == "get":
                 request = session.get(url, timeout=15)

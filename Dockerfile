@@ -16,14 +16,14 @@ RUN python -m pip install -r requirements.txt
 
 # This is the port that WARden runs from
 EXPOSE 5000
-# These are Tor ports
-EXPOSE 9050
-EXPOSE 9150
 
 # Install Tor
 RUN apt-get install -y tor
 
+# These are Tor ports
+EXPOSE 9050
+EXPOSE 9150
 
-ENTRYPOINT ["python"]
-CMD ["warden"]
+ENTRYPOINT ["/app/warden.sh"]
+CMD ["--docker"]
 

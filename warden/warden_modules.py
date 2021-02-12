@@ -228,9 +228,8 @@ def specter_df(save_files=False, sort_by='trade_date'):
 
     # Hash the Pandas df for quick comparison for changes
     from pandas.util import hash_pandas_object
-    df['checksum'] = (df['trade_blockchain_id'].astype(str) +
-                      df['trade_quantity'].astype(str))
-    df['checksum'] = hash_pandas_object(df['checksum'])
+    df['checksum'] = df['trade_blockchain_id']
+    df['checksum'] = hash_pandas_object(df['checksum'], index=False)
     # Every time this function runs, it will save a checksum and full df
     # This is used to make a quick check if there were changes
     # If there are changes, a notification method is started to alert user
