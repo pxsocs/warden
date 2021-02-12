@@ -49,7 +49,7 @@ case $key in
     HELP=true
     shift # past argument
     ;;
-    -d|--docker)
+    --docker)
     DOCKER=true
     shift # past argument
     ;;

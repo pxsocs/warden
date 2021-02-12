@@ -264,6 +264,13 @@ def specter_auth():
             'username': current_app.settings['SPECTER']['specter_login'],
             'password': current_app.settings['SPECTER']['specter_password']
         }
+        current_app.specter.tx_payload = {
+            'idx': 0,
+            'limit': 50,
+            'search': None,
+            'sortby': 'time',
+            'sortdir': 'desc'
+        }
         current_app.specter.base_url = url
         specter_dict, specter_messages = specter_test()
         if specter_messages is not None:
@@ -276,7 +283,9 @@ def specter_auth():
                 return redirect(url_for('warden.specter_auth'))
 
         # Update Config
+        current_app.specter.refresh_txs(load=False)
         flash("Success. Connected to Specter Server.", "success")
+        flash("Notice: Only first 50 transactions were downloaded. If you have many transactions, the refresh will run on the background but may take many minutes. Leave the app running.", "warning")
         return redirect(url_for('warden.warden_page'))
 
 
