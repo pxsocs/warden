@@ -62,7 +62,7 @@ def create_tor():
         else:
             logging.error(error("Could not connect to Tor"))
             spinner.fail("💥 ")
-            spinner.text(warning("    Tor NOT connected [ERROR]"))
+            spinner.text = warning("    Tor NOT connected [ERROR]")
             print(
                 error(
                     "    Could not connect to Tor. WARden requires Tor to run. Quitting..."
