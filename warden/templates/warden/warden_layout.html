@@ -213,14 +213,10 @@
 
                             {% with messages = get_flashed_messages(with_categories=true) %}
                             {% if messages %}
-                            {% set printed_messages = dict() %}
                             {% for category, message in messages %}
-                            {% if message not in printed_messages %}
                             <div id="messagealert" class="alert alert-{{ category }}">
                                 {{ message }}
                             </div>
-                            {% set x = printed_messages.__setitem__(message, "value")  %}
-                            {% endif %}
                             {% endfor %}
                             {% endif %}
                             {% endwith %}

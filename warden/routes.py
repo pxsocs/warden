@@ -81,6 +81,9 @@ def before_request():
     except Exception as e:
         specter_messages = str(e)
 
+    if current_app.downloading:
+        flash("Downloading Transactions from Specter. Some transactions may be missing.", "warning")
+
     if current_app.specter.wallet_alias_list() is None:
         meta['specter_reached'] = False
         session['status'] = json.dumps(meta)
@@ -252,10 +255,17 @@ def specter_auth():
         return (render_template('warden/specter_auth.html', **templateData))
 
     if request.method == 'POST':
+        from yaspin import yaspin
+        from ansi_management import (warning, success, error, info, clear_screen, bold,
+                                     muted, yellow, blue)
+
+        print("")
+        print(yellow("  Specter Authentication Log"))
         url = request.form.get('url')
         if url[-1] != '/':
             url += '/'
         current_app.settings['SPECTER']['specter_url'] = url
+        print(f"  [i] Trying to reach specter at {url}")
         current_app.settings['SPECTER']['specter_login'] = request.form.get('username')
         current_app.settings['SPECTER']['specter_password'] = request.form.get('password')
         update_config()
@@ -277,13 +287,24 @@ def specter_auth():
             if 'Connection refused' in specter_messages:
                 flash('Having some difficulty reaching Specter Server. ' +
                       f'Please make sure it is running at {current_app.specter.base_url}', 'warning')
+                print(error("💥 Connection Refused. Check URL."))
                 return redirect(url_for('warden.specter_auth'))
             if 'Unauthorized Login' in specter_messages:
+                print(error("💥 Invalid Credentials. Check Username and Password. Leave blank if none."))
                 flash('Invalid Credentials or URL. Try again. ', 'danger')
                 return redirect(url_for('warden.specter_auth'))
 
         # Update Config
-        current_app.specter.refresh_txs(load=False)
+        txs = current_app.specter.refresh_txs(load=False)
+        print("")
+        print(success("  ✅ Connected to Specter Server"))
+        print("")
+        print(f"  Was able to download {len(txs['txlist'])} transactions")
+        print("  Please note that only the first 50 transactions will show")
+        print("  at your dashboard as other transactions are downloaded in background.")
+        print("")
+        current_app.downloading = True
+
         flash("Success. Connected to Specter Server.", "success")
         flash("Notice: Only first 50 transactions were downloaded. If you have many transactions, the refresh will run on the background but may take many minutes. Leave the app running.", "warning")
         current_app.specter.tx_payload = {
