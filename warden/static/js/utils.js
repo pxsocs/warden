@@ -285,7 +285,7 @@ function draw_pie_chart(pie_chart, series_name, target_div) {
             type: 'pie'
         },
         credits: {
-            text: "Ⓒ Rebel",
+            text: " ",
             style: {
                 fontSize: '10px',
                 color: '#363636'
@@ -294,7 +294,7 @@ function draw_pie_chart(pie_chart, series_name, target_div) {
                 align: 'right',
                 y: -5
             },
-            href: "http://www.rebel.com.br"
+            href: " "
         },
         title: {
             text: null

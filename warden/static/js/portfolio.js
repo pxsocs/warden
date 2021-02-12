@@ -583,6 +583,21 @@ function getNodeInfo() {
             $('#size_on_disk').html(data[0]['bitcoin_core_data']['Size on disk']);
             $('#difficulty').html(data[0]['bitcoin_core_data']['Difficulty']);
             $('#specter_refresh').html(data[0]['last_update']);
+            const currentTimeStamp = new Date().getTime();
+            last_up_specter = new Date(data[0]['last_update'])
+            specter_difference = timeDifference(currentTimeStamp, last_up_specter)
+
+            if (specter_difference.indexOf('seconds') != -1) {
+                color = 'success'
+            } else if (specter_difference.indexOf('minutes') != -1) {
+                color = 'warning'
+            } else {
+                color = 'danger'
+            }
+            ago_string = "<span class='text-" + color + "'>" + specter_difference + "</span>"
+
+            $('#specter_refresh_ago').html(ago_string);
+
             $('#core_version').html(data[0]['bitcoin_core_data']['Bitcoin Core Version']);
             $('#connection_count').html(data[0]['bitcoin_core_data']['Connections count']);
             $('#mempool_size').html(data[0]['bitcoin_core_data']['Mempool Size']);

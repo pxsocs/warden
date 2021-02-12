@@ -73,8 +73,8 @@ class Specter():
             if "onion" in self.base_url:
                 global TOR
                 session.proxies = {
-                    "http": "socks5h://localhost:" + TOR['port'],
-                    "https": "socks5h://localhost:" + TOR['port'],
+                    "http": "socks5h://0.0.0.0:" + TOR['port'],
+                    "https": "socks5h://0.0.0.0:" + TOR['port'],
                 }
             response = session.post(
                 self.login_url,
