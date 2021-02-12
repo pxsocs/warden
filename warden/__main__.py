@@ -144,6 +144,7 @@ def init_app(app):
         from specter_importer import Specter
         app.specter = Specter()
         app.specter.refresh_txs(load=True)
+        app.downloading = False
 
     with app.app_context():
         app.runningInDocker = runningInDocker()
@@ -166,6 +167,7 @@ def init_app(app):
     def bk_su():
         with app.app_context():
             background_specter_update()
+            app.downloading = False
 
     def bk_stu():
         with app.app_context():
