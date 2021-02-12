@@ -1,6 +1,5 @@
 from config import Config
 from utils import (create_config, diags, runningInDocker)
-from specter_importer import Specter
 from yaspin import yaspin
 import logging
 import subprocess
@@ -142,6 +141,7 @@ def init_app(app):
     print("  [i] Checking if Specter Server was configured...")
     print("")
     with app.app_context():
+        from specter_importer import Specter
         app.specter = Specter()
         app.specter.refresh_txs(load=True)
 
