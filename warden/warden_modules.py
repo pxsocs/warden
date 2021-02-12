@@ -174,7 +174,10 @@ def specter_df(save_files=False, sort_by='trade_date'):
     portfolio_divisor = current_app.settings['PORTFOLIO'].getfloat('divisor')
     if portfolio_divisor is None:
         portfolio_divisor = 1
-    df['amount'] = df['amount'] / portfolio_divisor
+    try:
+        df['amount'] = df['amount'] / portfolio_divisor
+    except TypeError:
+        pass
     df['trade_quantity'] = df['amount']
     df['trade_notes'] = 'Imported from Specter Wallet'
     df['trade_reference_id'] = ""
