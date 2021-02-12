@@ -286,6 +286,13 @@ def specter_auth():
         current_app.specter.refresh_txs(load=False)
         flash("Success. Connected to Specter Server.", "success")
         flash("Notice: Only first 50 transactions were downloaded. If you have many transactions, the refresh will run on the background but may take many minutes. Leave the app running.", "warning")
+        current_app.specter.tx_payload = {
+            'idx': 0,
+            'limit': 0,
+            'search': None,
+            'sortby': 'time',
+            'sortdir': 'desc'
+        }
         return redirect(url_for('warden.warden_page'))
 
 
