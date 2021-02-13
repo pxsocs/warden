@@ -9,6 +9,7 @@ from warden_pricing_engine import (fx_rate, PROVIDER_LIST,
                                    PriceData)
 from utils import update_config, heatmap_generator
 from operator import itemgetter
+from packaging import version
 
 from datetime import datetime
 import jinja2
@@ -88,6 +89,18 @@ def before_request():
         meta['specter_reached'] = False
         session['status'] = json.dumps(meta)
         specter_messages = 'Having trouble finding Specter transactions. Check Specter Server'
+
+    # Check that Specter is > 1.1.0 version
+    # (this is the version where tx API was implemented)
+    try:
+        specter_version = str(current_app.specter.home_parser()['version'])
+    except KeyError:
+        flash("Could not connect to Specter. Check credentials below.", "warning")
+        return redirect(url_for('warden.specter_auth'))
+
+    if version.parse(specter_version) < version.parse("1.1.0"):
+        flash(f"Sorry, you need Specter version 1.1.0 or higher to connect to WARden. You are running version {specter_version}. Please upgrade.", "danger")
+        return redirect(url_for('warden.specter_auth'))
 
     if specter_messages:
         if 'Connection refused' in str(specter_messages):
@@ -299,13 +312,20 @@ def specter_auth():
         print("")
         print(success("  ✅ Connected to Specter Server"))
         print("")
-        print(f"  Was able to download {len(txs['txlist'])} transactions")
+        try:
+            print(f"  Was able to download {len(txs['txlist'])} transactions")
+        except Exception:
+            print(error("  Something went wrong... Here's what Specter returned:"))
+            print(txs)
+            flash('Something went wrong. Check your console for a message.', 'danger')
+            return redirect(url_for('warden.specter_auth'))
         print("  Please note that only the first 50 transactions will show")
         print("  at your dashboard as other transactions are downloaded in background.")
         print("")
         current_app.downloading = True
 
-        flash("Success. Connected to Specter Server.", "success")
+        specter_version = str(current_app.specter.home_parser()['version'])
+        flash(f"Success. Connected to Specter Server. Running Specter version {specter_version}.", "success")
         flash("Notice: Only first 50 transactions were downloaded. If you have many transactions, the refresh will run on the background but may take many minutes. Leave the app running.", "warning")
         current_app.specter.tx_payload = {
             'idx': 0,
