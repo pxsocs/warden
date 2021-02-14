@@ -12,3 +12,4 @@ ansi==0.1.5
 emoji==0.6.0
 beautifulsoup4==4.9.3
 apscheduler==3.7.0
+stem==1.8.0

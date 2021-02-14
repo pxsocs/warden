@@ -1,4 +1,4 @@
-from flask import (Blueprint, flash,  request, current_app,  jsonify)
+from flask import (Blueprint, flash,  request, current_app,  jsonify, Response)
 from warden_modules import (warden_metadata,
                             positions_dynamic, get_price_ondate,
                             generatenav, specter_df,
@@ -24,6 +24,7 @@ import os
 import math
 import csv
 import requests
+
 
 api = Blueprint('api', __name__)
 
@@ -793,3 +794,12 @@ def test_factory():
         return json.dumps(data)
 
     return json.dumps("No tests were passed. Use the ?test= argument.")
+
+
+@api.route('/log')
+def progress_log():
+    from config import Config
+    from warden_modules import tail
+    debug = Config.debug_file
+    data = tail(debug, 200)
+    return json.dumps(str(data))

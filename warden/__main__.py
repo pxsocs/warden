@@ -32,12 +32,11 @@ def create_app():
     formatter = "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
     logging.basicConfig(
         handlers=[RotatingFileHandler(
-            filename=Config.debug_file,
+            filename=str(Config.debug_file),
             mode='w', maxBytes=120000, backupCount=0)],
         level=logging.INFO,
         format=formatter,
         datefmt='%m/%d/%Y %I:%M:%S %p')
-    logger = logging.getLogger('WARden')
     logging.info("Starting main program...")
 
     # Launch app
@@ -278,10 +277,12 @@ def main(debug=False):
             return ('')
 
     def local_network_string():
+        host = app.settings['SERVER'].get('host')
         if app.runningInDocker:
             return ('')
         else:
-            return (f"""
+            if host == '0.0.0.0':
+                return (f"""
       Or through your network at address:
       {yellow('http://')}{yellow(get_local_ip())}{yellow(':5000/')}
                 """)
@@ -316,8 +317,8 @@ def main(debug=False):
 
     app.run(debug=debug,
             threaded=True,
-            host='0.0.0.0',
-            port=5000,
+            host=app.settings['SERVER'].get('host'),
+            port=app.settings['SERVER'].getint('port'),
             use_reloader=False)
 
     if app.settings['SERVER'].getboolean('onion_server'):
@@ -327,6 +328,8 @@ def main(debug=False):
 if __name__ == '__main__':
     # Run Diagnostic Function
     debug = False
-    if "--degug" in sys.argv:
+    if "debug" in sys.argv:
+        print("")
+        print(yellow("  [i] DEBUG MODE: ON"))
         debug = True
     main(debug=debug)

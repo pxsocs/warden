@@ -1,3 +1,5 @@
+# Adapted from Specter Server original code
+
 import os
 from stem.control import Controller
 from warden_modules import home_path

@@ -1,5 +1,5 @@
 from flask import (Blueprint, redirect, render_template, abort,
-                   flash, session, request, current_app, url_for)
+                   flash, session, request, current_app, url_for, Response)
 from warden_modules import (warden_metadata, positions,
                             generatenav, specter_df,
                             regenerate_nav,
@@ -15,8 +15,10 @@ from datetime import datetime
 import jinja2
 import numpy as np
 import json
+import time
 import os
 import urllib
+import logging
 
 warden = Blueprint("warden",
                    __name__,
@@ -478,6 +480,18 @@ def price_feed():
                            current_app=current_app,
                            current_user=fx_rate(),
                            return_dict=return_dict)
+
+
+# Show debug info
+@warden.route('/show_log')
+def show_log():
+    log = logging.getLogger('__name__')
+    log.info("route =>'/env' - hit!")
+    return render_template('warden/show_log.html',
+                           title="Debug Viewer",
+                           current_app=current_app,
+                           current_user=fx_rate()
+                           )
 
 
 # -------------------------------------------------

@@ -1,16 +1,18 @@
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 
 
 # Config class for Application Factory
 class Config:
+    home_path = Path.home()
     basedir = os.path.abspath(os.path.dirname(__file__))
 
     # You should change this secret key. But make sure it's done before any data
     # is included in the database
     SECRET_KEY = "24feff264xscdcjncdjdcjuu212i"
 
-    debug_file = os.path.join(basedir, 'debug.log')
+    debug_file = os.path.join(home_path, 'warden/debug.log')
 
     version_file = os.path.join(basedir, 'static/config/version.txt')
 
