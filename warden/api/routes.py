@@ -23,6 +23,7 @@ import json
 import os
 import math
 import csv
+import requests
 
 api = Blueprint('api', __name__)
 
@@ -725,3 +726,70 @@ def test_price():
         return json.dumps({"error": f"Check API keys or connection: {e}"})
 
     return (data)
+
+
+@api.route("/test_factory", methods=["GET"])
+def test_factory():
+    test = request.args.get("test")
+
+    # ONION ADDRESS TEST
+    # Check if Onion Address (true if has onion, else false)
+    # parameters:
+    # url
+    if test == 'is_onion':
+        url = request.args.get("url").lower()
+        if "onion" in url:
+            return json.dumps(True)
+        else:
+            return json.dumps(False)
+
+    # Now let's ping this url and check if connects
+    # Returns a json with the following info
+    # response = {
+    #                 "pre_proxy": pre_proxy,
+    #                 "post_proxy": post_proxy,
+    #                 "post_proxy_ping": "{0:.2f} seconds".format(post_proxy_ping),
+    #                 "pre_proxy_ping": "{0:.2f} seconds".format(pre_proxy_ping),
+    #                 "difference": "{0:.2f}".format(post_proxy_difference),
+    #                 "status": True,
+    #                 "port": PORT
+    #             }
+    if test == 'check_url':
+        url = request.args.get("url").lower()
+        response = tor_request(url)
+        tor = True
+
+        if response == 'ConnectionError':
+            import traceback
+            trace = traceback.print_exc()
+            data = {
+                'error': 'ConnectionError',
+                'traceback': trace
+            }
+
+        elif response == 'Tor not available':
+            import traceback
+            trace = traceback.print_exc()
+            data = {
+                'error': 'Tor not available',
+                'traceback': trace
+            }
+
+            # Try to get the same data but without Tor
+            tor = False
+            response = requests.get(url, timeout=10)
+
+        else:
+            data = {
+                'tor_request': tor,
+                'error': None,
+                'status_code': response.status_code,
+                'reason': response.reason,
+                'url': response.url,
+                'ok': response.ok,
+                'elapsed_microseconds': response.elapsed.microseconds
+            }
+
+        return json.dumps(data)
+
+    return json.dumps("No tests were passed. Use the ?test= argument.")

@@ -19,6 +19,7 @@ from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
 from ansi_management import (warning, success, error, info, clear_screen, bold,
                              muted, yellow, blue)
+from tor import stop_hidden_services
 
 
 # Make sure current libraries are found in path
@@ -129,6 +130,34 @@ def init_app(app):
             print("")
             create_config(config_file)
 
+    # TOR Server through Onion Address --
+    # USE WITH CAUTION - ONION ADDRESSES CAN BE EXPOSED!
+    # WARden needs to implement authentication (coming soon)
+    if app.settings['SERVER'].getboolean('onion_server'):
+        from stem.control import Controller
+        from urllib.parse import urlparse
+        app.tor_port = app.settings['SERVER'].getint('onion_port')
+        app.port = app.settings['SERVER'].getint('port')
+        from warden_modules import home_path
+        toraddr_file = os.path.join(home_path(), "onion.txt")
+        app.save_tor_address_to = toraddr_file
+        proxy_url = "socks5h://localhost:9050"
+        tor_control_port = ""
+        try:
+            tor_control_address = urlparse(proxy_url).netloc.split(":")[0]
+            if tor_control_address == "localhost":
+                tor_control_address = "127.0.0.1"
+            app.controller = Controller.from_port(
+                address=tor_control_address,
+                port=int(tor_control_port)
+                if tor_control_port
+                else "default",
+            )
+        except Exception:
+            app.controller = None
+        from tor import start_hidden_service
+        start_hidden_service(app)
+
     from routes import warden
     from errors.handlers import errors
     from api.routes import api
@@ -201,7 +230,7 @@ def get_local_ip():
     return (local_ip_address)
 
 
-def main():
+def main(debug=False):
 
     # Make sure current libraries are found in path
     current_path = os.path.abspath(os.path.dirname(__file__))
@@ -239,6 +268,15 @@ def main():
     print(success("✅ WARden Server is Ready... Launch cool ASCII logo!"))
     print("")
 
+    def onion_string():
+        if app.settings['SERVER'].getboolean('onion_server'):
+            return (f"""
+      {emoji.emojize(':onion:')} Tor Onion server running at:
+      {yellow(app.tor_service_id + '.onion')}
+                """)
+        else:
+            return ('')
+
     def local_network_string():
         if app.runningInDocker:
             return ('')
@@ -269,22 +307,26 @@ def main():
       {yellow('http://localhost:5000/')}
       {yellow('http://127.0.0.1:5000/')}
       {local_network_string()}
+      {onion_string()}
     ----------------------------------------------------------------
                          CTRL + C to quit server
     ----------------------------------------------------------------
 
     """)
 
-    app.run(debug=False,
+    app.run(debug=debug,
             threaded=True,
             host='0.0.0.0',
             port=5000,
             use_reloader=False)
 
+    if app.settings['SERVER'].getboolean('onion_server'):
+        stop_hidden_services(app)
+
 
 if __name__ == '__main__':
     # Run Diagnostic Function
-    if "--diag" in sys.argv:
-        diags()
-        exit()
-    main()
+    debug = False
+    if "--degug" in sys.argv:
+        debug = True
+    main(debug=debug)
