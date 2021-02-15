@@ -293,9 +293,7 @@ def specter_auth():
         # Recreate the specter class
         from specter_importer import Specter
         current_app.specter = Specter()
-        # Limit the Number of txs to avoid delays in checking
-        # when user has many txs
-        current_app.specter.tx_payload['limit'] = 50
+
         specter_dict, specter_messages = specter_test()
         if specter_messages is not None:
             if 'Connection refused' in specter_messages:
@@ -309,6 +307,9 @@ def specter_auth():
                 return redirect(url_for('warden.specter_auth'))
 
         # Update Config
+        # Limit the Number of txs to avoid delays in checking
+        # when user has many txs
+        current_app.specter.tx_payload['limit'] = 50
         txs = current_app.specter.refresh_txs(load=False)
         try:
             print(f"  Was able to download {len(txs['txlist'])} transactions")
