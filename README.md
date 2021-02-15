@@ -6,7 +6,10 @@
 
 This is a light weight version of the original WARden designed for integration with Specter Server.
 
-_Requirement: Specter 1.1.0 or later 👻_
+### Requirements:
+
+> 👻 Specter 1.1.0 or later
+> 🐍 Python 3.7 or later
 
 Transactions will be imported automatically from Specter.
 
@@ -30,7 +33,7 @@ Log in to your computer running Specter, open Terminal and type:
 ```bash
 git clone https://github.com/pxsocs/specter_warden
 cd specter_warden
-pip3 install -r requirements.txt
+python3 -m pip install requirements.txt
 ```
 
 Then run the WARden server:
@@ -45,8 +48,25 @@ Upgrade:
 git pull origin master
 ```
 
-Open your browser and navigate to:
-`http://localhost:5000/`
+## 🐳 Docker Container instructions:
+
+### Requirements:
+
+> Docker needs to installed and running
+
+Build the container:
+
+```bash
+git clone https://github.com/pxsocs/specter_warden
+cd specter_warden
+docker build -t warden_specter:latest .
+```
+
+Run:
+
+```bash
+docker run -it -p 5000:5000 warden_specter
+```
 
 ## Screenshot
 

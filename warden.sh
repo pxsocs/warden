@@ -28,7 +28,7 @@ pythonNotFound()
     echo "\tPython3 does not seem to be installed in this machine"
     echo "\tplease install to use WARden. Download and instructions:"
     echo "\thttps://www.python.org/"
-    echp ""
+    echo ""
     exit 1
 }
 

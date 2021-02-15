@@ -1,4 +1,4 @@
-from flask import (Blueprint, flash,  request, current_app,  jsonify)
+from flask import (Blueprint, flash,  request, current_app,  jsonify, Response)
 from warden_modules import (warden_metadata,
                             positions_dynamic, get_price_ondate,
                             generatenav, specter_df,
@@ -23,6 +23,8 @@ import json
 import os
 import math
 import csv
+import requests
+
 
 api = Blueprint('api', __name__)
 
@@ -725,3 +727,12 @@ def test_price():
         return json.dumps({"error": f"Check API keys or connection: {e}"})
 
     return (data)
+
+
+@api.route('/log')
+def progress_log():
+    from config import Config
+    from warden_modules import tail
+    debug = Config.debug_file
+    data = tail(debug, 200)
+    return json.dumps(str(data))
