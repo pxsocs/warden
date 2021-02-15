@@ -315,7 +315,7 @@ def specter_auth():
         except Exception:
             print(error("  Something went wrong... Here's what Specter returned:"))
             print(txs)
-            flash('Something went wrong. Check your console for a message.', 'danger')
+            flash('Something went wrong. Check your console for a message. Or try again.', 'danger')
             return redirect(url_for('warden.specter_auth'))
 
         print(success("  ✅ Connected to Specter Server"))
