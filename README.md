@@ -9,6 +9,7 @@ This is a light weight version of the original WARden designed for integration w
 ### Requirements:
 
 > 👻 Specter 1.1.0 or later
+
 > 🐍 Python 3.7 or later
 
 Transactions will be imported automatically from Specter.
@@ -18,9 +19,6 @@ This app was built with a couple of goals:
 - Easily track portfolio values in fiat (private requests through Tor)
 - Monitor Wallets and Addresses for activity using your own node and notify user.
 - Track your full node status
-
-> warden (wɔːʳdən )
-> A warden is responsible for making sure that the laws or regulations are obeyed.
 
 ## Installation
 
@@ -137,3 +135,7 @@ sudo apt-get install git
 
 **Please note that this is ALPHA software. There is no guarantee that the
 information and analytics are correct. Also expect no customer support. Issues are encouraged to be raised through GitHub but they will be answered on a best efforts basis.**
+
+> warden (wɔːʳdən )
+
+> A warden is responsible for making sure that the laws or regulations are obeyed.

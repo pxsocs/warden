@@ -288,19 +288,12 @@ def specter_auth():
         current_app.settings['SPECTER']['specter_login'] = request.form.get('username')
         current_app.settings['SPECTER']['specter_password'] = request.form.get('password')
         update_config()
-        # Try these credentials
-        current_app.specter.login_payload = {
-            'username': current_app.settings['SPECTER']['specter_login'],
-            'password': current_app.settings['SPECTER']['specter_password']
-        }
-        current_app.specter.tx_payload = {
-            'idx': 0,
-            'limit': 50,
-            'search': None,
-            'sortby': 'time',
-            'sortdir': 'desc'
-        }
-        current_app.specter.base_url = url
+        # Recreate the specter class
+        from specter_importer import Specter
+        current_app.specter = Specter()
+        # Limit the Number of txs to avoid delays in checking
+        # when user has many txs
+        current_app.specter.tx_payload['limit'] = 50
         specter_dict, specter_messages = specter_test()
         if specter_messages is not None:
             if 'Connection refused' in specter_messages:
@@ -315,9 +308,6 @@ def specter_auth():
 
         # Update Config
         txs = current_app.specter.refresh_txs(load=False)
-        print("")
-        print(success("  ✅ Connected to Specter Server"))
-        print("")
         try:
             print(f"  Was able to download {len(txs['txlist'])} transactions")
         except Exception:
@@ -325,6 +315,8 @@ def specter_auth():
             print(txs)
             flash('Something went wrong. Check your console for a message.', 'danger')
             return redirect(url_for('warden.specter_auth'))
+
+        print(success("  ✅ Connected to Specter Server"))
         print("  Please note that only the first 50 transactions will show")
         print("  at your dashboard as other transactions are downloaded in background.")
         print("")
@@ -333,13 +325,8 @@ def specter_auth():
         specter_version = str(current_app.specter.home_parser()['version'])
         flash(f"Success. Connected to Specter Server. Running Specter version {specter_version}.", "success")
         flash("Notice: Only first 50 transactions were downloaded. If you have many transactions, the refresh will run on the background but may take many minutes. Leave the app running.", "warning")
-        current_app.specter.tx_payload = {
-            'idx': 0,
-            'limit': 0,
-            'search': None,
-            'sortby': 'time',
-            'sortdir': 'desc'
-        }
+        # Now allow download of all txs in background on next run
+        current_app.specter.tx_payload['limit'] = 0
         return redirect(url_for('warden.warden_page'))
 
 
