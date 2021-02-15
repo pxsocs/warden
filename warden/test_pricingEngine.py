@@ -2,9 +2,12 @@
 # $ python3 test_pricingEngine.py
 
 
+from datetime import datetime
 import unittest
 import requests
-from warden_pricing_engine import price_data_rt, tor_request, test_tor
+import pandas as pd
+from warden_pricing_engine import (price_data_rt, tor_request,
+                                   test_tor, get_price_ondate)
 
 
 class TestPricing(unittest.TestCase):
@@ -43,14 +46,30 @@ class TestPricing(unittest.TestCase):
 
     # Check if pricing APIs are running and returning a valid price
 
-    def test_prices(self):
+    def test_rt_prices(self):
         # Realtime prices
-        ticker = 'BTC'
-        result = price_data_rt(ticker)
-        # Check if not note
-        self.assertIsNotNone(result)
-        import numbers
-        self.assertIsInstance(result, numbers.Number)
+        ticker_list = ['BTC', 'MSTR']
+        for ticker in ticker_list:
+            result = price_data_rt(ticker)
+            # Check if not none
+            self.assertIsNotNone(result)
+            import numbers
+            self.assertIsInstance(result, numbers.Number)
+
+    def test_price_ondate(self):
+        ticker_list = ['BTC', 'MSTR']
+        dates = [datetime(2018, 1, 1, 0, 0)]
+        for ticker in ticker_list:
+            for date in dates:
+                result = get_price_ondate(ticker, date)
+                # Check if not zero => this equals fail
+                self.assertIsNot(result, 0)
+                # Expected result is a dataframe with:
+                # close    13444.88
+                # open     13850.49
+                # high     13921.53
+                # low      12877.67
+                self.assertIsInstance(result, pd.Series)
 
 
 if __name__ == '__main__':

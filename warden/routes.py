@@ -105,6 +105,10 @@ def before_request():
         return redirect(url_for('warden.specter_auth'))
 
     if specter_messages:
+        if 'Read timed out' in str(specter_messages):
+            flash("Having trouble connecting to Specter. Connection timed out. Data may be outdated.", "warning")
+            return
+
         if 'Connection refused' in str(specter_messages):
             meta['specter_reached'] = False
             session['status'] = json.dumps(meta)

@@ -132,9 +132,9 @@ def tor_request(url, tor_only=True, method="get", payload=None):
                 "https": "socks5h://0.0.0.0:" + TOR['port'],
             }
             if method == "get":
-                request = session.get(url, timeout=25)
+                request = session.get(url, timeout=60)
             if method == "post":
-                request = session.post(url, timeout=25, data=payload)
+                request = session.post(url, timeout=60, data=payload)
 
         except (
                 requests.exceptions.ConnectionError,
@@ -147,9 +147,9 @@ def tor_request(url, tor_only=True, method="get", payload=None):
             return "Tor not available"
         try:
             if method == "get":
-                request = requests.get(url, timeout=10)
+                request = requests.get(url, timeout=30)
             if method == "post":
-                request = requests.post(url, timeout=10, data=payload)
+                request = requests.post(url, timeout=30, data=payload)
 
         except requests.exceptions.ConnectionError:
             session.close()
