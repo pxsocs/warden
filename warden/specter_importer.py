@@ -79,7 +79,7 @@ class Specter():
             response = session.post(
                 self.login_url,
                 data=self.login_payload,
-                timeout=30
+                timeout=60
             )
             # Check if authorized
             if response.status_code == 401:
