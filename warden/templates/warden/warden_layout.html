@@ -146,25 +146,6 @@
                             </span>
                         </span>
 
-
-
-                        {%if session['status']['specter_reached'] == False%}
-                        <a href="{{current_app.specter.base_url}}""
-                    target='_blank' class=" btn btn-danger btn-block" role="button" class="btn btn-light btn-sm">
-
-                            Specter Server Disconnected
-
-                        </a>
-                        {%else%}
-                        <a href="{{current_app.specter.base_url}}""
-                    target='_blank' class=" btn btn-secondary btn-block" role="button" class="btn btn-light btn-sm">
-                            <img src='{{url_for('warden.static', filename='images/specter_icon.png')}}' width="20">
-                            Connected to Specter Server
-                        </a>
-
-                        {%endif%}
-
-
                     </div>
                 </li>
 
