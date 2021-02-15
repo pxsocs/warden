@@ -283,6 +283,8 @@ def specter_auth():
         url = request.form.get('url')
         if url[-1] != '/':
             url += '/'
+        if (not url.startswith('http://')) or (not url.startswith('http://')):
+            url = 'http://' + url
         current_app.settings['SPECTER']['specter_url'] = url
         print(f"  [i] Trying to reach specter at {url}")
         current_app.settings['SPECTER']['specter_login'] = request.form.get('username')
@@ -313,7 +315,7 @@ def specter_auth():
         except Exception:
             print(error("  Something went wrong... Here's what Specter returned:"))
             print(txs)
-            flash('Something went wrong. Check your console for a message.', 'danger')
+            flash('Something went wrong. Check your console for a message. Or try again.', 'danger')
             return redirect(url_for('warden.specter_auth'))
 
         print(success("  ✅ Connected to Specter Server"))
@@ -377,7 +379,7 @@ def navchart():
                            current_app=current_app)
 
 
-@warden.route("/heatmap")
+@ warden.route("/heatmap")
 # Returns a monthly heatmap of returns and statistics
 def heatmap():
     heatmap_gen, heatmap_stats, years, cols = heatmap_generator()
@@ -394,7 +396,7 @@ def heatmap():
     )
 
 
-@warden.route("/volchart", methods=["GET", "POST"])
+@ warden.route("/volchart", methods=["GET", "POST"])
 # Only returns the html - request for data is done through jQuery AJAX
 def volchart():
     return render_template("warden/volchart.html",
@@ -403,7 +405,7 @@ def volchart():
                            current_user=fx_rate())
 
 
-@warden.route("/portfolio_compare", methods=["GET"])
+@ warden.route("/portfolio_compare", methods=["GET"])
 def portfolio_compare():
     return render_template("warden/portfolio_compare.html",
                            title="Portfolio Comparison",
@@ -411,7 +413,7 @@ def portfolio_compare():
                            current_user=fx_rate())
 
 
-@warden.route("/price_feed", methods=["GET"])
+@ warden.route("/price_feed", methods=["GET"])
 def price_feed():
     return_dict = {}
     ticker = request.args.get("ticker")
@@ -474,7 +476,7 @@ def price_feed():
 
 
 # Show debug info
-@warden.route('/show_log')
+@ warden.route('/show_log')
 def show_log():
     log = logging.getLogger('__name__')
     log.info("route =>'/env' - hit!")

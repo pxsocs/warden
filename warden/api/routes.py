@@ -67,9 +67,13 @@ def satoshi_quotes_json():
 def alert_activity():
     alerts = False
     ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
-    with open(ack_file) as data_file:
-        tx_list = json.loads(data_file.read())
-        data_file.close()
+
+    try:
+        with open(ack_file) as data_file:
+            tx_list = json.loads(data_file.read())
+            data_file.close()
+    except Exception:
+        return (False)
 
     try:
         last_changes = parser.parse(tx_list['changes_detected_on'])

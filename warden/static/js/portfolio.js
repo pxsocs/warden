@@ -27,7 +27,8 @@ $(document).ready(function () {
             error: function (xhr, status, error) {
                 console.log(status);
                 console.log(error);
-                $('#alerts').html("<div class='small alert alert-danger alert-dismissible fade show' role='alert'>An error occured while refreshing data." +
+                alerts_html = $('#alerts').html();
+                $('#alerts').html(alerts_html + "<div class='small alert alert-danger alert-dismissible fade show' role='alert'>An error occured while refreshing data." +
                     "<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button></div>")
             }
         });

@@ -99,7 +99,8 @@ function check_activity() {
         url: "/check_activity",
         success: function (data) {
             if (data == true) {
-                $('#alertsection').html("<div class='alert alert-danger'>Activity Detected in one or more wallets</div>")
+                alerts_html = $('#alertsection').html();
+                $('#alertsection').html(alerts_html + "<div class='alert alert-danger'>Activity Detected in one or more wallets</div>")
             }
         },
         error: function (xhr, status, error) {
