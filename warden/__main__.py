@@ -201,11 +201,11 @@ def init_app(app):
         with app.app_context():
             background_settings_update()
 
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(bk_su, 'interval', seconds=30)
-    scheduler.add_job(bk_stu, 'interval', seconds=60)
+    app.scheduler = BackgroundScheduler()
+    app.scheduler.add_job(bk_su, 'interval', seconds=30)
+    app.scheduler.add_job(bk_stu, 'interval', seconds=60)
 
-    scheduler.start()
+    app.scheduler.start()
     print(success("✅ Background jobs running"))
     print("")
     app.app_context().push()
@@ -252,16 +252,19 @@ def main(debug=False):
     app = init_app(app)
     app.app_context().push()
 
-    def close_running_threads():
+    def close_running_threads(app):
+        print("")
+        print("")
+        print(yellow("  [i] Please Wait... Shutting down."))
+        app.scheduler.shutdown(wait=False)
         print("""
-    -----------------------------------------------------------------
-                            Goodbye
-                 Keep Stacking. Keep Verifying.
-    -----------------------------------------------------------------
+                           Goodbye &
+                         Keep Stacking
             """)
+        print("")
 
     # Register the def above to run at close
-    atexit.register(close_running_threads)
+    atexit.register(close_running_threads, app)
 
     print("")
     print(success("✅ WARden Server is Ready... Launch cool ASCII logo!"))

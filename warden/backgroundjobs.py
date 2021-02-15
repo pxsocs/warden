@@ -16,6 +16,7 @@ def background_specter_update():
     for wallet in wallets:
         app.specter.wallet_info(wallet_alias=wallet, load=False)
         app.specter.rescan_progress(wallet_alias=wallet, load=False)
+    app.downloading = False
 
 
 def background_settings_update():
