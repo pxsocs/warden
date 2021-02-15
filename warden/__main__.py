@@ -19,7 +19,6 @@ from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
 from ansi_management import (warning, success, error, info, clear_screen, bold,
                              muted, yellow, blue)
-from tor import stop_hidden_services
 
 
 # Make sure current libraries are found in path
@@ -325,6 +324,7 @@ def main(debug=False):
             use_reloader=False)
 
     if app.settings['SERVER'].getboolean('onion_server'):
+        from tor import stop_hidden_services
         stop_hidden_services(app)
 
 
