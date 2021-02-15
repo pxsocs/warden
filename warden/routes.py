@@ -85,7 +85,7 @@ def before_request():
         specter_messages = str(e)
 
     if current_app.downloading:
-        flash("Downloading Transactions from Specter. Some transactions may be missing.", "warning")
+        flash("Still downloading transactions from Specter. Some transactions may still be missing.", "warning")
 
     if current_app.specter.wallet_alias_list() is None:
         meta['specter_reached'] = False
