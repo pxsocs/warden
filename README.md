@@ -6,6 +6,8 @@
 
 This is a light weight version of the original WARden designed for integration with Specter Server.
 
+Installation instructions for Specter can be found [here](https://github.com/cryptoadvance/specter-desktop).
+
 ### Requirements:
 
 > 👻 Specter 1.1.0 or later
@@ -20,13 +22,31 @@ This app was built with a couple of goals:
 - Monitor Wallets and Addresses for activity using your own node and notify user.
 - Track your full node status
 
-## Installation
+## 🐳 Docker Container instructions (recommended):
 
-### Please note that the WARden needs to be installed at the same machine running Specter Server.
+_If you don't want to have docker installed follow the regular instructions_
 
-Installation instructions for Specter can be found [here](https://github.com/cryptoadvance/specter-desktop).
+### Requirements:
 
-Log in to your computer running Specter, open Terminal and type:
+> Docker needs to installed and running
+
+[Docker Install Instructions](https://docs.docker.com/get-docker/)
+
+Build the container:
+
+```bash
+git clone https://github.com/pxsocs/specter_warden
+cd specter_warden
+docker build -t warden_specter:latest .
+```
+
+Run:
+
+```bash
+docker run -it -p 5000:5000 warden_specter
+```
+
+## Regular Instructions (without docker installation)
 
 ```bash
 git clone https://github.com/pxsocs/specter_warden
@@ -44,26 +64,6 @@ Upgrade:
 
 ```bash
 git pull origin master
-```
-
-## 🐳 Docker Container instructions:
-
-### Requirements:
-
-> Docker needs to installed and running
-
-Build the container:
-
-```bash
-git clone https://github.com/pxsocs/specter_warden
-cd specter_warden
-docker build -t warden_specter:latest .
-```
-
-Run:
-
-```bash
-docker run -it -p 5000:5000 warden_specter
 ```
 
 ## Screenshot
