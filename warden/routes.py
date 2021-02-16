@@ -374,7 +374,6 @@ def specter_auth():
         templateData = {
             "title": "Login to Specter",
             "donated": donate_check(),
-            "status": json.loads(session['status']),
             "current_app": current_app,
         }
         return (render_template('warden/specter_auth.html', **templateData))
