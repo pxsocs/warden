@@ -33,8 +33,9 @@ warden = Blueprint("warden",
 
 
 # Check Specter health every 60 seconds
+# A randomizer number below will make sure the cache is not used
 @MWT(timeout=60)
-def specter_test(force=False):
+def specter_test(force=False, randomizer=None):
     return_dict = {}
     messages = None
     # Load basic specter data
@@ -109,7 +110,7 @@ def before_request():
         specter_messages = str(e)
 
     if current_app.downloading:
-        flash("Still downloading transactions from Specter. Some transactions may still be missing.", "warning")
+        flash("Downloading transactions from Specter. Some transactions may be missing. This can take several minutes at first run.", "info")
 
     if current_app.specter.wallet_alias_list() is None:
         meta['specter_reached'] = False
@@ -396,7 +397,9 @@ def specter_auth():
         from specter_importer import Specter
         current_app.specter = Specter()
 
-        specter_dict, specter_messages = specter_test(force=True)
+        dt = datetime.now()
+        seq = int(dt.strftime("%Y%m%d%H%M%S"))
+        specter_dict, specter_messages = specter_test(force=True, randomizer=seq)
         if specter_messages is not None:
             if 'Connection refused' in specter_messages:
                 flash('Having some difficulty reaching Specter Server. ' +
