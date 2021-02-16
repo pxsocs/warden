@@ -2,18 +2,19 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
+home_path = Path.home()
+# make directory to store all private data at /home/warden
+# /root/warden/
+home_dir = os.path.join(home_path, 'warden')
+try:
+    os.mkdir(home_dir)
+except Exception:
+    pass
+
 
 # Config class for Application Factory
 class Config:
-    home_path = Path.home()
-    # make directory to store all private data at /home/warden
-    # /root/warden/
     home_dir = os.path.join(home_path, 'warden')
-    try:
-        os.mkdir(home_dir)
-    except Exception:
-        pass
-
     basedir = os.path.abspath(os.path.dirname(__file__))
 
     # You should change this secret key. But make sure it's done before any data

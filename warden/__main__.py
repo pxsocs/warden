@@ -92,7 +92,6 @@ def init_app(app):
     # app.settings['PORTFOLIO']['RENEW_NAV']
     # --------------------------------------------
     config_file = Config.config_file
-    os.path.isfile(config_file)
 
     # Config
     config_settings = configparser.ConfigParser()
