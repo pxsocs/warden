@@ -103,14 +103,17 @@ def before_request():
     # Save this in Flask session
     session['status'] = json.dumps(meta)
 
-    # Test Specter
-    try:
-        specter_dict, specter_messages = specter_test(force=False)
-    except Exception as e:
-        specter_messages = str(e)
-
     if current_app.downloading:
+        specter_messages = None
+        # No need to test if still downloading txs
         flash("Downloading transactions from Specter. Some transactions may be missing. This can take several minutes at first run.", "info")
+        return
+    else:
+        # Test Specter
+        try:
+            specter_dict, specter_messages = specter_test(force=False)
+        except Exception as e:
+            specter_messages = str(e)
 
     if current_app.specter.wallet_alias_list() is None:
         meta['specter_reached'] = False
