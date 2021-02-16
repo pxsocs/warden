@@ -15,7 +15,7 @@ from warden_pricing_engine import (get_price_ondate, fx_price_ondate,
                                    multiple_price_grab, price_data_rt,
                                    price_data_fx, price_data_rt_full,
                                    price_data, fx_rate)
-from warden_decorators import MWT
+from warden_decorators import MWT, timing
 
 
 # Returns the current application path
@@ -57,14 +57,6 @@ def get_specter_tx(wallet_alias, sort_by='time', idx=0, load=True, session=None)
     if wallet_alias not in wallet_list:
         logging.error(f"Wallet {wallet_alias}: Wallet not in current_app")
         return (df)
-
-    # is this scanning?
-    scan = current_app.specter.rescan_progress(wallet_alias)
-
-    if not scan['active']:
-        logging.info(f"Wallet {wallet_alias} --- looking for txs")
-    else:
-        logging.warn(f"\u001b[33mWallet {wallet_alias} being scanned {scan['progress']}\u001b[0m")
 
     t = current_app.specter.refresh_txs(load=True)
     df = df.append(pd.DataFrame(t))

@@ -11,6 +11,8 @@ from utils import pickle_it, load_config
 
 # Store TOR Status here to avoid having to check on all http requests
 from warden_pricing_engine import test_tor
+from warden_decorators import timing
+
 tor_test = test_tor()
 TOR = tor_test
 
@@ -41,7 +43,7 @@ class Specter():
 
     def rescan_progress(self, wallet_alias, load=True):
         if load:
-            data = pickle_it(action='load', filename='specter_rescan.pkl')
+            data = pickle_it(action='load', filename=f'specter_rescan_{wallet_alias}.pkl')
             if data != 'file not found':
                 return (data)
         try:
@@ -50,7 +52,7 @@ class Specter():
             response = session.get(url)
             data = response.json()
             # Save to pickle file
-            pickle_it(action='save', filename='specter_rescan.pkl', data=data)
+            pickle_it(action='save', filename=f'specter_rescan_{wallet_alias}.pkl', data=data)
             return(data)
         except Exception as e:
             return('[Specter Error] [rescan] {0}'.format(e))
