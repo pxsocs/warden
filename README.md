@@ -51,7 +51,7 @@ Run:
 ```bash
 git clone https://github.com/pxsocs/specter_warden
 cd specter_warden
-python3 -m pip install requirements.txt
+python3 -m pip install -r requirements.txt
 ```
 
 Then run the WARden server:

@@ -67,12 +67,21 @@ def create_tor():
                 error(
                     "    Could not connect to Tor. WARden requires Tor to run. Quitting..."
                 ))
+
             print(
                 info(
-                    "    Download Tor at: https://www.torproject.org/download/"
+                    "    [i] If you have a Tor Browser installed try opening (leave it running) and try again."
                 ))
-            print("    [i] Tor Diagnostic:")
-            print(tor)
+
+            print(
+                info(
+                    "    [i] If you are running Linux try the command: "
+                ) + yellow('service tor start'))
+            print(
+                info(
+                    "    or download Tor at: https://www.torproject.org/download/"
+                ))
+
             print("")
             exit()
 
@@ -209,7 +218,6 @@ def init_app(app):
     def bk_su():
         with app.app_context():
             background_specter_update()
-            app.downloading = False
 
     def bk_stu():
         with app.app_context():

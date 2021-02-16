@@ -14,6 +14,7 @@ from wtforms.validators import DataRequired, Email, Length, EqualTo
 from werkzeug.security import check_password_hash, generate_password_hash
 from warden_pricing_engine import (fx_rate, PROVIDER_LIST,
                                    PriceData)
+from warden_decorators import timing
 from utils import update_config, heatmap_generator, pickle_it
 from operator import itemgetter
 from packaging import version
