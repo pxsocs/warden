@@ -104,6 +104,7 @@ def before_request():
     session['status'] = json.dumps(meta)
 
     if current_app.downloading:
+        specter_messages = None
         # No need to test if still downloading txs
         flash("Downloading transactions from Specter. Some transactions may be missing. This can take several minutes at first run.", "info")
     else:
