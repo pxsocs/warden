@@ -37,13 +37,13 @@ Build the container:
 ```bash
 git clone https://github.com/pxsocs/specter_warden
 cd specter_warden
-docker build -t warden_specter:latest .
+./warden.sh --dockerbuild
 ```
 
 Run:
 
 ```bash
-docker run -it -p 5000:5000 warden_specter
+./warden.sh --dockerrun
 ```
 
 ## Regular Instructions (without docker installation)

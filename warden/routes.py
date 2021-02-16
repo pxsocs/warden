@@ -34,7 +34,7 @@ warden = Blueprint("warden",
 
 # Check Specter health every 60 seconds
 @MWT(timeout=60)
-def specter_test():
+def specter_test(force=False):
     return_dict = {}
     messages = None
     # Load basic specter data
@@ -104,7 +104,7 @@ def before_request():
 
     # Test Specter
     try:
-        specter_dict, specter_messages = specter_test()
+        specter_dict, specter_messages = specter_test(force=False)
     except Exception as e:
         specter_messages = str(e)
 
@@ -396,7 +396,7 @@ def specter_auth():
         from specter_importer import Specter
         current_app.specter = Specter()
 
-        specter_dict, specter_messages = specter_test()
+        specter_dict, specter_messages = specter_test(force=True)
         if specter_messages is not None:
             if 'Connection refused' in specter_messages:
                 flash('Having some difficulty reaching Specter Server. ' +
