@@ -129,8 +129,8 @@ def init_app(app):
     with app.app_context():
         app.version = version
 
-    print(f"  [i] Running version: {version}")
-    print("")
+    print(f"  [i] Running WARden version: {version}")
+    print("  [i] Loading...")
 
     # Check if config.ini exists
     with app.app_context():
