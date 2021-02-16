@@ -69,6 +69,11 @@ def satoshi_quotes_json():
 
 def alert_activity():
     alerts = False
+
+    # Don't send any alerts as activity still being downloaded
+    if current_app.downloading:
+        return alerts
+
     ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
 
     try:
