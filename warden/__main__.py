@@ -14,6 +14,7 @@ import time
 from logging.handlers import RotatingFileHandler
 from ansi.colour import fg
 from flask import Flask
+from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -92,7 +93,8 @@ def init_app(app):
     # --------------------------------------------
     config_file = Config.config_file
     os.path.isfile(config_file)
-    # create empty instance
+
+    # Config
     config_settings = configparser.ConfigParser()
     if os.path.isfile(config_file):
         config_settings.read(config_file)
@@ -101,6 +103,14 @@ def init_app(app):
         print(error("  Config File could not be loaded, created a new one with default values..."))
         create_config(config_file)
         config_settings.read(config_file)
+
+    # create empty instance
+    app.login_manager = LoginManager()
+    # If login required - go to login:
+    app.login_manager.login_view = "warden.login"
+    # To display messages - info class (Bootstrap)
+    app.login_manager.login_message_category = "secondary"
+    app.login_manager.init_app(app)
 
     # Get Version
     print("")

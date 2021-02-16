@@ -1,10 +1,16 @@
 from flask import (Blueprint, redirect, render_template, abort,
                    flash, session, request, current_app, url_for, Response)
+from flask_login import login_user, logout_user, current_user, login_required, UserMixin
 from warden_modules import (warden_metadata, positions,
                             generatenav, specter_df,
                             regenerate_nav,
                             home_path)
 
+from flask_wtf import FlaskForm
+from wtforms import (BooleanField, PasswordField, StringField,
+                     SubmitField)
+from wtforms.validators import DataRequired, Email, Length, EqualTo
+from werkzeug.security import check_password_hash, generate_password_hash
 from warden_pricing_engine import (fx_rate, PROVIDER_LIST,
                                    PriceData)
 from utils import update_config, heatmap_generator
@@ -53,15 +59,31 @@ def specter_test():
 # 4. Found Bitcoin Node? Not a requirement but enables added functions.
 
 
+@current_app.login_manager.user_loader
+def load_user(user_id):
+    return User
+
+
+class User(UserMixin):
+    def __init__(self):
+        if current_app.settings.has_option('SETUP', 'hash'):
+            self.password = current_app.settings['SETUP']['hash']
+        else:
+            self.password = None
+        self.username = 'specter_warden'
+        self.id = 1
+
+
 @warden.before_request
 def before_request():
+
     # Ignore check for some pages - these are mostly methods that need
     # to run even in setup mode
     exclude_list = [
         "warden.setup", "warden.testtor", "warden.gitreleases",
         "warden.realtime_btc", "warden.data_folder", "warden.testtor",
-        "warden.checkservices", "warden.check_activity", "warden.warden_metadata",
-        "warden.specter_json", "warden.specter_auth"
+        "warden.checkservices", "warden.check_activity", "warden.warden_page_metadata",
+        "warden.specter_json", "warden.specter_auth", "warden.login", "warden.register"
     ]
     if request.endpoint in exclude_list:
         return
@@ -131,6 +153,73 @@ def before_request():
     session['status'] = json.dumps(meta)
 
 
+@warden.route("/register", methods=["GET", "POST"])
+def register():
+
+    # if a password is already set, go to login page
+    if current_app.settings.has_option('SETUP', 'hash'):
+        if current_user.is_authenticated:
+            return redirect(url_for("warden.warden_page"))
+        else:
+            return redirect(url_for("warden.login"))
+
+    class RegistrationForm(FlaskForm):
+        password = PasswordField("Password", validators=[DataRequired()],
+                                 render_kw={"placeholder": "Password"})
+        confirm_password = PasswordField(
+            "Confirm Password", validators=[DataRequired(),
+                                            EqualTo("password")],
+            render_kw={"placeholder": "Confirm Password"})
+        submit = SubmitField("Register")
+
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        hash = generate_password_hash(form.password.data)
+        current_app.settings.set('SETUP', 'hash', hash)
+        update_config()
+        flash("Password set successfully", "success")
+        return redirect(url_for("warden.warden_page"))
+    return render_template("warden/register.html", title="Register", form=form)
+
+
+@warden.route("/login", methods=["GET", "POST"])
+def login():
+
+    # if no password set - send to register
+    if not current_app.settings.has_option('SETUP', 'hash'):
+        return redirect(url_for("warden.register"))
+
+    class LoginForm(FlaskForm):
+        password = PasswordField("Password", validators=[DataRequired()])
+        submit = SubmitField("Login")
+
+    if current_user.is_authenticated:
+        return redirect(url_for("warden.warden_page"))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User()
+        if check_password_hash(user.password, form.password.data):
+            login_user(user, remember=True)
+            # The get method below is actually very helpful
+            # it returns None if empty. Better than using [] for a dictionary.
+            next_page = request.args.get("next")  # get the original page
+            if next_page:
+                return redirect(next_page)
+            else:
+                return redirect(url_for("warden.warden_page"))
+        else:
+            flash("Login failed. Please check password", "danger")
+
+    return render_template("warden/login.html", title="Login", form=form)
+
+
+@warden.route("/logout")
+def logout():
+    logout_user()
+    flash("User logged out", "warning")
+    return redirect(url_for("warden.warden_page"))
+
+
 # Support method to check if donation was acknowledged
 def donate_check():
     counter_file = os.path.join(home_path(),
@@ -147,9 +236,9 @@ def donate_check():
 
 
 # Main page for WARden
-
 @ warden.route("/", methods=['GET'])
 @ warden.route("/warden", methods=['GET'])
+@login_required
 def warden_page():
     # For now pass only static positions, will update prices and other
     # data through javascript after loaded. This improves load time
@@ -234,6 +323,7 @@ def warden_page():
 
 
 @ warden.route("/list_transactions", methods=['GET'])
+@login_required
 def list_transactions():
     transactions = specter_df()
     return render_template("warden/transactions.html",
@@ -243,6 +333,7 @@ def list_transactions():
 
 
 @ warden.route("/satoshi_quotes", methods=['GET'])
+@login_required
 def satoshi_quotes():
     return render_template("warden/satoshi_quotes.html",
                            title="Satoshi Wisdom",
@@ -251,6 +342,7 @@ def satoshi_quotes():
 
 # Update user fx settings in config.ini
 @warden.route('/update_fx', methods=['GET', 'POST'])
+@login_required
 def update_fx():
     fx = request.args.get("code")
     current_app.settings['PORTFOLIO']['base_fx'] = fx
@@ -263,6 +355,7 @@ def update_fx():
 
 
 @warden.route('/specter_auth', methods=['GET', 'POST'])
+@login_required
 def specter_auth():
     if request.method == 'GET':
         templateData = {
@@ -330,11 +423,12 @@ def specter_auth():
         flash("Notice: Only first 50 transactions were downloaded. If you have many transactions, the refresh will run on the background but may take many minutes. Leave the app running.", "warning")
         # Now allow download of all txs in background on next run
         current_app.specter.tx_payload['limit'] = 0
-        return redirect(url_for('warden.warden_page'))
+        return redirect(url_for('warden.warden_page_page'))
 
 
 # Donation Thank you Page
 @ warden.route("/donated", methods=['GET'])
+@login_required
 def donated():
     counter_file = os.path.join(home_path(),
                                 'warden/counter.json')
@@ -347,6 +441,7 @@ def donated():
 # Page with a single historical chart of NAV
 # Include portfolio value as well as CF_sumcum()
 @ warden.route("/navchart")
+@login_required
 def navchart():
     data = generatenav()
     navchart = data[["NAV_fx"]].copy()
@@ -381,6 +476,7 @@ def navchart():
 
 
 @ warden.route("/heatmap")
+@login_required
 # Returns a monthly heatmap of returns and statistics
 def heatmap():
     heatmap_gen, heatmap_stats, years, cols = heatmap_generator()
@@ -398,6 +494,7 @@ def heatmap():
 
 
 @ warden.route("/volchart", methods=["GET", "POST"])
+@login_required
 # Only returns the html - request for data is done through jQuery AJAX
 def volchart():
     return render_template("warden/volchart.html",
@@ -407,6 +504,7 @@ def volchart():
 
 
 @ warden.route("/portfolio_compare", methods=["GET"])
+@login_required
 def portfolio_compare():
     return render_template("warden/portfolio_compare.html",
                            title="Portfolio Comparison",
@@ -415,6 +513,7 @@ def portfolio_compare():
 
 
 @ warden.route("/price_feed", methods=["GET"])
+@login_required
 def price_feed():
     return_dict = {}
     ticker = request.args.get("ticker")
@@ -478,6 +577,7 @@ def price_feed():
 
 # Show debug info
 @ warden.route('/show_log')
+@login_required
 def show_log():
     log = logging.getLogger('__name__')
     log.info("route =>'/env' - hit!")

@@ -4,7 +4,7 @@ from warden_modules import (warden_metadata,
                             generatenav, specter_df,
                             current_path, regenerate_nav,
                             home_path)
-
+from flask_login import login_required
 from random import randrange
 from warden_pricing_engine import (test_tor, tor_request, price_data_rt,
                                    fx_rate, price_data_fx, PROVIDER_LIST,
@@ -32,6 +32,7 @@ api = Blueprint('api', __name__)
 
 
 @api.route("/gitreleases", methods=["GET"])
+@login_required
 def gitreleases():
     url = 'https://api.github.com/repos/pxsocs/specter_warden/releases'
     request = tor_request(url)
@@ -47,6 +48,7 @@ def gitreleases():
 
 
 @api.route("/txs_json", methods=['GET'])
+@login_required
 def txs_json():
     df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
     tx_df = pd.read_pickle(df_pkl)
@@ -54,6 +56,7 @@ def txs_json():
 
 
 @api.route("/satoshi_quotes_json", methods=['GET'])
+@login_required
 def satoshi_quotes_json():
     url = 'https://raw.githubusercontent.com/NakamotoInstitute/nakamotoinstitute.org/0bf08c48cd21655c76e8db06da39d16036a88594/data/quotes.json'
     try:
@@ -95,6 +98,7 @@ def alert_activity():
 
 
 @api.route("/check_activity", methods=['GET'])
+@login_required
 def check_activity():
     alerts = alert_activity()
     return (json.dumps(alerts))
@@ -102,6 +106,7 @@ def check_activity():
 
 # API End Point with all WARden metadata
 @api.route("/warden_metadata", methods=['GET'])
+@login_required
 def metadata_json():
     meta = warden_metadata()
     # jsonify transactions
@@ -130,6 +135,7 @@ def metadata_json():
 
 # Returns a JSON with Test Response on TOR
 @api.route("/testtor", methods=["GET"])
+@login_required
 def testtor():
     return json.dumps(test_tor())
 
@@ -138,6 +144,7 @@ def testtor():
 
 
 @api.route("/positions_json", methods=["GET"])
+@login_required
 def positions_json():
     # Get all transactions and cost details
     # This serves the main page
@@ -166,6 +173,7 @@ def positions_json():
 # This is the function used at the layout navbar to update BTC price
 # Please note that the default is to update every 20s (MWT(20) above)
 @ api.route("/realtime_btc", methods=["GET"])
+@login_required
 def realtime_btc():
     try:
         fx_details = fx_rate()
@@ -179,6 +187,7 @@ def realtime_btc():
 
 # API end point - cleans notifications and creates a new checkpoint
 @api.route("/dismiss_notification", methods=["POST"])
+@login_required
 def dismiss_notification():
     # Run the df and clean the files (True)
     specter_df(True)
@@ -189,6 +198,7 @@ def dismiss_notification():
 # API end point to return Specter data
 # args: ?load=True (True = loads saved json, False = refresh data)
 @api.route("/specter", methods=["GET"])
+@login_required
 def specter_json():
     data = current_app.specter.home_parser(),
     return simplejson.dumps(data, ignore_nan=True)
@@ -196,6 +206,7 @@ def specter_json():
 
 # Latest Traceback message
 @api.route("/traceback_error", methods=["GET"])
+@login_required
 def traceback_error():
     import traceback
     trace = traceback.format_exc()
@@ -206,6 +217,7 @@ def traceback_error():
 # Function returns summary statistics for portfolio NAV and values
 # Main function for portfolio page
 @api.route("/portstats", methods=["GET", "POST"])
+@login_required
 def portstats():
     meta = {}
     # Looking to generate the following data here and return as JSON
@@ -296,6 +308,7 @@ def portstats():
 
 # API end point - returns a json with NAV Chartdata
 @api.route("/navchartdatajson", methods=["GET", "POST"])
+@login_required
 #  Creates a table with dates and NAV values
 def navchartdatajson():
     data = generatenav()
@@ -316,6 +329,7 @@ def navchartdatajson():
 
 # API end point - returns a json with NAV Chartdata
 @api.route("/stackchartdatajson", methods=["GET", "POST"])
+@login_required
 #  Creates a table with dates and NAV values
 def stackchartdatajson():
     data = generatenav()
@@ -344,6 +358,7 @@ def stackchartdatajson():
 # ticker:       Single ticker for filter (default = NAV)
 # date:         date to get price
 @api.route("/getprice_ondate", methods=["GET"])
+@login_required
 def getprice_ondate():
     # Get the arguments and store
     if request.method == "GET":
@@ -362,6 +377,7 @@ def getprice_ondate():
 
 
 @api.route("/fx_lst", methods=["GET"])
+@login_required
 # Receiver argument ?term to return a list of fx (fiat and digital)
 # Searches the list both inside the key as well as value of dict
 def fx_list():
@@ -388,6 +404,7 @@ def fx_list():
 
 
 @api.route("/heatmapbenchmark_json", methods=["GET"])
+@login_required
 # Return Monthly returns for Benchmark and Benchmark difference from NAV
 # Takes arguments:
 # ticker   - single ticker for filter
@@ -494,6 +511,7 @@ def heatmapbenchmark_json():
 
 
 @api.route("/histvol", methods=["GET", "POST"])
+@login_required
 # Returns a json with data to create the vol chart
 # takes inputs from get:
 # ticker, meta (true returns only metadata), rolling (in days)
@@ -557,6 +575,7 @@ def histvol():
 
 
 @api.route("/mempool_json", methods=["GET", "POST"])
+@login_required
 def mempool_json():
     try:
         mp_config = current_app.settings['MEMPOOL']
@@ -572,6 +591,7 @@ def mempool_json():
 
 
 @api.route("/portfolio_compare_json", methods=["GET"])
+@login_required
 # Compare portfolio performance to a list of assets
 # Takes arguments:
 # tickers  - (comma separated. ex: BTC,ETH,AAPL)
@@ -698,6 +718,7 @@ def portfolio_compare_json():
 
 
 @api.route("/test_price", methods=["GET"])
+@login_required
 def test_price():
     try:
         # Tests a price using a provider and returns price data
@@ -734,6 +755,7 @@ def test_price():
 
 
 @api.route('/log')
+@login_required
 def progress_log():
     from config import Config
     from warden_modules import tail
