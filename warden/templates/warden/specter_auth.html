@@ -48,21 +48,24 @@
           </small>
           <p>
             <img src='{{url_for('warden.static', filename='images/Tor-logo.png')}}' width="35">
-            &nbsp;Onion Addresses are supported (Go to Specter > Settings > Tor > Enable Tor Hidden Service)
+            &nbsp;Onion Addresses are supported<small><br> (Go to Specter > Settings > Tor > Enable Tor Hidden
+              Service)</small>
           </p>
 
 
         </div>
       </div>
       <div class="form-group row">
-        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label-lg">Username (blank if None)</label>
+        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label-lg">Username<br>(blank if
+          None)</label>
         <div class="col-sm-9">
           <input type="text" class="form-control form-control-lg" name="username"
             value="{{current_app.settings['SPECTER']['specter_login']}}">
         </div>
       </div>
       <div class="form-group row">
-        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label-lg">Password (blank if None)</label>
+        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label-lg">Password<br>(blank if
+          None)</label>
         <div class="col-sm-9">
           <input type="password" class="form-control form-control-lg" name="password"
             value="{{current_app.settings['SPECTER']['specter_password']}}">
