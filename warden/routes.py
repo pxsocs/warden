@@ -107,6 +107,7 @@ def before_request():
         specter_messages = None
         # No need to test if still downloading txs
         flash("Downloading transactions from Specter. Some transactions may be missing. This can take several minutes at first run.", "info")
+        return
     else:
         # Test Specter
         try:
