@@ -431,13 +431,12 @@ def specter_auth():
         print("  Please note that only the first 50 transactions will show")
         print("  at your dashboard as other transactions are downloaded in background.")
         print("")
-        current_app.downloading = True
-
         specter_version = str(current_app.specter.home_parser()['version'])
         flash(f"Success. Connected to Specter Server. Running Specter version {specter_version}.", "success")
         flash("Notice: Only first 50 transactions were downloaded. If you have many transactions, the refresh will run on the background but may take many minutes. Leave the app running.", "warning")
         # Now allow download of all txs in background on next run
         current_app.specter.tx_payload['limit'] = 0
+        current_app.downloading = True
         return redirect(url_for('warden.warden_page'))
 
 
