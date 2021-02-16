@@ -14,6 +14,10 @@ $(document).ready(function () {
     check_activity()
 
 
+    setTimeout(function () { $('.alert-success').slideUp(1000) }, 7000);
+    setTimeout(function () { $('.alert-info').slideUp(1000) }, 10000);
+    setTimeout(function () { $('.alert-warning').slideUp(1000) }, 30000);
+
     // Updates BTC Price every 30 seconds
     window.setInterval(function () {
         BTC_price();
@@ -100,7 +104,7 @@ function check_activity() {
         success: function (data) {
             if (data == true) {
                 alerts_html = $('#alertsection').html();
-                $('#alertsection').html(alerts_html + "<div class='alert alert-danger'>Activity Detected in one or more wallets</div>")
+                $('#alertsection').html(alerts_html + "<div class='alert alert-warning'>Probable activity detected in one or more wallets. Refresh home page.</div>")
             }
         },
         error: function (xhr, status, error) {

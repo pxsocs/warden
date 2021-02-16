@@ -439,15 +439,21 @@
                                     <thead class="thead-light">
                                         <tr class='text-right'>
                                             <th></th>
-                                            <th class='text-left'>Date</th>
-                                            <th class='text-left'> Label </th>
+                                            <th class='text-left' data-toggle="tooltip" data-placement="top"
+                                                title="Transaction Date">Date</th>
+                                            <th class='text-left' data-toggle="tooltip" data-placement="top"
+                                                title="Specter Label"> Label </th>
                                             <th> Address </th>
                                             <th> TX id </th>
                                             <th> Confirmations </th>
                                             <th> Amount (&#8383)</th>
-                                            <th> ₿ ({{current_app.fx['symbol']}})</th>
+                                            <th data-toggle="tooltip" data-placement="top" title="Transaction Price"> ₿
+                                                ({{current_app.fx['symbol']}})</th>
                                             <th> Cash ({{current_app.fx['symbol']}})</th>
                                             <th> Fees ({{current_app.fx['symbol']}})</th>
+                                            <th class='text-center' data-toggle="tooltip" data-placement="top"
+                                                title="Change this transactions details. Note: will not change Specter data.">
+                                                Edit </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -504,6 +510,11 @@
                                             </td>
                                             <td class='text-right'>
                                                 {{tx[1]['trade_fees'] | jformat(2)}}
+                                            </td>
+                                            <td class='text-center edit_tx_button' data-txid="{{tx[1]['txid']}}"
+                                                data-toggle="tooltip" data-placement="right"
+                                                title="Click to edit this transaction details" style="cursor: pointer;">
+                                                <i class=" far fa-edit"></i>
                                             </td>
                                         </tr>
                                         {%endfor%}

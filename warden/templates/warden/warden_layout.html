@@ -194,7 +194,7 @@
             <main role=" main">
                 <div style='padding-top: 30px; padding-bottom: 200px;'>
 
-                    {% with messages = get_flashed_messages(with_categories=true) %}
+
                     <div class='row'>
                         <div id='alertsection' class='col-12'>
 
@@ -202,7 +202,11 @@
                             {% if messages %}
                             {% for category, message in messages %}
                             <div id="messagealert" class="alert alert-{{ category }}">
-                                {{ message }}
+                                <strong>{{message}}</strong>
+                                {%if category != 'success'%}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                    {%endif%}
                             </div>
                             {% endfor %}
                             {% endif %}
@@ -210,7 +214,7 @@
 
                         </div>
                     </div>
-                    {% endwith %}
+
                     {% block content %}
                     {% endblock %}
                 </div>
