@@ -76,6 +76,9 @@ class User(UserMixin):
 
 @warden.before_request
 def before_request():
+    # if no password set - send to register
+    if not current_app.settings.has_option('SETUP', 'hash'):
+        return redirect(url_for("warden.register"))
 
     # Ignore check for some pages - these are mostly methods that need
     # to run even in setup mode
@@ -423,7 +426,7 @@ def specter_auth():
         flash("Notice: Only first 50 transactions were downloaded. If you have many transactions, the refresh will run on the background but may take many minutes. Leave the app running.", "warning")
         # Now allow download of all txs in background on next run
         current_app.specter.tx_payload['limit'] = 0
-        return redirect(url_for('warden.warden_page_page'))
+        return redirect(url_for('warden.warden_page'))
 
 
 # Donation Thank you Page
