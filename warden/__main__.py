@@ -104,6 +104,12 @@ def init_app(app):
         create_config(config_file)
         config_settings.read(config_file)
 
+    # Check if password has been set
+    # if no password set - send to register
+    if not config_settings.has_option('SETUP', 'hash'):
+        print(yellow("  [i] This is a new setup. Welcome to WARden."))
+        print(yellow("  [i] No login password found. Will ask you to create a new one."))
+
     # create empty instance
     app.login_manager = LoginManager()
     # If login required - go to login:
