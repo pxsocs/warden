@@ -106,6 +106,10 @@ if [ "$DOCKER" = true ] ; then
 fi
 
 if [ "$DOCKERBUILD" = true ] ; then
+    # clean up older and stopped images
+    docker rm -v $(docker ps --filter status=exited -q 2>/dev/null) 2>/dev/null
+    docker rmi $(docker images --filter dangling=true -q 2>/dev/null) 2>/dev/null
+    # build
     docker build -t warden_specter:latest .
     exit 1
 fi

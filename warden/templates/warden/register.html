@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<link rel="icon" href="{{url_for('warden.static', filename='images/favicon-bitcoin.ico')}}" class="invert">
+
+<head>
+    <!-- Style Sheets -->
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/bootstrap/css/bootstrap.min.css')}}">
+    <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/font-awesome/css/all.css')}}">
+    <!-- JQuery UI -->
+    <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/jquery/themes/flicker.css')}}">
+    <link rel="stylesheet" href="{{url_for('warden.static', filename='css/warden_main.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{url_for('warden.static', filename='css/warden_layout.css')}}">
+
+    <!-- End Style Sheets -->
+
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Welcome to the WARDen | Register</title>
+
+</head>
+
+<body>
+    <!-- JavaScript Loaders -->
+    <!-- JQuery -->
+    <script src="{{url_for('warden.static', filename='dependencies/jquery/jquery-3.4.1.js')}}"></script>
+    <!-- Popper -->
+    <script src="{{url_for('warden.static', filename='dependencies/popper/popper.js')}}">
+    </script>
+    <script src="{{url_for('warden.static', filename='dependencies/popper/tooltip.js')}}">
+    </script>
+    <!-- Bootstrap -->
+    <script src="{{url_for('warden.static', filename='dependencies/jquery-ui/jquery-ui.js')}}"></script>
+    <script src="{{url_for('warden.static', filename='dependencies/bootstrap/js/bootstrap.js')}}"></script>
+
+    <!-- END JavaScript Loaders -->
+
+    <div style='padding-top:200px; padding-left:30px; padding-right:30px;'>
+        <main role="main">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            <div class='row'>
+                <div id='alertsection' class='col-12'>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    {% for category, message in messages %}
+                    <div id="messagealert" class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    {% endwith %}
+
+                </div>
+            </div>
+            {% endwith %}
+
+            <div class="d-flex flex-column align-items-center justify-content-center min-vh100 p-2">
+
+                <h1 class="text-center mb-2">welcome to the WARden</h1>
+                <p class="text-muted w-75 text-center">
+                    Choose your login password</p>
+
+
+                <form class="d-flex flex-column form-container w-100 align-items-center" method="POST" action="">
+                    <!-- Important to include the below for added security -->
+                    {{ form.hidden_tag() }}
+                    <fieldset class="form-group">
+
+                        <div class="form-group">
+                            {% if form.password.errors %}
+                            {{ form.password(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.password.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            {{ form.password(class="form-control form-control-lg") }}
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            {% if form.confirm_password.errors %}
+                            {{ form.confirm_password(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.confirm_password.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            {{ form.confirm_password(class="form-control form-control-lg") }}
+                            {% endif %}
+
+                        </div>
+
+
+                    </fieldset>
+                    <div class="form-group">
+                        {{ form.submit(class="btn px-4 login-button btn-dark btn-lg")}}
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
