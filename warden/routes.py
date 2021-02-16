@@ -119,6 +119,9 @@ def before_request():
     try:
         specter_version = str(current_app.specter.home_parser()['version'])
     except KeyError:
+        # if no password set - send to register
+        if not current_app.settings.has_option('SETUP', 'hash'):
+            return redirect(url_for("warden.register"))
         flash("Could not connect to Specter. Check credentials below.", "warning")
         return redirect(url_for('warden.specter_auth'))
 
@@ -357,10 +360,6 @@ def update_fx():
 @warden.route('/specter_auth', methods=['GET', 'POST'])
 @login_required
 def specter_auth():
-    # if no password set - send to register
-    if not current_app.settings.has_option('SETUP', 'hash'):
-        return redirect(url_for("warden.register"))
-
     if request.method == 'GET':
         templateData = {
             "title": "Login to Specter",
