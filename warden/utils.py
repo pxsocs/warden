@@ -6,6 +6,7 @@ import pickle
 import re
 
 from flask import current_app
+from pathlib import Path
 
 from config import Config
 
@@ -33,10 +34,8 @@ def update_config(config_file=Config.config_file):
         current_app.settings.write(file)
 
 
-def load_config():
+def load_config(config_file=Config.config_file):
     # Load Config
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    config_file = os.path.join(basedir, 'config.ini')
     CONFIG = configparser.ConfigParser()
     CONFIG.read(config_file)
     return (CONFIG)

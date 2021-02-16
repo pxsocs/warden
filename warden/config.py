@@ -8,8 +8,8 @@ class Config:
     home_path = Path.home()
     # make directory to store all private data at /home/warden
     # /root/warden/
+    home_dir = os.path.join(home_path, 'warden')
     try:
-        home_dir = os.path.join(home_path, 'warden')
         os.mkdir(home_dir)
     except Exception:
         pass
@@ -20,12 +20,12 @@ class Config:
     # is included in the database
     SECRET_KEY = "24feff264xscdcjncdjdcjuu212i"
 
-    debug_file = os.path.join(home_path, 'warden/debug.log')
+    debug_file = os.path.join(home_dir, 'warden/debug.log')
 
     version_file = os.path.join(basedir, 'static/config/version.txt')
 
     default_config_file = os.path.join(basedir, 'static/config/config_default.ini')
-    config_file = os.path.join(basedir, 'config.ini')
+    config_file = os.path.join(home_dir, 'warden/config.ini')
 
     # Used for password recovery. Not needed in most cases.
     MAIL_SERVER = "smtp.googlemail.com"
