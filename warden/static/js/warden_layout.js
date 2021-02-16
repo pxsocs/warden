@@ -104,7 +104,8 @@ function check_activity() {
         success: function (data) {
             if (data == true) {
                 alerts_html = $('#alertsection').html();
-                $('#alertsection').html(alerts_html + "<div class='alert alert-warning'>Probable activity detected in one or more wallets. Refresh home page.</div>")
+                if (alerts_html.includes('activity detected in one') == false):
+                    $('#alertsection').html(alerts_html + "<div class='alert alert-warning'>Probable activity detected in one or more wallets. Refresh home page.</div>")
             }
         },
         error: function (xhr, status, error) {
