@@ -69,12 +69,21 @@ $(document).ready(function () {
     // Start this function whenever a popup opens
     $('[data-toggle="popover"]').on('shown.bs.popover', onPopoverHtmlLoad)
 
+    $('.edit_tx_button').click(function () {
+        this_var = $(this)
+        edit_tx(this_var);
+    });
+
+    function edit_tx(this_var) {
+        console.log(this_var)
+    }
+
+
     $('.FIFOLIFOmodal').click(function () {
         $('#FIFOLIFOModal').modal('show');
         this_var = $(this)
         updateModal(this_var);
     });
-
 
     // Main function to update the Modal with some cost calculations
     function updateModal(this_var) {

@@ -1,6 +1,6 @@
 from warden_decorators import MWT
 from flask import (Blueprint, redirect, render_template, abort,
-                   flash, session, request, current_app, url_for, Response)
+                   flash, session, request, current_app, url_for, get_flashed_messages)
 from flask_login import login_user, logout_user, current_user, login_required, UserMixin
 from warden_modules import (warden_metadata, positions,
                             generatenav, specter_df,
@@ -14,7 +14,7 @@ from wtforms.validators import DataRequired, Email, Length, EqualTo
 from werkzeug.security import check_password_hash, generate_password_hash
 from warden_pricing_engine import (fx_rate, PROVIDER_LIST,
                                    PriceData)
-from utils import update_config, heatmap_generator
+from utils import update_config, heatmap_generator, pickle_it
 from operator import itemgetter
 from packaging import version
 
@@ -22,7 +22,6 @@ from datetime import datetime
 import jinja2
 import numpy as np
 import json
-import time
 import os
 import urllib
 import logging
@@ -79,7 +78,6 @@ class User(UserMixin):
 
 @warden.before_request
 def before_request():
-
     # Ignore check for some pages - these are mostly methods that need
     # to run even in setup mode
     exclude_list = [
@@ -117,6 +115,10 @@ def before_request():
         meta['specter_reached'] = False
         session['status'] = json.dumps(meta)
         specter_messages = 'Having trouble finding Specter transactions. Check Specter Server'
+        # If local data is present, continue
+        data = pickle_it(action='load', filename='specter_txs.pkl')
+        if data != 'file not found':
+            return
 
     # Check that Specter is > 1.1.0 version
     # (this is the version where tx API was implemented)
@@ -207,6 +209,7 @@ def login():
         user = User()
         if check_password_hash(user.password, form.password.data):
             login_user(user, remember=True)
+            flash("Login Successful. Welcome.", "success")
             # The get method below is actually very helpful
             # it returns None if empty. Better than using [] for a dictionary.
             next_page = request.args.get("next")  # get the original page
@@ -223,7 +226,6 @@ def login():
 @warden.route("/logout")
 def logout():
     logout_user()
-    flash("User logged out", "warning")
     return redirect(url_for("warden.warden_page"))
 
 
