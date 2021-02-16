@@ -76,9 +76,6 @@ class User(UserMixin):
 
 @warden.before_request
 def before_request():
-    # if no password set - send to register
-    if not current_app.settings.has_option('SETUP', 'hash'):
-        return redirect(url_for("warden.register"))
 
     # Ignore check for some pages - these are mostly methods that need
     # to run even in setup mode
@@ -360,6 +357,10 @@ def update_fx():
 @warden.route('/specter_auth', methods=['GET', 'POST'])
 @login_required
 def specter_auth():
+    # if no password set - send to register
+    if not current_app.settings.has_option('SETUP', 'hash'):
+        return redirect(url_for("warden.register"))
+
     if request.method == 'GET':
         templateData = {
             "title": "Login to Specter",
