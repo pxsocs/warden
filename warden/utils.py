@@ -27,6 +27,8 @@ def create_config(config_file):
     with open(config_file, 'w') as file:
         default_config.write(file)
 
+    return(default_config)
+
 
 def update_config(config_file=Config.config_file):
     logging.info("Updating Config file")

@@ -23,8 +23,8 @@ import requests
 
 def load_config():
     # Load Config
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    config_file = os.path.join(basedir, 'config.ini')
+    from config import Config
+    config_file = Config.config_file
     CONFIG = configparser.ConfigParser()
     CONFIG.read(config_file)
     return (CONFIG)
