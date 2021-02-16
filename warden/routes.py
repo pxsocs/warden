@@ -1,3 +1,4 @@
+from warden_decorators import MWT
 from flask import (Blueprint, redirect, render_template, abort,
                    flash, session, request, current_app, url_for, Response)
 from flask_login import login_user, logout_user, current_user, login_required, UserMixin
@@ -32,6 +33,8 @@ warden = Blueprint("warden",
                    static_folder='static')
 
 
+# Check Specter health every 60 seconds
+@MWT(timeout=60)
 def specter_test():
     return_dict = {}
     messages = None
@@ -83,7 +86,8 @@ def before_request():
         "warden.setup", "warden.testtor", "warden.gitreleases",
         "warden.realtime_btc", "warden.data_folder", "warden.testtor",
         "warden.checkservices", "warden.check_activity", "warden.warden_page_metadata",
-        "warden.specter_json", "warden.specter_auth", "warden.login", "warden.register"
+        "warden.specter_json", "warden.specter_auth", "warden.login", "warden.register",
+        "warden.logout"
     ]
     if request.endpoint in exclude_list:
         return
