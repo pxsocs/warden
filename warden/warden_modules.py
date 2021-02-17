@@ -72,7 +72,6 @@ def get_specter_tx(wallet_alias, sort_by='time', idx=0, load=True, session=None)
 # This returns data to create the Warden Status Page
 def warden_metadata():
     meta = {}
-
     meta['full_df'] = specter_df()
     meta['wallet_list'] = current_app.specter.wallet_alias_list()
 

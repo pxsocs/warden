@@ -16,6 +16,7 @@ from ansi.colour import fg
 from flask import Flask
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
+from flask_sqlalchemy import SQLAlchemy
 from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
 from ansi_management import (warning, success, error, info, clear_screen, bold,
@@ -118,8 +119,11 @@ def init_app(app):
         print(yellow("  [i] This is a new setup. Welcome to WARden."))
         print(yellow("  [i] No login password found. Will ask you to create a new one."))
 
-    # create empty instance
+    # create empty instance of LoginManager
     app.login_manager = LoginManager()
+    # Create empty instance of SQLAlchemy
+    app.db = SQLAlchemy()
+    app.db.init_app(app)
     # If login required - go to login:
     app.login_manager.login_view = "warden.login"
     # To display messages - info class (Bootstrap)

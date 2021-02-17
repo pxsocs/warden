@@ -270,6 +270,7 @@ def warden_page():
         df.set_index('trade_asset_ticker', inplace=True)
     df = df[df['is_currency'] == 0].sort_index(ascending=True)
     df = df.to_dict(orient='index')
+
     # Open Counter, increment, send data
     counter_file = os.path.join(home_path(),
                                 'warden/counter.json')
@@ -313,18 +314,28 @@ def warden_page():
 
     meta = warden_metadata()
 
-    sorted_wallet_list = []
-    for wallet in current_app.specter.wallet_alias_list():
-        wallet_df = meta['full_df'].loc[meta['full_df']['wallet_alias'] == wallet]
-        if wallet_df.empty:
-            balance = 0
-        else:
-            balance = wallet_df['amount'].sum()
-        sorted_wallet_list.append((wallet, balance))
+    # Sort the wallets by balance
+    try:
+        sorted_wallet_list = []
+        for wallet in current_app.specter.wallet_alias_list():
+            wallet_df = meta['full_df'].loc[meta['full_df']['wallet_alias'] == wallet]
+            if wallet_df.empty:
+                balance = 0
+            else:
+                balance = wallet_df['amount'].sum()
+            sorted_wallet_list.append((wallet, balance))
+    except Exception:
+        flash("No wallets found. Check Specter Server connections.", "danger")
+        abort(500, "Specter returned empty data. Check connections. Your node may be down.")
 
     sorted_wallet_list = sorted(sorted_wallet_list, reverse=True, key=itemgetter(1))
     sorted_wallet_list = [i[0] for i in sorted_wallet_list]
+
     from api.routes import alert_activity
+    if not current_app.downloading:
+        activity = alert_activity()
+    else:
+        activity = False
 
     templateData = {
         "title": "Portfolio Dashboard",
@@ -332,7 +343,7 @@ def warden_page():
         "portfolio_data": df,
         "FX": current_app.settings['PORTFOLIO']['base_fx'],
         "donated": donated,
-        "alerts": alert_activity(),
+        "alerts": activity,
         "current_app": current_app,
         "sorted_wallet_list": sorted_wallet_list
     }

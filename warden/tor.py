@@ -58,10 +58,7 @@ def start_hidden_service(app):
         " * This .onion URL is publicly exposed and indexed on the Tor network - it is not secret!"
     ))
     print(error(
-        " * It is stronly adviced that you configure proper authentication while running WARden behind a Tor hidden service."
-    ))
-    print(error(
-        " * Please go to Settings -> Authentication and set up an authentication method."
+        " * It is stronly adviced that you configure a password to login to WARden."
     ))
     print(error(" * ####################################################################"))
     print(error(""))

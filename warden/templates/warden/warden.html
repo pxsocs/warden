@@ -857,6 +857,12 @@
                                     <td id='specter_refresh_ago' class="text-right"> <img src='{{url_for('warden.static',
                                         filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
                                 </tr>
+                                {%if current_app.downloading%}
+                                <tr>
+                                    <td></td>
+                                    <td class="text-right text-danger">Downloading transactions...</td>
+                                </tr>
+                                {%endif%}
 
                             </tbody>
                         </table>
