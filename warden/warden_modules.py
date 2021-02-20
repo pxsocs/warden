@@ -422,7 +422,7 @@ def positions():
     # Get all transactions & group by ticker name and operation
     df = transactions_fx()
     if df.empty:
-        logging.warn("No Transactions Found")
+        logging.warning("No Transactions Found")
         return df
 
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[[
