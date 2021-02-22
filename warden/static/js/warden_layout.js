@@ -122,7 +122,11 @@ function get_version() {
         dataType: 'json',
         url: "/gitreleases",
         success: function (data) {
-            $('#version').html("<p>Latest Version " + data[0]['tag_name'] + "</p>")
+            if ('tag_name' in data[0]) {
+                $('#version').html("<p>Latest Version " + data[0]['tag_name'] + "</p>")
+            } else {
+                $('#version').html("<p>Could not retrieve version</p>")
+            }
         },
         error: function (xhr, status, error) {
             console.log("Error on gitcheck")

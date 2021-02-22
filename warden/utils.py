@@ -186,3 +186,11 @@ def runningInDocker():
 
     except Exception:
         return False
+
+
+# Serialize only objects that are json compatible
+# This will exclude classes and methods
+def safe_serialize(obj):
+    def default(o):
+        return f"{type(o).__qualname__}"
+    return json.dumps(obj, default=default)

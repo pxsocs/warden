@@ -130,6 +130,11 @@ def init_app(app):
     app.login_manager.login_message_category = "secondary"
     app.login_manager.init_app(app)
 
+    # Create empty instance of messagehandler
+    from message_handler import MessageHandler
+    app.message_handler = MessageHandler()
+    app.message_handler.clean_all()
+
     # Get Version
     print("")
     try:
@@ -282,6 +287,14 @@ def main(debug=False):
         print("")
         print("")
         print(yellow("  [i] Please Wait... Shutting down."))
+        # Delete Debug File
+        try:
+            os.remove(Config.debug_file)
+        except FileNotFoundError:
+            pass
+        # Clean all messages
+        app.message_handler.clean_all()
+        # Breaks background jobs
         app.scheduler.shutdown(wait=False)
         print("""
                            Goodbye &

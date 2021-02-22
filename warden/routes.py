@@ -606,12 +606,23 @@ def price_feed():
 @ warden.route('/show_log')
 @login_required
 def show_log():
-    log = logging.getLogger('__name__')
-    log.info("route =>'/env' - hit!")
     return render_template('warden/show_log.html',
                            title="Debug Viewer",
                            current_app=current_app,
                            current_user=fx_rate()
+                           )
+
+
+# Show debug info
+@ warden.route('/show_broadcast')
+@login_required
+def show_broadcast():
+    category = request.args.get("category")
+    return render_template('warden/show_broadcast.html',
+                           title="Message Broadcaster",
+                           current_app=current_app,
+                           current_user=fx_rate(),
+                           category=category,
                            )
 
 

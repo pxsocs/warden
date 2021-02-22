@@ -767,3 +767,13 @@ def progress_log():
     debug = Config.debug_file
     data = tail(debug, 200)
     return json.dumps(str(data))
+
+
+@api.route('/broadcaster')
+@login_required
+def broadcaster():
+    category = request.args.get("category")
+    if category == 'None':
+        category = None
+    from flask import current_app
+    return current_app.message_handler.to_json(category=category)
