@@ -1,6 +1,5 @@
 import os
 import configparser
-from datetime import datetime, timedelta
 from pathlib import Path
 
 home_path = Path.home()
@@ -56,21 +55,12 @@ class Config:
     if not file_config_file.is_file():
         create_config()
 
-    # Used for password recovery. Not needed in most cases.
+    # Used for notifications --- FUTURE FEATURE
     MAIL_SERVER = "smtp.googlemail.com"
     MAIL_PORT = 587
     MAIL_USE_TLS = True
     MAIL_USERNAME = os.environ.get("EMAIL_USER")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
-
-    # ApScheduler Jobs
-    JOBS = [{
-        'id': 'background_job',
-        'func': 'warden_modules:background_jobs',
-        'trigger': 'interval',
-        'seconds': 30,
-        'next_run_time': datetime.now() + timedelta(seconds=15)
-    }]
 
     # Pretty print json
     JSONIFY_PRETTYPRINT_REGULAR = True

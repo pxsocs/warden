@@ -233,8 +233,8 @@ def init_app(app):
             background_settings_update()
 
     app.scheduler = BackgroundScheduler()
-    app.scheduler.add_job(bk_su, 'interval', seconds=30)
-    app.scheduler.add_job(bk_stu, 'interval', seconds=60)
+    app.scheduler.add_job(bk_su, 'interval', seconds=1)
+    app.scheduler.add_job(bk_stu, 'interval', seconds=1)
 
     app.scheduler.start()
     print(success("✅ Background jobs running"))
