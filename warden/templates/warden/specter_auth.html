@@ -24,8 +24,7 @@
       </span>
     </div>
   </div>
-  <br>
-  <br>
+
   <div class='content-section' style='background-color: #333333;'>
 
 
@@ -39,9 +38,9 @@
 
     <form class='text-white' action="{{ url_for('warden.specter_auth') }}" method="post">
       <div class="form-group row">
-        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label-lg">Specter Server URL</label>
+        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label">Specter Server URL</label>
         <div class="col-sm-9">
-          <input type="text" class="form-control form-control-lg" name="url"
+          <input type="text" class="form-control form-control" name="url"
             value="{{current_app.settings['SPECTER']['specter_url']}}">
           <small>
             <p style='padding-top:20px;'>Typically this is http://127.0.0.1:25441/ or http://localhost:25441/</p>
@@ -56,18 +55,18 @@
         </div>
       </div>
       <div class="form-group row">
-        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label-lg">Username<br>(blank if
+        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label">Username<br>(blank if
           None)</label>
         <div class="col-sm-9">
-          <input type="text" class="form-control form-control-lg" name="username"
+          <input type="text" class="form-control form-control" name="username"
             value="{{current_app.settings['SPECTER']['specter_login']}}">
         </div>
       </div>
       <div class="form-group row">
-        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label-lg">Password<br>(blank if
+        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label">Password<br>(blank if
           None)</label>
         <div class="col-sm-9">
-          <input type="password" class="form-control form-control-lg" name="password"
+          <input type="password" class="form-control form-control" name="password"
             value="{{current_app.settings['SPECTER']['specter_password']}}">
         </div>
       </div>
@@ -76,19 +75,81 @@
         <div class="col-sm-3">
         </div>
         <div class="col-sm-9">
-          <button id='submit_button' type="submit" class="btn btn-lg btn-secondary btn-block">Submit</button>
+          <button id='submit_button' type="submit" class="btn btn btn-secondary btn-block">Submit</button>
         </div>
       </div>
     </form>
   </div>
+
+
+  <div id="output" class='content-section' style='background-color: #f0f0f0;'>
+    <h6>Connection Log</h6>
+    Empty Log
+  </div>
+
 
 </div>
 
 <script>
   $('#submit_button').click(function () {
     $('#submit_button').html(
-      'Checking Credentials. Check console for log. Please Wait. This can take a few minutes...');
-  })
+      'Checking Credentials. Check Connection Log. Please Wait. This can take a few minutes...');
+    var intervalId = window.setInterval(function () {
+      run_ajax()
+    }, 1000);
+  });
+
+  function run_ajax() {
+    table_header = `
+    <h6>Connection Log</h6>
+    <table class='table table-sm table-striped small-text' id='list_table_json'>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Category</th>
+            <th>Message</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+    <tbody>
+    `
+    table_footer = "</tbody></table>"
+    $.ajax({
+      type: "GET",
+      dataType: 'json',
+      url: "/broadcaster?category={{category}}",
+      success: function (data) {
+        $('#output').html('')
+        if (data == '') {
+          $('#output').html(
+            "<div class='small alert alert-info' role='alert'>No messages from this session yet. But monitoring realtime." +
+            "</div>"
+          )
+        } else {
+          /*console.log(data);*/
+          var event_data = '';
+          $.each(data, function (index, value) {
+            /*console.log(value);*/
+            event_data += '<tr>';
+            event_data += '<td>' + value.time_str + '</td>';
+            event_data += '<td>' + value.category + '</td>';
+            event_data += '<td>' + value.message_txt + '</td>';
+            event_data += '<td>' + value.notes + '</td>';
+            event_data += '</tr>';
+          });
+          $("#output").html(table_header + event_data + table_footer)
+
+        }
+
+      },
+      error: function (xhr, status, error) {
+        $('#output').html(
+          "<div class='small alert alert-danger' role='alert'>An error occured while refreshing debug data." +
+          "</div>"
+        )
+      }
+    });
+  }
 </script>
 
 {% endblock content %}
