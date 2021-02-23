@@ -25,7 +25,7 @@ import numpy as np
 import json
 import os
 import urllib
-import logging
+import requests
 
 warden = Blueprint("warden",
                    __name__,
@@ -394,22 +394,29 @@ def specter_auth():
         return (render_template('warden/specter_auth.html', **templateData))
 
     if request.method == 'POST':
-        from yaspin import yaspin
-        from ansi_management import (warning, success, error, info, clear_screen, bold,
-                                     muted, yellow, blue)
-
-        print("")
-        print(yellow("  Specter Authentication Log"))
+        from message_handler import Message
+        current_app.message_handler.clean_category('Specter Connection')
         url = request.form.get('url')
         if url[-1] != '/':
             url += '/'
         if (not url.startswith('http://')) or (not url.startswith('http://')):
             url = 'http://' + url
+        # Try to ping this url
+        if int(requests.head(url).status_code) < 400:
+            message = Message(category='Specter Connection',
+                              message_txt='Pinging URL',
+                              notes=f"{url}<br> ping <span class='text-success'>✅ Success</span>"
+                              )
+            current_app.message_handler.add_message(message)
+        else:
+            flash('Please check Specter URL (unreacheable)', 'danger')
+            return redirect(url_for('warden.specter_auth'))
+
         current_app.settings['SPECTER']['specter_url'] = url
-        print(f"  [i] Trying to reach specter at {url}")
         current_app.settings['SPECTER']['specter_login'] = request.form.get('username')
         current_app.settings['SPECTER']['specter_password'] = request.form.get('password')
         update_config()
+
         # Recreate the specter class
         from specter_importer import Specter
         current_app.specter = Specter()
@@ -421,10 +428,8 @@ def specter_auth():
             if 'Connection refused' in specter_messages:
                 flash('Having some difficulty reaching Specter Server. ' +
                       f'Please make sure it is running at {current_app.specter.base_url}', 'warning')
-                print(error("💥 Connection Refused. Check URL."))
                 return redirect(url_for('warden.specter_auth'))
             if 'Unauthorized Login' in specter_messages:
-                print(error("💥 Invalid Credentials. Check Username and Password. Leave blank if none."))
                 flash('Invalid Credentials or URL. Try again. ', 'danger')
                 return redirect(url_for('warden.specter_auth'))
 
@@ -434,19 +439,16 @@ def specter_auth():
         current_app.specter.tx_payload['limit'] = 50
         txs = current_app.specter.refresh_txs(load=False)
         try:
-            print(f"  Was able to download {len(txs['txlist'])} transactions")
+            message = Message(category='Specter Connection',
+                              message_txt='Downloading Txs',
+                              notes=f"<span class='text-success'>✅ Was able to download {len(txs['txlist'])}/50 test transactions</span>"
+                              )
+            current_app.message_handler.add_message(message)
         except Exception:
-            print(error("  Something went wrong... Here's what Specter returned:"))
-            print(txs)
             flash('Something went wrong. Check your console for a message. Or try again.', 'danger')
             return redirect(url_for('warden.specter_auth'))
 
-        print(success("  ✅ Connected to Specter Server"))
-        print("  Please note that only the first 50 transactions will show")
-        print("  at your dashboard as other transactions are downloaded in background.")
-        print("")
         flash("Success. Connected to Specter Server.", "success")
-        flash("Notice: During setup, only 50 transactions were downloaded. Downloading the remainder on background but may take many minutes to hours. Leave the app running.", "warning")
         # Now allow download of all txs in background on next run
         current_app.specter.tx_payload['limit'] = 0
         current_app.downloading = True
