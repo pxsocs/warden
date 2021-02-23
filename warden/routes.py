@@ -361,7 +361,7 @@ def specter_auth():
         from specter_importer import Specter
         current_app.specter = Specter()
 
-        dt = datetime.now()
+        from backgroundjobs import specter_test
         specter_dict, specter_messages = specter_test(force=True)
         if specter_messages is not None:
             if 'Connection refused' in specter_messages:

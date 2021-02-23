@@ -22,7 +22,18 @@ def background_specter_update():
 
     # Test: CHECK TOR
     from warden_pricing_engine import test_tor
-    current_app.tor = test_tor()
+    app.tor = test_tor()
+    if app.tor:
+        message = Message(category='Background Job',
+                          message_txt="<span class='text-success'>✅ Tor Running</span>",
+                          notes=""
+                          )
+    else:
+        message = Message(category='Background Job',
+                          message_txt="<span class='text-danger'>Tor is down - Check Connections</span>",
+                          notes=""
+                          )
+    app.message_handler.add_message(message)
 
     # Ping URL
     try:
@@ -30,11 +41,11 @@ def background_specter_update():
         if result.ok:
             app.specter.specter_reached = True
             message = Message(category='Background Job',
-                              message_txt="<span class='text-success'>Ping ok to Specter Server</span>")
+                              message_txt="<span class='text-success'>Specter Server Reached</span>")
         else:
             app.specter.specter_reached = False
             message = Message(category='Background Job',
-                              message_txt="<span class='text-danger'>Could not ping Specter Server</span>")
+                              message_txt="<span class='text-danger'>Could not reach Specter Server</span>")
     except Exception as e:
         app.specter.specter_reached = False
         message = Message(category='Background Job',
@@ -61,19 +72,19 @@ def background_specter_update():
     # Log Home data
     if metadata['alias_list']:
         message = Message(category='Background Job',
-                          message_txt='Home Data Crawler',
-                          notes=f"Loaded the following wallets:<br><span class='text-success'>{metadata['alias_list']}</span>"
+                          message_txt='Basic Info',
+                          notes=f"Found the following wallets:<br><span class='text-info'>{metadata['alias_list']}</span>"
                           )
     else:
         message = Message(category='Background Job',
-                          message_txt='Home Data Crawler',
+                          message_txt='Basic Info',
                           notes="<span class='text-warning'>Could not get wallet info -  check Specter Server</span>"
                           )
 
     app.message_handler.add_message(message)
     message = Message(category='Background Job',
-                      message_txt='Home Data Crawler',
-                      notes=f"<span class='text-success'>Bitcoin Core is at block {metadata['bitcoin_core_data']['Blocks count']}</span>"
+                      message_txt='Basic Info',
+                      notes=f"<span class='text-info'>Bitcoin Core is at block {metadata['bitcoin_core_data']['Blocks count']}</span>"
                       )
     app.message_handler.add_message(message)
     #  End log
@@ -101,7 +112,7 @@ def background_specter_update():
             rescan = app.specter.rescan_progress(wallet_alias=wallet, load=False)
             message = Message(category='Background Job',
                               message_txt=f"<span class='text-success'>Loaded wallet {wallet} </span>",
-                              notes=f"Rescan: {rescan} "
+                              notes=f"Rescan Info: {rescan} "
                               )
             app.message_handler.add_message(message)
 
