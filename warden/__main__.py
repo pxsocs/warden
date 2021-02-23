@@ -16,6 +16,7 @@ from ansi.colour import fg
 from flask import Flask
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
+from flask_sqlalchemy import SQLAlchemy
 from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
 from ansi_management import (warning, success, error, info, clear_screen, bold,
@@ -118,13 +119,21 @@ def init_app(app):
         print(yellow("  [i] This is a new setup. Welcome to WARden."))
         print(yellow("  [i] No login password found. Will ask you to create a new one."))
 
-    # create empty instance
+    # create empty instance of LoginManager
     app.login_manager = LoginManager()
+    # Create empty instance of SQLAlchemy
+    app.db = SQLAlchemy()
+    app.db.init_app(app)
     # If login required - go to login:
     app.login_manager.login_view = "warden.login"
     # To display messages - info class (Bootstrap)
     app.login_manager.login_message_category = "secondary"
     app.login_manager.init_app(app)
+
+    # Create empty instance of messagehandler
+    from message_handler import MessageHandler
+    app.message_handler = MessageHandler()
+    app.message_handler.clean_all()
 
     # Get Version
     print("")
@@ -224,8 +233,8 @@ def init_app(app):
             background_settings_update()
 
     app.scheduler = BackgroundScheduler()
-    app.scheduler.add_job(bk_su, 'interval', seconds=30)
-    app.scheduler.add_job(bk_stu, 'interval', seconds=60)
+    app.scheduler.add_job(bk_su, 'interval', seconds=1)
+    app.scheduler.add_job(bk_stu, 'interval', seconds=1)
 
     app.scheduler.start()
     print(success("✅ Background jobs running"))
@@ -278,6 +287,14 @@ def main(debug=False):
         print("")
         print("")
         print(yellow("  [i] Please Wait... Shutting down."))
+        # Delete Debug File
+        try:
+            os.remove(Config.debug_file)
+        except FileNotFoundError:
+            pass
+        # Clean all messages
+        app.message_handler.clean_all()
+        # Breaks background jobs
         app.scheduler.shutdown(wait=False)
         print("""
                            Goodbye &

@@ -40,6 +40,9 @@ class Specter():
             'username': config['SPECTER']['specter_login'],
             'password': config['SPECTER']['specter_password']
         }
+        self.specter_reached = False
+        self.specter_auth = False
+        self.tor = False
 
     def rescan_progress(self, wallet_alias, load=True):
         if load:
@@ -191,6 +194,12 @@ class Specter():
                 cols = element.find_all('td')
                 bitcoin_core_data[cols[0].get_text().split(':')[0]] = cols[1].get_text()
             metadata['bitcoin_core_data'] = bitcoin_core_data
+            # Format blocks count
+            try:
+                metadata['bitcoin_core_data']['Blocks count'] = ("{0:,.0f}".format(float(metadata['bitcoin_core_data']['Blocks count'])))
+                metadata['bitcoin_core_data']['Difficulty'] = ("{0:,.0f}".format(float(metadata['bitcoin_core_data']['Difficulty'])))
+            except Exception:
+                pass
         except Exception as e:
             metadata['bitcoin_core_html'] = (
                 f"<span class='text-warning'>Error: {str(e)}</span>"

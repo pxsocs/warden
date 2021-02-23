@@ -1,0 +1,85 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+
+
+<div class='container-fluid' style='padding-bottom: 200px;'>
+
+
+
+  <div class="row">
+    <div class='col-lg-12'>
+
+      <div id="output">
+        Loading...
+      </div>
+
+
+
+    </div>
+  </div>
+
+</div>
+
+
+<script>
+  $(document).ready(function () {
+    var intervalId = window.setInterval(function () {
+      run_ajax()
+    }, 1000);
+  });
+
+  function run_ajax() {
+    table_header = `
+    <table class='table table-sm table-striped small-text' id='list_table_json'>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Category</th>
+            <th>Message</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+    <tbody>
+    `
+    table_footer = "</tbody></table>"
+    $.ajax({
+      type: "GET",
+      dataType: 'json',
+      url: "/broadcaster?category={{category}}",
+      success: function (data) {
+        $('#output').html('')
+        if (data == '') {
+          $('#output').html(
+            "<div class='small alert alert-info' role='alert'>No messages from this session yet. But monitoring realtime." +
+            "</div>"
+          )
+        } else {
+          /*console.log(data);*/
+          var event_data = '';
+          $.each(data, function (index, value) {
+            /*console.log(value);*/
+            event_data += '<tr>';
+            event_data += '<td>' + value.time_str + '</td>';
+            event_data += '<td>' + value.category + '</td>';
+            event_data += '<td>' + value.message_txt + '</td>';
+            event_data += '<td>' + value.notes + '</td>';
+            event_data += '</tr>';
+          });
+          $("#output").html(table_header + event_data + table_footer)
+
+        }
+
+      },
+      error: function (xhr, status, error) {
+        $('#output').html(
+          "<div class='small alert alert-danger' role='alert'>An error occured while refreshing debug data." +
+          "</div>"
+        )
+      }
+    });
+  }
+</script>
+
+
+{% endblock content %}

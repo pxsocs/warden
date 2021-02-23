@@ -25,34 +25,13 @@ import numpy as np
 import json
 import os
 import urllib
-import logging
+import requests
 
 warden = Blueprint("warden",
                    __name__,
                    template_folder='templates',
                    static_folder='static')
 
-
-# Check Specter health every 60 seconds
-# A randomizer number below will make sure the cache is not used
-@MWT(timeout=60)
-def specter_test(force=False, randomizer=None):
-    return_dict = {}
-    messages = None
-    # Load basic specter data
-    try:
-        specter = current_app.specter.init_session()
-        if type(specter) == str:
-            if 'Specter Error' in specter:
-                return_dict['specter_status'] = 'Error'
-                messages = specter
-                return (return_dict, messages)
-
-    except Exception as e:
-        return_dict['specter_status'] = 'Error'
-        messages = str(e)
-
-    return (return_dict, messages)
 
 # START WARDEN ROUTES ----------------------------------------
 # Things to check before each request:
@@ -83,55 +62,39 @@ def before_request():
     # Ignore check for some pages - these are mostly methods that need
     # to run even in setup mode
     exclude_list = [
-        "warden.setup", "warden.testtor", "warden.gitreleases",
-        "warden.realtime_btc", "warden.data_folder", "warden.testtor",
-        "warden.checkservices", "warden.check_activity", "warden.warden_page_metadata",
-        "warden.specter_json", "warden.specter_auth", "warden.login", "warden.register",
+        "warden.setup", "warden.specter_auth", "warden.login", "warden.register",
         "warden.logout"
     ]
     if request.endpoint in exclude_list:
         return
 
-    # Check Tor
-    tor = current_app.tor
-
     # Create empty status dictionary
     meta = {
-        'tor': tor,
-        'specter_reached': True,
-        'specter_auth': True
+        'tor': current_app.tor,
+        'specter_reached': current_app.specter.specter_reached,
+        'specter_auth': current_app.specter.specter_auth
     }
     # Save this in Flask session
     session['status'] = json.dumps(meta)
 
+    # Check if still downloading data, if so load files
     if current_app.downloading:
         # No need to test if still downloading txs
-        flash("Downloading transactions from Specter. Some transactions may be missing. This can take several minutes at first run.", "info")
+        flash("Downloading from Specter. Some transactions may be outdated or missing.", "info")
         # If local data is present, continue
         data = pickle_it(action='load', filename='specter_txs.pkl')
         if data != 'file not found':
             return
-
-    else:
-        # Test Specter
-        try:
-            specter_dict, specter_messages = specter_test(force=False)
-        except Exception as e:
-            specter_messages = str(e)
-
-    if current_app.specter.wallet_alias_list() is None:
-        meta['specter_reached'] = False
-        session['status'] = json.dumps(meta)
-        specter_messages = 'Having trouble finding Specter transactions. Check Specter Server'
-        # If local data is present, continue
-        data = pickle_it(action='load', filename='specter_txs.pkl')
-        if data != 'file not found':
-            return
+        else:
+            if request.endpoint != 'warden.specter_auth':
+                flash("Transactions file is empty. Check Specter Server settings and connection.", "warning")
+            return redirect(url_for('warden.specter_auth'))
 
     # Check that Specter is > 1.1.0 version
     # (this is the version where tx API was implemented)
     try:
         specter_version = str(current_app.specter.home_parser()['version'])
+    # An error below means no file was ever created - probably needs setup
     except KeyError:
         # if no password set - send to register
         if not current_app.settings.has_option('SETUP', 'hash'):
@@ -142,29 +105,6 @@ def before_request():
     if version.parse(specter_version) < version.parse("1.1.0"):
         flash(f"Sorry, you need Specter version 1.1.0 or higher to connect to WARden. You are running version {specter_version}. Please upgrade.", "danger")
         return redirect(url_for('warden.specter_auth'))
-
-    if specter_messages:
-        if 'Read timed out' in str(specter_messages):
-            flash("Having trouble connecting to Specter. Connection timed out. Data may be outdated.", "warning")
-            return
-
-        if 'Connection refused' in str(specter_messages):
-            meta['specter_reached'] = False
-            session['status'] = json.dumps(meta)
-            try:
-                flash('Having some difficulty reaching Specter Server. ' +
-                      f'Please make sure it is running at {current_app.specter.base_url}. Using cached data. Last Update: ' +
-                      current_app.specter.home_parser()['last_update'], 'warning')
-                return redirect(url_for('warden.specter_auth'))
-            except KeyError:
-                flash('Looks like your first time running the WARden. Welcome.', 'info')
-                return redirect(url_for('warden.specter_auth'))
-        elif 'Unauthorized Login' in str(specter_messages):
-            meta['specter_reached'] = False
-            session['status'] = json.dumps(meta)
-            return redirect(url_for('warden.specter_auth'))
-        else:
-            abort(500, specter_messages)
 
     # Update session status
     session['status'] = json.dumps(meta)
@@ -270,6 +210,7 @@ def warden_page():
         df.set_index('trade_asset_ticker', inplace=True)
     df = df[df['is_currency'] == 0].sort_index(ascending=True)
     df = df.to_dict(orient='index')
+
     # Open Counter, increment, send data
     counter_file = os.path.join(home_path(),
                                 'warden/counter.json')
@@ -313,18 +254,28 @@ def warden_page():
 
     meta = warden_metadata()
 
-    sorted_wallet_list = []
-    for wallet in current_app.specter.wallet_alias_list():
-        wallet_df = meta['full_df'].loc[meta['full_df']['wallet_alias'] == wallet]
-        if wallet_df.empty:
-            balance = 0
-        else:
-            balance = wallet_df['amount'].sum()
-        sorted_wallet_list.append((wallet, balance))
+    # Sort the wallets by balance
+    try:
+        sorted_wallet_list = []
+        for wallet in current_app.specter.wallet_alias_list():
+            wallet_df = meta['full_df'].loc[meta['full_df']['wallet_alias'] == wallet]
+            if wallet_df.empty:
+                balance = 0
+            else:
+                balance = wallet_df['amount'].sum()
+            sorted_wallet_list.append((wallet, balance))
+    except Exception:
+        flash("No wallets found. Check Specter Server connections.", "danger")
+        abort(500, "Specter returned empty data. Check connections. Your node may be down.")
 
     sorted_wallet_list = sorted(sorted_wallet_list, reverse=True, key=itemgetter(1))
     sorted_wallet_list = [i[0] for i in sorted_wallet_list]
+
     from api.routes import alert_activity
+    if not current_app.downloading:
+        activity = alert_activity()
+    else:
+        activity = False
 
     templateData = {
         "title": "Portfolio Dashboard",
@@ -332,7 +283,7 @@ def warden_page():
         "portfolio_data": df,
         "FX": current_app.settings['PORTFOLIO']['base_fx'],
         "donated": donated,
-        "alerts": alert_activity(),
+        "alerts": activity,
         "current_app": current_app,
         "sorted_wallet_list": sorted_wallet_list
     }
@@ -383,37 +334,41 @@ def specter_auth():
         return (render_template('warden/specter_auth.html', **templateData))
 
     if request.method == 'POST':
-        from yaspin import yaspin
-        from ansi_management import (warning, success, error, info, clear_screen, bold,
-                                     muted, yellow, blue)
-
-        print("")
-        print(yellow("  Specter Authentication Log"))
+        from message_handler import Message
+        current_app.message_handler.clean_category('Specter Connection')
         url = request.form.get('url')
         if url[-1] != '/':
             url += '/'
         if (not url.startswith('http://')) or (not url.startswith('http://')):
             url = 'http://' + url
+        # Try to ping this url
+        if int(requests.head(url).status_code) < 400:
+            message = Message(category='Specter Connection',
+                              message_txt='Pinging URL',
+                              notes=f"{url}<br> ping <span class='text-success'>✅ Success</span>"
+                              )
+            current_app.message_handler.add_message(message)
+        else:
+            flash('Please check Specter URL (unreacheable)', 'danger')
+            return redirect(url_for('warden.specter_auth'))
+
         current_app.settings['SPECTER']['specter_url'] = url
-        print(f"  [i] Trying to reach specter at {url}")
         current_app.settings['SPECTER']['specter_login'] = request.form.get('username')
         current_app.settings['SPECTER']['specter_password'] = request.form.get('password')
         update_config()
+
         # Recreate the specter class
         from specter_importer import Specter
         current_app.specter = Specter()
 
         dt = datetime.now()
-        seq = int(dt.strftime("%Y%m%d%H%M%S"))
-        specter_dict, specter_messages = specter_test(force=True, randomizer=seq)
+        specter_dict, specter_messages = specter_test(force=True)
         if specter_messages is not None:
             if 'Connection refused' in specter_messages:
                 flash('Having some difficulty reaching Specter Server. ' +
                       f'Please make sure it is running at {current_app.specter.base_url}', 'warning')
-                print(error("💥 Connection Refused. Check URL."))
                 return redirect(url_for('warden.specter_auth'))
             if 'Unauthorized Login' in specter_messages:
-                print(error("💥 Invalid Credentials. Check Username and Password. Leave blank if none."))
                 flash('Invalid Credentials or URL. Try again. ', 'danger')
                 return redirect(url_for('warden.specter_auth'))
 
@@ -423,19 +378,16 @@ def specter_auth():
         current_app.specter.tx_payload['limit'] = 50
         txs = current_app.specter.refresh_txs(load=False)
         try:
-            print(f"  Was able to download {len(txs['txlist'])} transactions")
+            message = Message(category='Specter Connection',
+                              message_txt='Downloading Txs',
+                              notes=f"<span class='text-success'>✅ Was able to download {len(txs['txlist'])}/50 test transactions</span>"
+                              )
+            current_app.message_handler.add_message(message)
         except Exception:
-            print(error("  Something went wrong... Here's what Specter returned:"))
-            print(txs)
             flash('Something went wrong. Check your console for a message. Or try again.', 'danger')
             return redirect(url_for('warden.specter_auth'))
 
-        print(success("  ✅ Connected to Specter Server"))
-        print("  Please note that only the first 50 transactions will show")
-        print("  at your dashboard as other transactions are downloaded in background.")
-        print("")
         flash("Success. Connected to Specter Server.", "success")
-        flash("Notice: During setup, only 50 transactions were downloaded. Downloading the remainder on background but may take many minutes to hours. Leave the app running.", "warning")
         # Now allow download of all txs in background on next run
         current_app.specter.tx_payload['limit'] = 0
         current_app.downloading = True
@@ -595,12 +547,23 @@ def price_feed():
 @ warden.route('/show_log')
 @login_required
 def show_log():
-    log = logging.getLogger('__name__')
-    log.info("route =>'/env' - hit!")
     return render_template('warden/show_log.html',
                            title="Debug Viewer",
                            current_app=current_app,
                            current_user=fx_rate()
+                           )
+
+
+# Show debug info
+@ warden.route('/show_broadcast')
+@login_required
+def show_broadcast():
+    category = request.args.get("category")
+    return render_template('warden/show_broadcast.html',
+                           title="Message Broadcaster",
+                           current_app=current_app,
+                           current_user=fx_rate(),
+                           category=category,
                            )
 
 

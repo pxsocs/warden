@@ -115,6 +115,7 @@ tor_test = test_tor()
 TOR = tor_test
 
 
+@MWT(timeout=5)
 def tor_request(url, tor_only=True, method="get", payload=None):
     # Tor requests takes arguments:
     # url:       url to get or post
@@ -250,14 +251,9 @@ class PriceProvider:
             # Some URLs are in the form http://www.www.www/ticker_field/extra_fields?
             if self.replace_ticker is not None:
                 globalURL = self.base_url.replace('ticker_field', ticker)
-            if diags:
-                print(f"Getting URL: {globalURL}")
             request = tor_request(globalURL)
             try:
                 data = request.json()
-                if diags:
-                    print("RESULT: ")
-                    print(data)
             except Exception:
                 try:  # Try again - some APIs return a json already
                     data = json.loads(request)
@@ -631,15 +627,9 @@ def price_data_fx(ticker, diags=False):
 
     # Loop through FX providers until a df is filled
     for provider in FX_PROVIDER_PRIORITY:
-        if diags:
-            print(f"\n     Trying provider: {provider}")
         prices = price_data.df_fx(FX, PROVIDER_LIST[provider])
         if prices is not None:
             break
-        else:
-            if diags:
-                print("    [x] Returned Empty Historical Data. Errors:")
-                print(price_data.errors)
     return (prices)
 
 
@@ -879,6 +869,7 @@ def fx_price_ondate(base, cross, date):
 # _____________________________________________
 # List of API providers
 # name: should be unique and contain only lowecase letters
+config = load_config()
 PROVIDER_LIST = {
     'aa_digital':
     PriceProvider(name='alphavantagedigital',

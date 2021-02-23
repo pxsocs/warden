@@ -72,7 +72,6 @@ def get_specter_tx(wallet_alias, sort_by='time', idx=0, load=True, session=None)
 # This returns data to create the Warden Status Page
 def warden_metadata():
     meta = {}
-
     meta['full_df'] = specter_df()
     meta['wallet_list'] = current_app.specter.wallet_alias_list()
 
@@ -423,7 +422,7 @@ def positions():
     # Get all transactions & group by ticker name and operation
     df = transactions_fx()
     if df.empty:
-        logging.warn("No Transactions Found")
+        logging.warning("No Transactions Found")
         return df
 
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[[
@@ -511,6 +510,30 @@ def positions_dynamic():
             last_up_source = multi_price["RAW"][ticker][FX]["LASTUPDATE"]
             source = multi_price["DISPLAY"][ticker][FX]["LASTMARKET"]
             last_update = datetime.now()
+
+            # PUMP NGU Checker
+            up_alert = 5
+            down_alert = -5
+            try:
+                if ticker.lower() == 'btc' and chg < down_alert:
+                    from message_handler import Message
+                    current_app.message_handler.clean_category('NGU Tech')
+                    message = Message(category='NGU Tech',
+                                      message_txt='BTC Price ↓',
+                                      notes=f"<span class='text-danger'>Looks like BTC is dropping by {'{:.2f}'.format(chg)}%. Time to stack some sats.</span>"
+                                      )
+                    current_app.message_handler.add_message(message)
+                if ticker.lower() == 'btc' and chg > up_alert:
+                    from message_handler import Message
+                    current_app.message_handler.clean_category('NGU Tech')
+                    message = Message(category='NGU Tech',
+                                      message_txt='BTC Price ↑ 🚀',
+                                      notes=f"<span class='text-danger'>Looks like BTC is up by {'{:.2f}'.format(chg)}%. Pump it.</span>"
+                                      )
+                    current_app.message_handler.add_message(message)
+            except Exception:
+                pass
+
         except (KeyError, TypeError):
             # Couldn't find price with CryptoCompare. Let's try a different source
             # and populate data in the same format [aa = alphavantage]

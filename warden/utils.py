@@ -17,7 +17,7 @@ import mhp as mrh
 
 
 def create_config(config_file):
-    logging.warn("Config File not found. Getting default values and saving.")
+    logging.warning("Config File not found. Getting default values and saving.")
     # Get the default config and save into config.ini
     default_file = Config.default_config_file
 
@@ -56,7 +56,7 @@ def pickle_it(action='load', filename=None, data=None):
                 logging.info(f"Loaded: Pickle {action} file: {filename}")
                 return (ld)
         except Exception as e:
-            logging.warn(f"Error: Pickle {action} file: {filename} error:{e}")
+            logging.warning(f"Error: Pickle {action} file: {filename} error:{e}")
             return ("file not found")
     else:
         with open(filename, 'wb') as handle:
@@ -186,3 +186,11 @@ def runningInDocker():
 
     except Exception:
         return False
+
+
+# Serialize only objects that are json compatible
+# This will exclude classes and methods
+def safe_serialize(obj):
+    def default(o):
+        return f"{type(o).__qualname__}"
+    return json.dumps(obj, default=default)
