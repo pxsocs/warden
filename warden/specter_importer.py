@@ -44,14 +44,15 @@ class Specter():
         self.specter_auth = False
         self.tor = False
 
-    def rescan_progress(self, wallet_alias, load=True):
+    def rescan_progress(self, wallet_alias, load=True, session=None):
         if load:
             data = pickle_it(action='load', filename=f'specter_rescan_{wallet_alias}.pkl')
             if data != 'file not found':
                 return (data)
         try:
             url = self.base_url + f"wallets/wallet/{wallet_alias}/rescan_progress"
-            session = self.init_session()
+            if not session:
+                session = self.init_session()
             response = session.get(url)
             data = response.json()
             # Save to pickle file
@@ -153,6 +154,9 @@ class Specter():
             tmp = list(filter(None, tmp))
             device_info['name'] = tmp[0].lstrip()
             metadata['devices'][alias] = device_info
+
+        metadata['rescan'] = self.rescan_progress(wallet_alias=wallet_alias,
+                                                  load=load, session=session)
 
         # Save to pickle file
         pickle_it(action='save',

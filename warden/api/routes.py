@@ -69,35 +69,18 @@ def satoshi_quotes_json():
 
 def alert_activity():
     alerts = False
-
     # Don't send any alerts as activity still being downloaded
     if current_app.downloading:
         return alerts
-
     ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
-
     try:
         with open(ack_file) as data_file:
-            tx_list = json.loads(data_file.read())
-            data_file.close()
+            data = json.loads(data_file.read())
+        if ('deleted' in data) or ('added' in data):
+            return (True)
     except Exception:
         return (False)
 
-    try:
-        last_changes = parser.parse(tx_list['changes_detected_on'])
-        elapsed = datetime.now() - last_changes
-        elapsed = elapsed.seconds
-
-        # Limit of 60 seconds = if changes happened in the last minute or less, flag it
-        EXPIRED = 999999999
-
-        if elapsed < EXPIRED:
-            alerts = True
-            regenerate_nav()
-    except Exception:
-        alerts = False
-
-    return (alerts)
 
 # API End Point checks for wallet activity
 
