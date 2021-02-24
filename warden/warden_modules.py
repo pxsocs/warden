@@ -123,7 +123,7 @@ class Trades():
         self.user_id = "specter_user"
         self.trade_inputon = None
         self.trade_date = None
-        self.trade_currency = FX
+        self.trade_currency = current_app.settings['PORTFOLIO']['base_fx']
         self.trade_asset_ticker = None
         self.trade_account = None
         self.trade_quantity = None
@@ -902,20 +902,13 @@ def cost_calculation(ticker, html_table=None):
     # Gets all transactions in local currency terms
     df = transactions_fx()
     df = df[(df.trade_asset_ticker == ticker)]
-    if df.empty:
-        html = "<span class='text-warning'>No positions were downloaded yet</span>"
-        return (html)
 
     # Find current open position on asset
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[[
         "cash_value", "cash_value_fx", "trade_fees", "trade_quantity"
     ]].sum()
 
-    try:
-        open_position = summary_table.sum()['trade_quantity']
-    except KeyError:
-        html = "<span class='text-warning'>No positions were downloaded yet</span>"
-        return (html)
+    open_position = summary_table.sum()['trade_quantity']
 
     # Drop Deposits and Withdraws - keep only Buy and Sells
     if open_position > 0:
@@ -990,7 +983,7 @@ def cost_calculation(ticker, html_table=None):
 
     # Now format the HTML properly
     if html_table:
-        fx = FX
+        fx = current_app.settings['PORTFOLIO']['base_fx']
         # Include a link to edit this transaction
         html["trade_reference_id"] = "<a href='/edittransaction?reference_id=" +\
             html['trade_reference_id'] +\
