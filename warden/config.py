@@ -48,7 +48,7 @@ class Config:
     version_file = os.path.join(basedir, 'static/config/version.txt')
 
     default_config_file = os.path.join(basedir, 'static/config/config_default.ini')
-    config_file = os.path.join(home_dir, 'config2.ini')
+    config_file = os.path.join(home_dir, 'config.ini')
 
     # Check if config file exists
     file_config_file = Path(config_file)

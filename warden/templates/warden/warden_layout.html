@@ -104,7 +104,7 @@
                     <a data-toggle="collapse" href="#collapse_transactions" role="button" aria-expanded="true"
                         aria-controls="collapse_transactions">
                         <i class="fas fa-coins fa-lg"></i>
-                        &nbsp;&nbsp;&nbsp;&nbsp;Portfolio
+                        &nbsp;&nbsp;&nbsp;&nbsp;Main
                         <i class="fas fa-caret-down"></i></a>
                 </li>
                 <div class="collapse show" id="collapse_transactions"">
@@ -127,7 +127,8 @@
                     <a class="sidebar-subitem" href="/volchart"><i
                             class="fas fa-cloud-sun-rain fa-lg"></i>&nbsp;&nbsp;Volatility Chart</a>
 
-
+                    <a class="sidebar-subitem" href="/satoshi_quotes"><i
+                            class="fas fa-quote-left fa-lg"></i>&nbsp;&nbsp;Quotable Satoshi</a>
 
                 </div>
 
@@ -143,20 +144,27 @@
                 <div class="collapse show" id="collapse_settings"">
                     <div class=" list-group bg-transparent text-white">
 
+
                     <a class="sidebar-subitem" href="/specter_auth"><i
                             class="fas fa-ghost fa-lg"></i>&nbsp;&nbsp;Specter Credentials</a>
 
-                    <a class="sidebar-subitem" href="/show_log"><i class="fas fa-bug fa-lg"></i>&nbsp;&nbsp;Debug
-                        Log</a>
-
                     <a class="sidebar-subitem" href="/show_broadcast"><i
-                            class="fas fa-bullhorn fa-lg"></i>&nbsp;&nbsp;Message Log</a>
+                            class="fas fa-bullhorn fa-lg"></i>&nbsp;&nbsp;Message Monitor</a>
 
-                    <a class="sidebar-subitem" href="/satoshi_quotes"><i
-                            class="fas fa-quote-left fa-lg"></i>&nbsp;&nbsp;Quotable Satoshi</a>
+                    <a class="sidebar-subitem" href="/config_ini"><i class="fas fa-edit fa-lg"></i>&nbsp;&nbsp;Edit
+                        Config</a>
+
+
+
+
+
+
 
                     <a class="sidebar-subitem" href="/logout"><i class="fas fa-sign-out-alt fa-lg"></i>&nbsp;&nbsp;
                         Logout</a>
+
+                    <a class="sidebar-subitem" href="/show_log"><i class="fas fa-bug fa-lg"></i>&nbsp;&nbsp;Debug
+                        Log</a>
                 </div>
 
 
@@ -222,11 +230,7 @@
                             {% if messages %}
                             {% for category, message in messages %}
                             <div id="messagealert" class="alert alert-{{ category }}">
-                                <strong>{{message}}</strong>
-                                {%if category != 'success'%}
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                    {%endif%}
+                                {{message}}
                             </div>
                             {% endfor %}
                             {% endif %}

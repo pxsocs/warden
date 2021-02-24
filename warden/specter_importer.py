@@ -40,9 +40,8 @@ class Specter():
             'username': config['SPECTER']['specter_login'],
             'password': config['SPECTER']['specter_password']
         }
-        self.specter_reached = False
-        self.specter_auth = False
-        self.tor = False
+        self.specter_reached = True
+        self.specter_auth = True
 
     def rescan_progress(self, wallet_alias, load=True, session=None):
         if load:

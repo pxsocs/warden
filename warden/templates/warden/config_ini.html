@@ -1,0 +1,30 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+
+
+<div class='container-fluid' style='padding-bottom: 200px;'>
+
+  <div class="row">
+    <div class='col-lg-12'>
+
+
+      <form class='text-white' action="{{ url_for('warden.config_ini') }}" method="post">
+        <div class="form-group">
+          <label for="exampleFormControlTextarea1">
+            <pre>Config File: {{config_file}}</pre></label>
+          <textarea class="form-control text-small" rows="40" name='config_txt' spellcheck="false"
+            style="font-size: 14px; color: rgb(85, 85, 85); font-family: 'Courier New', Courier, monospace; font-weight:bold;">
+          {{config_contents}}
+          </textarea>
+        </div>
+
+        <button id='submit_button' type="submit" class="btn btn btn-secondary btn-block">Save Config</button>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+
+{% endblock content %}
