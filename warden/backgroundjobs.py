@@ -90,13 +90,14 @@ def background_specter_update():
                       )
     app.message_handler.add_message(message)
     #  End log
-
+    ts_t = time.time()
     txs = app.specter.refresh_txs(load=False)
-
+    te_t = time.time()
     # Log Home data
+
     message = Message(category='Background Job',
                       message_txt="<span class='text-success'>✅ Finished Transaction Refresh</span>",
-                      notes=f"<span class='text-info'>Loaded {len(txs['txlist'])} Transactions</span>"
+                      notes=f"<span class='text-info'>Loaded {len(txs['txlist'])} Transactions in {round((te_t - ts_t), 2)} seconds.</span>"
                       )
     app.message_handler.add_message(message)
     #  End log
@@ -110,11 +111,13 @@ def background_specter_update():
 
     else:
         for wallet in wallets:
+            ts_a = time.time()
             app.specter.wallet_info(wallet_alias=wallet, load=False)
-            rescan = app.specter.rescan_progress(wallet_alias=wallet, load=False)
+            rescan = app.specter.rescan_progress(wallet_alias=wallet, load=True)
+            te_a = time.time()
             message = Message(category='Background Job',
                               message_txt=f"<span class='text-success'>Loaded wallet {wallet} </span>",
-                              notes=f"Rescan Info: {rescan} "
+                              notes=f"Time to load: {round((te_a - ts_a), 2)} seconds. Rescan Info: {rescan} "
                               )
             app.message_handler.add_message(message)
 
