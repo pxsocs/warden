@@ -77,10 +77,13 @@ def before_request():
     # Save this in Flask session
     session['status'] = json.dumps(meta)
 
+    if not current_app.specter.specter_auth:
+        flash("Authentication to Specter Failed. Check credentials.", "danger")
+
     # Check if still downloading data, if so load files
     if current_app.downloading:
         # No need to test if still downloading txs
-        flash("Downloading from Specter. Some transactions may be outdated or missing.", "info")
+        flash("Downloading from Specter. Some transactions may be outdated or missing. Leave the app running to finish download.", "info")
         # If local data is present, continue
         data = pickle_it(action='load', filename='specter_txs.pkl')
         if data != 'file not found':
@@ -564,6 +567,36 @@ def show_broadcast():
                            current_app=current_app,
                            current_user=fx_rate(),
                            category=category,
+                           )
+
+
+# Show debug info
+@ warden.route('/config_ini', methods=['GET', 'POST'])
+@login_required
+def config_ini():
+    from config import Config
+    config_file = Config.config_file
+    if not os.path.isfile(config_file):
+        flash('Config File not Found. Restart the app.', 'danger')
+        config_contents = None
+    else:
+        f = open(config_file, 'r')
+        config_contents = f.read()
+
+    if request.method == 'POST':
+        config_txt = request.form.get('config_txt')
+        f = open(config_file, "w")
+        f.write(config_txt)
+        f.close()
+        flash("Config File Saved", "success")
+        config_contents = config_txt
+
+    return render_template('warden/config_ini.html',
+                           title="Custom Configurations",
+                           current_app=current_app,
+                           current_user=fx_rate(),
+                           config_file=config_file,
+                           config_contents=config_contents
                            )
 
 
