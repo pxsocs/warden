@@ -206,7 +206,26 @@ def warden_page():
     # data through javascript after loaded. This improves load time
     # and refresh speed.
     # Get positions and prepare df for delivery
-    df = positions()
+    try:
+        df = positions()
+    except Exception as e:
+        # Check if there is a tx file saved at all. If not,
+        # it means that it's downloading.
+        filename = 'specter_txs.pkl'
+        filename = 'warden/' + filename
+        filename = os.path.join(home_path(), filename)
+        if not os.path.isfile(filename):
+            templateData = {
+                "title": "No Transactions Found Yet",
+                "FX": current_app.settings['PORTFOLIO']['base_fx'],
+                "donated": donate_check(),
+                "current_app": current_app
+            }
+            return (render_template('warden/empty_txs.html', **templateData))
+        else:
+            msg = f"An error ocurred while getting transactions: {e}"
+            abort(500, msg)
+
     if df.empty:
         msg = "Specter has no transaction history or is down. Open Specter Server and check."
         flash(msg, "warning")

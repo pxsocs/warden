@@ -473,7 +473,6 @@ function realtime_table() {
             $('#end_portvalue').html(formatNumber(data.positions.Total.position_fx, 0)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
 
             posbtc = data.positions.Total.position_fx / data.btc
-            $('#pvaluebtc').html(formatNumber(posbtc, 2, "&#8383 ")).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
             $('#chg1').html(formatNumber(data.positions.Total.change_fx, 0, fx)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
             pct_chg = (data.positions.Total.change_fx / data.positions.Total.position_fx) * 100
             $('#chg2').html(formatNumber(pct_chg, 2, '+', '%', 'False', true)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
