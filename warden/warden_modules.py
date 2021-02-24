@@ -911,7 +911,11 @@ def cost_calculation(ticker, html_table=None):
         "cash_value", "cash_value_fx", "trade_fees", "trade_quantity"
     ]].sum()
 
-    open_position = summary_table.sum()['trade_quantity']
+    try:
+        open_position = summary_table.sum()['trade_quantity']
+    except KeyError:
+        html = "<span class='text-warning'>No positions were downloaded yet</span>"
+        return (html)
 
     # Drop Deposits and Withdraws - keep only Buy and Sells
     if open_position > 0:
