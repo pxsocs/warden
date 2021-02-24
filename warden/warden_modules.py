@@ -288,18 +288,19 @@ def specter_df(save_files=False, sort_by='trade_date'):
             deleted_addresses = list(set(old_list).difference(new_list))
             added_addresses = list(set(new_list).difference(old_list))
 
-            # Save these to a file
-            json_save = {
-                'changes_detected_on':
-                datetime.now().strftime("%I:%M %p on %B %d, %Y"),
-                'deleted':
-                deleted_addresses,
-                'added':
-                added_addresses
-            }
+            if deleted_addresses != None or added_addresses != None:
+                # Save these to a file
+                json_save = {
+                    'changes_detected_on':
+                    datetime.now().strftime("%I:%M %p on %B %d, %Y"),
+                    'deleted':
+                    deleted_addresses,
+                    'added':
+                    added_addresses
+                }
 
-            with open(ack_file, 'w') as fp:
-                json.dump(json_save, fp)
+                with open(ack_file, 'w') as fp:
+                    json.dump(json_save, fp)
 
     except Exception:
         # Files not found - let's save a new checkpoint
@@ -520,7 +521,7 @@ def positions_dynamic():
                     current_app.message_handler.clean_category('NGU Tech')
                     message = Message(category='NGU Tech',
                                       message_txt='BTC Price ↓',
-                                      notes=f"<span class='text-danger'>Looks like BTC is dropping by {'{:.2f}'.format(chg)}%. Time to stack some sats.</span>"
+                                      notes=f"<span class='text-danger'>BTC is dropping {'{:.2f}'.format(chg)}%. Time to stack some sats.</span>"
                                       )
                     current_app.message_handler.add_message(message)
                 if ticker.lower() == 'btc' and chg > up_alert:
@@ -528,7 +529,7 @@ def positions_dynamic():
                     current_app.message_handler.clean_category('NGU Tech')
                     message = Message(category='NGU Tech',
                                       message_txt='BTC Price ↑ 🚀',
-                                      notes=f"<span class='text-danger'>Looks like BTC is up by {'{:.2f}'.format(chg)}%. Pump it.</span>"
+                                      notes=f"<span class='text-success'>BTC is up {'{:.2f}'.format(chg)}%. Pump it.</span>"
                                       )
                     current_app.message_handler.add_message(message)
             except Exception:
@@ -901,6 +902,9 @@ def cost_calculation(ticker, html_table=None):
     # Gets all transactions in local currency terms
     df = transactions_fx()
     df = df[(df.trade_asset_ticker == ticker)]
+    if df.empty:
+        html = "<span class='text-warning'>No positions were downloaded yet</span>"
+        return (html)
 
     # Find current open position on asset
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[[
