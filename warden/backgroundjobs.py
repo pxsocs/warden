@@ -1,5 +1,6 @@
 import configparser
 import requests
+import time
 from flask import current_app as app
 from flask import flash
 from flask.globals import current_app
@@ -16,6 +17,7 @@ from message_handler import Message
 def background_specter_update():
     # clean old messages
     app.message_handler.clean_category('Background Job')
+    ts = time.time()
     message = Message(category='Background Job',
                       message_txt="<span class='text-info'>Starting Background Update</span>")
     app.message_handler.add_message(message)
@@ -136,17 +138,34 @@ def background_specter_update():
             flash("Could not login to Specter Server [Unauthorized]. Check username and password.")
 
     # Success
+    app.message_handler.clean_category('Specter Import')
+    te = time.time()
+    message = Message(category='Specter Import',
+                      message_txt="<span class='text-success'>Background Job for Specter Done</span>",
+                      notes=f"Previous job took {round((te - ts), 2)} seconds to complete"
+                      )
+    app.message_handler.add_message(message)
     app.downloading = False
 
 
 def background_settings_update():
+    app.message_handler.clean_category('Background Job [2]')
     # Reload config
     config_file = Config.config_file
     config_settings = configparser.ConfigParser()
     config_settings.read(config_file)
     app.settings = config_settings
     app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
+    ts = time.time()
     regenerate_nav()
+    te = time.time()
+    message = Message(category='Background Job [2]',
+                      message_txt="<span class='text-success'>NAV Recalculated</span>",
+                      notes=f"Calculation took {round((te - ts) * 1000, 2)} ms"
+                      )
+    app.message_handler.add_message(message)
+    # Wait 5 seconds before running again
+    time.sleep(5)
 
 
 # Check Specter health

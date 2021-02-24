@@ -89,7 +89,7 @@ def alert_activity():
         elapsed = elapsed.seconds
 
         # Limit of 60 seconds = if changes happened in the last minute or less, flag it
-        EXPIRED = 60
+        EXPIRED = 999999999
 
         if elapsed < EXPIRED:
             alerts = True

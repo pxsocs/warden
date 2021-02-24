@@ -14,9 +14,7 @@ $(document).ready(function () {
     check_activity()
 
 
-    setTimeout(function () { $('.alert-success').slideUp(1000) }, 7000);
-    setTimeout(function () { $('.alert-info').slideUp(1000) }, 10000);
-    setTimeout(function () { $('.alert-warning').slideUp(1000) }, 30000);
+    setTimeout(function () { $('.alert-slideup').slideUp(1000) }, 7000);
 
     // Updates BTC Price every 30 seconds
     window.setInterval(function () {
