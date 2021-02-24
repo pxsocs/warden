@@ -138,6 +138,8 @@ def register():
         current_app.settings.set('SETUP', 'hash', hash)
         update_config()
         flash("Password set successfully", "success")
+        user = User()
+        login_user(user, remember=True)
         return redirect(url_for("warden.warden_page"))
     return render_template("warden/register.html", title="Register", form=form)
 
