@@ -4,13 +4,14 @@ from warden_modules import (warden_metadata,
                             generatenav, specter_df,
                             current_path, regenerate_nav,
                             home_path)
-from flask_login import login_required
+from flask_login import login_required, current_user
 from random import randrange
 from warden_pricing_engine import (test_tor, tor_request, price_data_rt,
                                    fx_rate, price_data_fx, PROVIDER_LIST,
-                                   PriceData)
+                                   PriceData, asset_list_alphavantage,
+                                   asset_list_cc, asset_list_fp)
 from utils import heatmap_generator
-
+from models import Trades, AccountInfo, TickerInfo
 from datetime import datetime, timedelta
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
@@ -758,5 +759,49 @@ def broadcaster():
     category = request.args.get("category")
     if category == 'None':
         category = None
-    from flask import current_app
     return current_app.message_handler.to_json(category=category)
+
+
+@api.route("/assetlist", methods=["GET", "POST"])
+# List of available tickers. Also takes argument {term} so this can be used
+# in autocomplete forms
+def assetlist():
+    q = request.args.get("term")
+    jsonlist = []
+    if len(q) < 2:
+        return jsonify(jsonlist)
+    # Get list of available tickers from pricing APIs
+    jsonlist.extend(asset_list_alphavantage(q))
+    # jsonlist.extend(asset_list_cc(q))
+    # jsonlist.extend(asset_list_fp(q))
+
+    return jsonify(jsonlist)
+
+
+@api.route("/aclst", methods=["GET", "POST"])
+@login_required
+# Returns JSON for autocomplete on account names.
+# Gathers account names from trades and account_info tables
+# Takes on input ?term - which is the string to be found
+def aclst():
+    list = []
+    if request.method == "GET":
+
+        tradeaccounts = Trades.query.filter_by(
+            user_id=current_user.username).group_by(Trades.trade_account)
+
+        accounts = AccountInfo.query.filter_by(
+            user_id=current_user.username).group_by(
+                AccountInfo.account_longname)
+
+        q = request.args.get("term")
+        for item in tradeaccounts:
+            if q.upper() in item.trade_account.upper():
+                list.append(item.trade_account)
+        for item in accounts:
+            if q.upper() in item.account_longname.upper():
+                list.append(item.account_longname)
+
+        list = json.dumps(list)
+
+        return list

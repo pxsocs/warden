@@ -70,16 +70,25 @@
 
             <div class="d-flex flex-column align-items-center justify-content-center min-vh100 p-2">
 
-                <h1 class="text-center mb-2">welcome to the WARden</h1>
-                <p class="text-muted w-75 text-center">
-                    Enter the password to login</p>
-
-
-
+                <h1 class="text-center mb-2">welcome to<br>the WARden</h1>
+                <br>
                 <form class="d-flex flex-column form-container w-100 align-items-center" method="POST" action="">
 
                     {{ form.hidden_tag() }}
                     <fieldset class="form-group">
+
+                        <div class="form-group">
+                            {% if form.username.errors %}
+                            {{ form.username(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.username.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            {{ form.username(class="form-control form-control-lg") }}
+                            {% endif %}
+                        </div>
 
 
                         <div class="form-group">
@@ -100,6 +109,12 @@
                         {{ form.submit(class="btn px-4 login-button btn-dark btn-lg")}}
                     </div>
                 </form>
+                <div class="border-top pt-3">
+                    <small class="text-muted">
+                        Or create a<a class="ml-2" href="{{ url_for('warden.register') }}">New Login</a><br>
+                        You may setup multiple logins for different portfolios
+                    </small>
+                </div>
             </div>
         </main>
     </div>

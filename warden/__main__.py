@@ -11,6 +11,7 @@ import warnings
 import socket
 import emoji
 import time
+import sqlite3
 from logging.handlers import RotatingFileHandler
 from ansi.colour import fg
 from flask import Flask
@@ -113,17 +114,27 @@ def init_app(app):
         create_config(config_file)
         config_settings.read(config_file)
 
-    # Check if password has been set
-    # if no password set - send to register
-    if not config_settings.has_option('SETUP', 'hash'):
-        print(yellow("  [i] This is a new setup. Welcome to WARden."))
-        print(yellow("  [i] No login password found. Will ask you to create a new one."))
+    table_error = False
+    try:
+        # create empty instance of LoginManager
+        app.login_manager = LoginManager()
+    except sqlite3.OperationalError:
+        table_error = True
 
-    # create empty instance of LoginManager
-    app.login_manager = LoginManager()
     # Create empty instance of SQLAlchemy
     app.db = SQLAlchemy()
     app.db.init_app(app)
+    # Import models so tables are created
+    from models import Trades, User, AccountInfo, TickerInfo, SpecterInfo
+    app.db.create_all()
+
+    #  There was an initial error on getting users
+    #  probably because tables were not created yet.
+    # The above create_all should have solved it so try again.
+    if table_error:
+        # create empty instance of LoginManager
+        app.login_manager = LoginManager()
+
     # If login required - go to login:
     app.login_manager.login_view = "warden.login"
     # To display messages - info class (Bootstrap)

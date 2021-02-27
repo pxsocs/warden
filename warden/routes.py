@@ -1,21 +1,20 @@
 from warden_decorators import MWT
 from flask import (Blueprint, redirect, render_template, abort,
-                   flash, session, request, current_app, url_for, get_flashed_messages)
-from flask_login import login_user, logout_user, current_user, login_required, UserMixin
+                   flash, session, request, current_app, url_for)
+from flask_login import login_user, logout_user, current_user, login_required
 from warden_modules import (warden_metadata, positions,
                             generatenav, specter_df,
                             regenerate_nav,
                             home_path)
 
-from flask_wtf import FlaskForm
-from wtforms import (BooleanField, PasswordField, StringField,
-                     SubmitField)
-from wtforms.validators import DataRequired, Email, Length, EqualTo
+from forms import RegistrationForm, LoginForm, TradeForm
+
 from werkzeug.security import check_password_hash, generate_password_hash
 from warden_pricing_engine import (fx_rate, PROVIDER_LIST,
                                    PriceData)
 from warden_decorators import timing
-from utils import update_config, heatmap_generator, pickle_it
+from models import User, AccountInfo, Trades
+from utils import update_config, heatmap_generator, pickle_it, cleancsv
 from operator import itemgetter
 from packaging import version
 
@@ -26,35 +25,12 @@ import json
 import os
 import urllib
 import requests
+import secrets
 
 warden = Blueprint("warden",
                    __name__,
                    template_folder='templates',
                    static_folder='static')
-
-
-# START WARDEN ROUTES ----------------------------------------
-# Things to check before each request:
-# 1. Is Tor running? It's a requirement.
-# 2. Is Specter server running? Also a requirement.
-# 2.5 If running, is there a balance?
-# 3. Found MyNode? Not a requirement but enables added functions.
-# 4. Found Bitcoin Node? Not a requirement but enables added functions.
-
-
-@current_app.login_manager.user_loader
-def load_user(user_id):
-    return User
-
-
-class User(UserMixin):
-    def __init__(self):
-        if current_app.settings.has_option('SETUP', 'hash'):
-            self.password = current_app.settings['SETUP']['hash']
-        else:
-            self.password = None
-        self.username = 'specter_warden'
-        self.id = 1
 
 
 @warden.before_request
@@ -100,7 +76,8 @@ def before_request():
     # An error below means no file was ever created - probably needs setup
     except KeyError:
         # if no password set - send to register
-        if not current_app.settings.has_option('SETUP', 'hash'):
+        users = User.query.all()
+        if users == []:
             return redirect(url_for("warden.register"))
         flash("Could not connect to Specter. Check credentials below.", "warning")
         return redirect(url_for('warden.specter_auth'))
@@ -117,61 +94,48 @@ def before_request():
 def register():
 
     # if a password is already set, go to login page
-    if current_app.settings.has_option('SETUP', 'hash'):
-        if current_user.is_authenticated:
-            return redirect(url_for("warden.warden_page"))
-        else:
-            return redirect(url_for("warden.login"))
-
-    class RegistrationForm(FlaskForm):
-        password = PasswordField("Password", validators=[DataRequired()],
-                                 render_kw={"placeholder": "Password"})
-        confirm_password = PasswordField(
-            "Confirm Password", validators=[DataRequired(),
-                                            EqualTo("password")],
-            render_kw={"placeholder": "Confirm Password"})
-        submit = SubmitField("Register")
+    if current_user.is_authenticated:
+        return redirect(url_for("warden.warden_page"))
 
     form = RegistrationForm()
     if form.validate_on_submit():
         hash = generate_password_hash(form.password.data)
-        current_app.settings.set('SETUP', 'hash', hash)
-        update_config()
-        flash("Password set successfully", "success")
-        user = User()
+        user = User(username=form.username.data,
+                    password=hash)
+        current_app.db.session.add(user)
+        current_app.db.session.commit()
+        flash(f"Account created for {form.username.data}.", "success")
         login_user(user, remember=True)
         return redirect(url_for("warden.warden_page"))
+
     return render_template("warden/register.html", title="Register", form=form)
 
 
 @warden.route("/login", methods=["GET", "POST"])
 def login():
 
-    # if no password set - send to register
-    if not current_app.settings.has_option('SETUP', 'hash'):
+    # if no users found, send to register
+    users = User.query.all()
+    if users == []:
+        flash('Looks like it is your first time running the app. Welcome', 'success')
         return redirect(url_for("warden.register"))
-
-    class LoginForm(FlaskForm):
-        password = PasswordField("Password", validators=[DataRequired()])
-        submit = SubmitField("Login")
 
     if current_user.is_authenticated:
         return redirect(url_for("warden.warden_page"))
+
     form = LoginForm()
     if form.validate_on_submit():
-        user = User()
-        if check_password_hash(user.password, form.password.data):
+        user = User.query.filter_by(username=form.username.data).first()
+        if user and check_password_hash(user.password, form.password.data):
             login_user(user, remember=True)
-            flash("Login Successful. Welcome.", "success")
-            # The get method below is actually very helpful
-            # it returns None if empty. Better than using [] for a dictionary.
+            flash(f"Login Successful. Welcome {user}.", "success")
             next_page = request.args.get("next")  # get the original page
             if next_page:
                 return redirect(next_page)
             else:
                 return redirect(url_for("warden.warden_page"))
         else:
-            flash("Login failed. Please check password", "danger")
+            flash("Login failed. Please check Username and Password", "danger")
 
     return render_template("warden/login.html", title="Login", form=form)
 
@@ -319,7 +283,7 @@ def warden_page():
 def list_transactions():
     transactions = specter_df()
     return render_template("warden/transactions.html",
-                           title="Full Transaction History",
+                           title="Specter Transaction History",
                            transactions=transactions,
                            current_app=current_app)
 
@@ -619,6 +583,95 @@ def config_ini():
                            config_file=config_file,
                            config_contents=config_contents
                            )
+
+
+#   TRADES -----------------------------------------------
+
+@warden.route("/newtrade", methods=["GET", "POST"])
+@login_required
+def newtrade():
+    form = TradeForm()
+    acclist = AccountInfo.query.filter_by(user_id=current_user.username)
+    accounts = []
+    for item in acclist:
+        accounts.append((item.account_longname, item.account_longname))
+    form.trade_account.choices = accounts
+
+    if request.method == "POST":
+
+        if form.validate_on_submit():
+            # Need to include two sides of trade:
+            if form.trade_operation.data in ("B"):
+                qop = 1
+            elif form.trade_operation.data in ("S"):
+                qop = -1
+            else:
+                qop = 0
+                flash("Trade Operation Error. Should be B for buy or S for sell.",
+                      "warning")
+
+            # Calculate Trade's cash value
+            cvfail = False
+
+            try:
+                p = float(cleancsv(form.trade_price.data))
+                q = float(cleancsv(form.trade_quantity.data))
+                f = float(cleancsv(form.trade_fees.data))
+                cv = qop * (q * p) + f
+
+            except ValueError:
+                flash(
+                    "Error on calculating fiat amount \
+                for transaction - TRADE NOT included",
+                    "danger",
+                )
+                cvfail = True
+                cv = 0
+
+            # Check what type of trade this is
+            # Cash and/or Asset
+
+            try:
+                tquantity = float(form.trade_quantity.data) * qop
+            except ValueError:
+                tquantity = 0
+
+            try:
+                tprice = float(form.trade_price.data)
+            except ValueError:
+                tprice = 0
+
+            trade = Trades(
+                user_id=current_user.username,
+                trade_date=form.trade_date.data,
+                trade_account=form.trade_account.data,
+                trade_currency=form.trade_currency.data,
+                trade_asset_ticker=form.trade_asset_ticker.data,
+                trade_quantity=tquantity,
+                trade_operation=form.trade_operation.data,
+                trade_price=tprice,
+                trade_fees=form.trade_fees.data,
+                trade_notes=form.trade_notes.data,
+                cash_value=cv,
+            )
+            if not cvfail:
+                current_app.db.session.add(trade)
+                current_app.db.session.commit()
+                regenerate_nav()
+                flash("Trade included", "success")
+
+            return redirect(url_for("warden.warden_page"))
+        else:
+            flash("Trade Input failed. Something went wrong. Try Again.",
+                  "danger")
+
+    form.trade_currency.data = current_app.fx['code']
+    form.trade_date.data = datetime.utcnow()
+    return render_template("warden/newtrade.html",
+                           form=form,
+                           title="New Trade",
+                           current_app=current_app,
+                           current_user=fx_rate())
 
 
 # -------------------------------------------------

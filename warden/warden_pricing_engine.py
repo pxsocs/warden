@@ -124,14 +124,15 @@ def tor_request(url, tor_only=True, method="get", payload=None):
     global TOR
     tor_check = TOR
     url = urllib.parse.urlparse(url).geturl()
+    session = requests.session()
     if tor_check["status"] is True:
         try:
             # Activate TOR proxies
-            session = requests.session()
             session.proxies = {
                 "http": "socks5h://0.0.0.0:" + TOR['port'],
                 "https": "socks5h://0.0.0.0:" + TOR['port'],
             }
+
             if method == "get":
                 request = session.get(url, timeout=60)
             if method == "post":
@@ -864,11 +865,112 @@ def fx_price_ondate(base, cross, date):
         return (1)
 
 
+# THE BELOW METHODS return lists of avaiable tickers and names
+# under each of the providers.
+# See routes /assetlist?term=<keyword>
+
+def asset_list_alphavantage(term=None):
+    import csv
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    master_list = []
+    if term is None:
+        term = ""
+    # Alphavantage Currency List - CSV
+    filename = os.path.join(basedir, 'static/csv_files/physical_currency_list.csv')
+    with open(filename, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            if term.upper() in row[0].upper() or term in row[1].upper():
+                master_list.append(
+                    {
+                        'symbol': row[0],
+                        'name': row[1],
+                        'provider': 'aa_fx'
+                    }
+                )
+    # Alphavantage Digital Currency list
+    filename = os.path.join(basedir, 'static/csv_files/digital_currency_list.csv')
+    with open(filename, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            if term.upper() in row[0].upper() or term.upper() in row[1].upper():
+                master_list.append(
+                    {
+                        'symbol': row[0],
+                        'name': row[1],
+                        'provider': 'aa_digital'
+                    }
+                )
+    # Alphavantage Stock Search EndPoint
+    try:
+        url = 'https://www.alphavantage.co/query?function=SYMBOL_SEARCH'
+        url += '&keywords=' + term
+        url += '&apikey=' + config['API']['alphavantage']
+        result = requests.get(url).json()
+        result = result['bestMatches']
+        for element in result:
+            master_list.append(
+                {
+                    'symbol': element['1. symbol'],
+                    'name': element['2. name'],
+                    'provider': 'aa_stock',
+                    'notes': element['3. type'] + ' ' + element['4. region'],
+                    'fx': element['8. currency']
+                }
+            )
+    except Exception:
+        pass
+    return (master_list)
+
+
+def asset_list_cc(term=None):
+    master_list = []
+    try:
+        url = 'https://min-api.cryptocompare.com/data/all/coinlist'
+        result = requests.get(url).json()
+        result = result['Data']
+        for key, value in result.items():
+            if term.upper() in value['Symbol'].upper() or term.upper() in value['FullName'].upper().upper():
+                master_list.append(
+                    {
+                        'symbol': value['Symbol'],
+                        'name': value['FullName'],
+                        'provider': 'cc_digital'
+                    }
+                )
+    except Exception:
+        pass
+
+    return (master_list)
+
+
+def asset_list_fp(term=None):
+    master_list = []
+    try:
+        url = f'https://financialmodelingprep.com/api/v3/search?query={term}&limit=10&apikey=d44fb36a0c62da8ff9b1b40b47802000'
+        result = requests.get(url).json()
+        for item in result:
+            master_list.append(
+                {
+                    'symbol': item['symbol'],
+                    'name': item['name'],
+                    'provider': 'fp_stock',
+                    'notes': item['exchangeShortName'],
+                    'fx': item['currency']
+                }
+            )
+    except Exception:
+        pass
+
+    return (master_list)
+
+
 # _____________________________________________
 # Variables go here
 # _____________________________________________
 # List of API providers
 # name: should be unique and contain only lowecase letters
+
 config = load_config()
 PROVIDER_LIST = {
     'aa_digital':

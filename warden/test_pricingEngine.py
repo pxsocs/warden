@@ -7,7 +7,9 @@ import unittest
 import requests
 import pandas as pd
 from warden_pricing_engine import (price_data_rt, tor_request,
-                                   test_tor, get_price_ondate)
+                                   test_tor, get_price_ondate,
+                                   asset_list_alphavantage,
+                                   asset_list_cc, asset_list_fp)
 
 
 class TestPricing(unittest.TestCase):
@@ -70,6 +72,38 @@ class TestPricing(unittest.TestCase):
                 # high     13921.53
                 # low      12877.67
                 self.assertIsInstance(result, pd.Series)
+
+    def test_asset_list_alphavantage(self):
+        # Test that the asset list is correctly retrieved
+        term = 'BTC'
+        result = asset_list_alphavantage(term)
+        self.assertNotEqual(result, [])
+
+    def test_alphavantage(self):
+        # get config
+        from utils import load_config
+        config = load_config()
+        # Check if there's API in Alphavantage
+        api = config['API']['alphavantage']
+        # Search for ticker in stock endpoint
+        term = 'BTC'
+        url = 'https://www.alphavantage.co/query?function=SYMBOL_SEARCH'
+        url += '&keywords=' + term
+        url += '&apikey=' + api
+
+        # Try without Tor
+        result = requests.get(url)
+        self.assertEqual(result.ok, True)
+
+    def test_asset_list_cc(self):
+        term = 'BTC'
+        result = asset_list_cc(term)
+        self.assertNotEqual(result, [])
+
+    def test_asset_list_fp(self):
+        term = 'apple'
+        result = asset_list_fp(term)
+        self.assertNotEqual(result, [])
 
 
 if __name__ == '__main__':

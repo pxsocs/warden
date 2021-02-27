@@ -194,3 +194,15 @@ def safe_serialize(obj):
     def default(o):
         return f"{type(o).__qualname__}"
     return json.dumps(obj, default=default)
+
+
+def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
+    if text is None:
+        return (0)
+    acceptable = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "."]
+    str = ""
+    for char in text:
+        if char in acceptable:
+            str = str + char
+    str = float(str)
+    return(str)
