@@ -8,13 +8,11 @@ import glob
 import logging
 
 from datetime import datetime, timedelta
-from flask import flash, current_app, abort
+from flask import flash, current_app
+from flask_login import current_user
 from pathlib import Path
 from specter_importer import Specter
-from warden_pricing_engine import (get_price_ondate, fx_price_ondate,
-                                   multiple_price_grab, price_data_rt,
-                                   price_data_fx, price_data_rt_full,
-                                   price_data, fx_rate)
+from pricing_engine.engine import fx_rate
 from warden_decorators import MWT, timing
 
 
@@ -338,19 +336,37 @@ def transactions_fx():
     # Note that it uses the currency exchange for the date of transaction
     # Get all transactions from Specter and format
 
+    # SPECTER ============================================
     df = specter_df()
+    if not df.empty:
+        df['trade_date'] = pd.to_datetime(df['trade_date'])
+        df = df.set_index('trade_date')
+        # Ignore times in df to merge - keep only dates
+        df.index = df.index.floor('d')
+        df.index.rename('date', inplace=True)
+
+    # SQL DATABASE ========================================
+    # Get all transactions from db and format
+    df_sql = pd.read_sql_table('trades', current_app.db.engine)
+    if not df_sql.empty:
+        df_sql = df_sql[(df_sql.user_id == current_user.username)]
+        # df = df[(df.trade_operation == "B") | (df.trade_operation == "S")]
+        df_sql['trade_date'] = pd.to_datetime(df_sql['trade_date'])
+        df_sql = df_sql.set_index('trade_date')
+        # Ignore times in df to merge - keep only dates
+        df_sql.index = df_sql.index.floor('d')
+        df_sql.index.rename('date', inplace=True)
+
+    # Merge both
+    df = df.append(df_sql, sort=False)
 
     if df.empty:
         logging.warning("Transactions_FX - No txs found")
         return df
 
-    df['trade_date'] = pd.to_datetime(df['trade_date'])
-    df = df.set_index('trade_date')
-    # Ignore times in df to merge - keep only dates
-    df.index = df.index.floor('d')
-    df.index.rename('date', inplace=True)
     # The current fx needs no conversion, set to 1
     df[fx_rate()['fx_rate']] = 1
+
     # Need to get currencies into the df in order to normalize
     # let's load a list of currencies needed and merge
     list_of_fx = df.trade_currency.unique().tolist()
@@ -495,13 +511,11 @@ def positions_dynamic():
     def find_data(ticker):
         notes = None
         try:
+            if ticker == 'GBTC':
+                raise KeyError
             # Parse the cryptocompare data
             FX = current_app.settings['PORTFOLIO']['base_fx']
             price = multi_price["RAW"][ticker][FX]["PRICE"]
-            # GBTC should not be requested from multi_price as there is a
-            # coin with same ticker
-            if ticker == 'GBTC':
-                raise
             price = float(price)
             high = float(multi_price["RAW"][ticker][FX]["HIGHDAY"])
             low = float(multi_price["RAW"][ticker][FX]["LOWDAY"])
@@ -539,6 +553,8 @@ def positions_dynamic():
             # Couldn't find price with CryptoCompare. Let's try a different source
             # and populate data in the same format [aa = alphavantage]
             try:
+                if ticker == 'GBTC':
+                    raise KeyError
                 single_price = price_data_rt_full(ticker, 'aa')
                 if single_price is None:
                     raise KeyError
@@ -567,11 +583,11 @@ def positions_dynamic():
                         if price_class is None:
                             raise KeyError
                         price = float(
-                            price_class.df['close'].iloc[0]) * FX_RATE
-                        high = float(price_class.df['high'].iloc[0]) * FX_RATE
-                        low = float(price_class.df['low'].iloc[0]) * FX_RATE
+                            price_class.df['close'].iloc[0]) * fx_rate()['fx_rate']
+                        high = float(price_class.df['high'].iloc[0]) * fx_rate()['fx_rate']
+                        low = float(price_class.df['low'].iloc[0]) * fx_rate()['fx_rate']
                         volume = FX + "  " + "{0:,.0f}".format(
-                            float(price_class.df['volume'].iloc[0]) * FX_RATE)
+                            float(price_class.df['volume'].iloc[0]) * fx_rate()['fx_rate'])
                         mktcap = chg = 0
                         source = last_up_source = 'Historical Data'
                         last_update = price_class.df.index[0]
@@ -605,8 +621,8 @@ def positions_dynamic():
         (df['FIFO_unreal'] / df['trade_quantity'])
     # Allocations below 0.01% are marked as small
     # this is used to hide small and closed positions at html
-    df.loc[df.allocation <= 0.0001, 'small_pos'] = 'True'
-    df.loc[df.allocation >= 0.0001, 'small_pos'] = 'False'
+    df.loc[df.allocation <= 0, 'small_pos'] = 'True'
+    df.loc[df.allocation >= 0, 'small_pos'] = 'False'
 
     # Prepare for delivery. Change index, add total
     df.set_index('trade_asset_ticker', inplace=True)

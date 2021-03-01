@@ -10,11 +10,8 @@ from bs4 import BeautifulSoup
 from utils import pickle_it, load_config
 
 # Store TOR Status here to avoid having to check on all http requests
-from warden_pricing_engine import test_tor
+from connections import test_tor
 from warden_decorators import timing
-
-tor_test = test_tor()
-TOR = tor_test
 
 
 class Specter():

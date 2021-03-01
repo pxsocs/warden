@@ -6,12 +6,11 @@ from warden_modules import (warden_metadata, positions,
                             generatenav, specter_df,
                             regenerate_nav,
                             home_path)
+from pricing_engine.engine import fx_rate
 
 from forms import RegistrationForm, LoginForm, TradeForm
 
 from werkzeug.security import check_password_hash, generate_password_hash
-from warden_pricing_engine import (fx_rate, PROVIDER_LIST,
-                                   PriceData)
 from warden_decorators import timing
 from models import User, AccountInfo, Trades
 from utils import update_config, heatmap_generator, pickle_it, cleancsv
@@ -303,7 +302,7 @@ def update_fx():
     fx = request.args.get("code")
     current_app.settings['PORTFOLIO']['base_fx'] = fx
     update_config()
-    from warden_pricing_engine import fxsymbol as fxs
+    from utils import fxsymbol as fxs
     current_app.fx = fxs(fx, 'all')
     regenerate_nav()
     redir = request.args.get("redirect")
@@ -468,69 +467,6 @@ def portfolio_compare():
                            current_user=fx_rate())
 
 
-@ warden.route("/price_feed", methods=["GET"])
-@login_required
-def price_feed():
-    return_dict = {}
-    ticker = request.args.get("ticker")
-    ticker = "BTC" if not ticker else ticker
-    ticker = ticker.upper()
-    for pr in PROVIDER_LIST:
-        provider = PROVIDER_LIST[pr]
-        price_data = PriceData(ticker, provider)
-        data = {}
-        data['provider_info'] = {
-            'name': provider.name,
-            'errors': provider.errors,
-            'base_url': provider.base_url,
-            'doc_link': provider.doc_link,
-            'field_dict': provider.field_dict,
-            'globalURL': None
-        }
-        if provider.base_url is not None:
-            globalURL = (provider.base_url + "?" + provider.ticker_field + "=" +
-                         ticker + provider.url_args)
-            # Some APIs use the ticker without a ticker field i.e. xx.xx./AAPL&...
-            # in these cases, we pass the ticker field as empty
-            if provider.ticker_field == '':
-                if provider.url_args[0] == '&':
-                    provider.url_args = provider.url_args.replace('&', '?', 1)
-                globalURL = (provider.base_url + "/" + ticker + provider.url_args)
-            # Some URLs are in the form http://www.www.www/ticker_field/extra_fields?
-            if provider.replace_ticker is not None:
-                globalURL = provider.base_url.replace('ticker_field', ticker)
-            data['provider_info']['globalURL'] = globalURL
-
-        try:
-
-            data['price_data'] = {
-                'ticker': ticker,
-                'last_update': price_data.last_update.strftime('%m/%d/%Y'),
-                'first_update': price_data.first_update.strftime('%m/%d/%Y'),
-                'last_close': float(price_data.last_close),
-                'errors': price_data.errors
-            }
-        except Exception as e:
-            data['price_data'] = {
-                'price_data_errors': price_data.errors,
-                'error': str(e)
-            }
-
-        # Try to get realtime prices
-        data['realtime'] = {
-            'price': (price_data.realtime(PROVIDER_LIST[pr])),
-            'error': price_data.errors
-        }
-
-        return_dict[provider.name] = data
-
-    return render_template("warden/price_feed.html",
-                           title="Price Feed Check",
-                           current_app=current_app,
-                           current_user=fx_rate(),
-                           return_dict=return_dict)
-
-
 # Show debug info
 @ warden.route('/show_log')
 @login_required
@@ -672,6 +608,153 @@ def newtrade():
                            title="New Trade",
                            current_app=current_app,
                            current_user=fx_rate())
+
+
+@warden.route("/trade_transactions")
+@login_required
+# List of all transactions
+def trade_transactions():
+    transactions = Trades.query.filter_by(user_id=current_user.username)
+
+    if transactions.count() == 0:
+        return render_template("warden/empty_txs.html",
+                               title="Empty Transaction List",
+                               current_app=current_app,
+                               current_user=fx_rate())
+
+    return render_template("warden/trade_transactions.html",
+                           title="Transaction History",
+                           transactions=transactions,
+                           current_app=current_app,
+                           current_user=fx_rate())
+
+
+@warden.route("/edittransaction", methods=["GET", "POST"])
+@login_required
+# Edit transaction takes arguments {id} or {reference_id}
+def edittransaction():
+    form = TradeForm()
+    reference_id = request.args.get("reference_id")
+    id = request.args.get("id")
+    if reference_id:
+        trade = Trades.query.filter_by(
+            user_id=current_user.username).filter_by(
+                trade_reference_id=reference_id).first()
+        if trade.count() == 0:
+            abort(404, "Transaction not found")
+        id = trade.id
+
+    trade = Trades.query.filter_by(user_id=current_user.username).filter_by(
+        id=id).first()
+
+    if trade is None:
+        abort(404)
+
+    if trade.user_id != current_user.username:
+        abort(403)
+
+    acclist = AccountInfo.query.filter_by(user_id=current_user.username)
+    accounts = []
+    for item in acclist:
+        accounts.append((item.account_longname, item.account_longname))
+    form.trade_account.choices = accounts
+    form.submit.label.text = 'Edit Trade'
+
+    if request.method == "POST":
+
+        if form.validate_on_submit():
+            # Write changes to database
+            if form.trade_operation.data in ("B", "D"):
+                qop = 1
+            elif form.trade_operation.data in ("S", "W"):
+                qop = -1
+            else:
+                qop = 0
+
+            # Calculate Trade's cash value
+            cvfail = False
+
+            try:
+                p = float(cleancsv(form.trade_price.data))
+                q = float(cleancsv(form.trade_quantity.data))
+                f = float(cleancsv(form.trade_fees.data))
+                cv = qop * (q * p) + f
+
+            except ValueError:
+                flash(
+                    "Error on calculating cash amount \
+                for transaction - TRADE NOT edited. Try Again.",
+                    "danger",
+                )
+                cvfail = True
+                cv = 0
+
+            trade.trade_date = form.trade_date.data
+            trade.trade_asset_ticker = form.trade_asset_ticker.data
+            trade.trade_currency = form.trade_currency.data
+            trade.trade_operation = form.trade_operation.data
+            trade.trade_quantity = float(form.trade_quantity.data) * qop
+            trade.trade_price = float(cleancsv(form.trade_price.data))
+            trade.trade_fees = float(cleancsv(form.trade_fees.data))
+            trade.trade_account = form.trade_account.data
+            trade.trade_notes = form.trade_notes.data
+            trade.cash_value = cv
+
+            if not cvfail:
+                current_app.db.session.commit()
+                regenerate_nav()
+                flash("Trade edit successful", "success")
+
+            return redirect(url_for("warden.warden_page"))
+
+        flash("Trade edit failed. Something went wrong. Try Again.", "danger")
+
+    # Pre-populate the form
+    form.trade_date.data = trade.trade_date
+    form.trade_currency.data = trade.trade_currency
+    form.trade_asset_ticker.data = trade.trade_asset_ticker
+    form.trade_operation.data = trade.trade_operation
+    form.trade_quantity.data = abs(float(trade.trade_quantity))
+    form.trade_price.data = trade.trade_price
+    form.trade_fees.data = trade.trade_fees
+    form.trade_account.data = trade.trade_account
+    form.trade_notes.data = trade.trade_notes
+
+    return render_template(
+        "warden/edittransaction.html",
+        title="Edit Transaction",
+        form=form,
+        trade=trade,
+        id=id,
+        current_app=current_app,
+        current_user=fx_rate()
+
+    )
+
+
+@warden.route("/deltrade", methods=["GET"])
+@login_required
+# Deletes a trade - takes one argument: {id}
+def deltrade():
+    if request.method == "GET":
+        id = request.args.get("id")
+        trade = Trades.query.filter_by(id=id).first()
+
+        if trade is None:
+            flash(f"Trade id: {id} not found. Nothing done.", "warning")
+            return redirect(url_for("main.home"))
+
+        if trade.user_id != current_user.username:
+            abort(403)
+
+        Trades.query.filter_by(id=trade.id).delete()
+        current_app.db.session.commit()
+        regenerate_nav()
+        flash("Trade deleted", "danger")
+        return redirect(url_for("warden.warden_page"))
+
+    else:
+        return redirect(url_for("warden.warden_page"))
 
 
 # -------------------------------------------------

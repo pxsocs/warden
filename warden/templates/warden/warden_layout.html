@@ -129,15 +129,31 @@
                 </div>
 
                 <li>
-                    <a data-toggle="collapse" href="#collapse_settings" role="button" aria-expanded="true"
-                        aria-controls="collapse_transactions">
+                    <a data-toggle="collapse" href="#collapse_trades" role="button" aria-expanded="true"
+                        aria-controls="collapse_trades">
+                        <i class="fas fa-coins fa-lg"></i>
+                        &nbsp;&nbsp;&nbsp;&nbsp;Transactions
+                        <i class="fas fa-caret-down"></i></a>
+                </li>
+                <div class="collapse show" id="collapse_trades"">
+                    <div class=" list-group bg-transparent text-white">
+                    <a class="sidebar-subitem" href="{{ url_for('warden.trade_transactions') }}"><i
+                            class="fas fa-list fa-lg"></i>&nbsp;&nbsp;List Trades</a>
+                    <a class="sidebar-subitem" href="{{ url_for('warden.newtrade') }}"><i
+                            class="fas fa-plus-square fa-lg"></i>&nbsp;&nbsp;Include New Trade</a>
+                </div>
+
+
+                <li>
+                    <a data-toggle="collapse" href="#collapse_specter" role="button" aria-expanded="true"
+                        aria-controls="collapse_specter">
                         <i class="fas fa-users-cog fa-lg"></i>
                         &nbsp;&nbsp;&nbsp;&nbsp;Specter Server
                         <i class="fas fa-caret-down"></i></a>
                 </li>
 
 
-                <div class="collapse show" id="collapse_settings"">
+                <div class="collapse show" id="collapse_specter"">
                     <div class=" list-group bg-transparent text-white">
 
                     <a class="sidebar-subitem" href="/list_transactions"><i
@@ -173,6 +189,10 @@
             <a class="sidebar-subitem" href="/satoshi_quotes"><i
                     class="fas fa-quote-left fa-lg"></i>&nbsp;&nbsp;Quotable Satoshi</a>
 
+            <a class="sidebar-subitem" href="https://github.com/pxsocs/warden_terminal" target='_blank'><i
+                    class="fas fa-terminal fa-lg"></i>&nbsp;&nbsp;Warden Terminal&nbsp;
+                <i class="fas fa-external-link-alt text-muted"></i>
+            </a>
 
             <a class="sidebar-subitem" href="/logout"><i class="fas fa-sign-out-alt fa-lg"></i>&nbsp;&nbsp;
                 Logout</a>

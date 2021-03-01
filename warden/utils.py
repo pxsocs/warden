@@ -3,10 +3,8 @@ import configparser
 import os
 import json
 import pickle
-import re
 
 from flask import current_app
-from pathlib import Path
 
 from config import Config
 
@@ -14,6 +12,19 @@ import mhp as mrh
 
 # Method to create a new config file if not found
 # Copies data from warden.config_default.ini into a new config.ini
+
+
+# Returns the current application path
+def current_path():
+    application_path = os.path.dirname(os.path.abspath(__file__))
+    return (application_path)
+
+
+# Returns the home path
+def home_path():
+    from pathlib import Path
+    home = str(Path.home())
+    return (home)
 
 
 def create_config(config_file):
@@ -65,41 +76,28 @@ def pickle_it(action='load', filename=None, data=None):
             return ("saved")
 
 
-#  Tests
-
-def diags(e=None):
-    if e:
-        print("---------------------------------")
-        print("  An error occured ")
-        print("  Running a quick diagnostic")
-        print("---------------------------------")
-        print("  Error Message")
-        print("  " + str(e))
-        print("---------------------------------")
-    return_dict = {}
-    print("  Starting Tests...")
-    print("---------------------------------")
-
-    # Loading Config
-    print("  Loading config file...")
-    file = Config.config_file
-    config = configparser.ConfigParser()
-    config.read(file)
-
-    # Test Pricing Engine
-    print("---------------------------------")
-    print(" Starting Price Engine")
-    print("---------------------------------")
-    ticker = 'BTC'
-    print(f"Ticker: {ticker}")
-    print("Testing Realtime Pricing")
-    from warden_pricing_engine import price_data_rt, REALTIME_PROVIDER_PRIORITY
-    price = price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY, diags=True)
-    print(price)
-
-    print(json.dumps(return_dict, indent=4, sort_keys=True))
-
-    return(return_dict)
+def fxsymbol(fx, output='symbol'):
+    # Gets an FX 3 letter symbol and returns the HTML symbol
+    # Sample outputs are:
+    # "EUR": {
+    # "symbol": "",
+    # "name": "Euro",
+    # "symbol_native": "",
+    # "decimal_digits": 2,
+    # "rounding": 0,
+    # "code": "EUR",
+    # "name_plural": "euros"
+    from warden_modules import current_path
+    filename = os.path.join(current_path(), 'static/json_files/currency.json')
+    with open(filename) as fx_json:
+        fx_list = json.load(fx_json)
+    try:
+        out = fx_list[fx][output]
+    except Exception:
+        if output == 'all':
+            return (fx_list[fx])
+        out = fx
+    return (out)
 
 
 def heatmap_generator():

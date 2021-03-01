@@ -4,12 +4,10 @@ from warden_modules import (warden_metadata,
                             generatenav, specter_df,
                             current_path, regenerate_nav,
                             home_path)
+from connections import tor_request
 from flask_login import login_required, current_user
 from random import randrange
-from warden_pricing_engine import (test_tor, tor_request, price_data_rt,
-                                   fx_rate, price_data_fx, PROVIDER_LIST,
-                                   PriceData, asset_list_alphavantage,
-                                   asset_list_cc, asset_list_fp)
+from pricing_engine.engine import fx_rate
 from utils import heatmap_generator
 from models import Trades, AccountInfo, TickerInfo
 from datetime import datetime, timedelta
@@ -126,6 +124,7 @@ def metadata_json():
 @api.route("/testtor", methods=["GET"])
 @login_required
 def testtor():
+    from connections import test_tor
     return json.dumps(test_tor())
 
 #  API End point

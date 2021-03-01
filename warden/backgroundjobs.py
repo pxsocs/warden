@@ -7,7 +7,7 @@ from flask.globals import current_app
 from warden_modules import regenerate_nav
 from specter_importer import Specter
 from config import Config
-from warden_pricing_engine import fxsymbol
+from utils import fxsymbol
 from message_handler import Message
 
 
@@ -23,7 +23,7 @@ def background_specter_update():
     app.message_handler.add_message(message)
 
     # Test: CHECK TOR
-    from warden_pricing_engine import test_tor
+    from connections import test_tor
     app.tor = test_tor()
     if app.tor:
         message = Message(category='Background Job',

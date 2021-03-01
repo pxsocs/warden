@@ -1,27 +1,21 @@
 {% extends "warden/warden_layout.html" %}
 {% block content %}
 
-<div class="container">
+<div class="container" style='padding-top: 50px;'>
   <div class="row">
     <div class="col-sm-8">
-      <h4>
-        Your portfolio does not appear to have any positions yet</br>
-      </h4><br>
-      {% if current_app.downloading%}
-      <p>Still Downloading in Background. Please refresh in a few minutes.</p>
-      <p>You can check the progress on the <a href='/show_broadcast'>Message Monitor</a></p>
-      {%else%}
-      <h5>Check Specter Authentication to make sure credentials are working.</h5>
-      <p>You can check the status on the <a href='/show_broadcast'>Message Monitor</a></p>
-      {%endif%}
-      <br>
-
-      <div>
-        <div class="col-sm-4">
-          <img class="mx-auto d-block" src="static/images/empty.png" width="75" height="125"></img>
-        </div>
-      </div>
+      <h4 class='text-info'>
+        No Transactions Found
+      </h4>
+      <h5>Maybe you are new here?</br>
+        You can start by manually including some <a href="{{url_for('warden.newtrade')}}">transactions</a>.</h5>
     </div>
 
+    <div class="col-sm-4">
+      <img class="mx-auto d-block" src="static/images/empty.png" width="75" height="125"></img>
+    </div>
+  </div>
+</div>
 
-    {% endblock content %}
+
+{% endblock content %}

@@ -5,161 +5,6 @@
 # associate with the standardized field names for the dataframe
 # Standardized field names:
 # open, high, low, close, volume
-import json
-import os
-import urllib
-import configparser
-from datetime import datetime
-
-from warden_decorators import MWT
-
-from flask import current_app
-
-from time import time
-
-import pandas as pd
-import requests
-
-
-def load_config():
-    # Load Config
-    from config import Config
-    config_file = Config.config_file
-    CONFIG = configparser.ConfigParser()
-    CONFIG.read(config_file)
-    return (CONFIG)
-
-
-# Returns the current application path
-def current_path():
-    application_path = os.path.dirname(os.path.abspath(__file__))
-    return (application_path)
-
-
-# Returns the home path
-def home_path():
-    from pathlib import Path
-    home = str(Path.home())
-    return (home)
-
-
-@MWT(timeout=1)
-def test_tor():
-    url = "http://httpbin.org/ip"
-    response = {}
-    session = requests.session()
-
-    try:
-        time_before = time()  # Save Ping time to compare
-        r = session.get(url)
-        time_after = time()
-        pre_proxy_ping = time_after - time_before
-        pre_proxy = r.json()
-    except Exception as e:
-        pre_proxy = pre_proxy_ping = "Connection Error: " + str(e)
-
-    PORTS = ['9050', '9150']
-
-    # Activate TOR proxies
-    for PORT in PORTS:
-        session.proxies = {
-            "http": "socks5h://0.0.0.0:" + PORT,
-            "https": "socks5h://0.0.0.0:" + PORT,
-        }
-        try:
-            failed = False
-            time_before = time()  # Save Ping time to compare
-            r = session.get(url)
-            time_after = time()
-            post_proxy_ping = time_after - time_before
-            post_proxy_difference = post_proxy_ping / pre_proxy_ping
-            post_proxy = r.json()
-
-            if pre_proxy["origin"] != post_proxy["origin"]:
-                response = {
-                    "pre_proxy": pre_proxy,
-                    "post_proxy": post_proxy,
-                    "post_proxy_ping": "{0:.2f} seconds".format(post_proxy_ping),
-                    "pre_proxy_ping": "{0:.2f} seconds".format(pre_proxy_ping),
-                    "difference": "{0:.2f}".format(post_proxy_difference),
-                    "status": True,
-                    "port": PORT,
-                    "url": url,
-                }
-                session.close()
-                return response
-        except Exception as e:
-            failed = True
-            post_proxy_ping = post_proxy = "Failed checking TOR status. Error: " + str(
-                e)
-
-        if not failed:
-            break
-
-    response = {
-        "pre_proxy": pre_proxy,
-        "post_proxy": post_proxy,
-        "post_proxy_ping": post_proxy_ping,
-        "pre_proxy_ping": pre_proxy_ping,
-        "difference": "-",
-        "status": False,
-        "port": "failed",
-        "url": url
-    }
-    session.close()
-    return response
-
-
-# Store TOR Status here to avoid having to check on all http requests
-tor_test = test_tor()
-TOR = tor_test
-
-
-@MWT(timeout=5)
-def tor_request(url, tor_only=True, method="get", payload=None):
-    # Tor requests takes arguments:
-    # url:       url to get or post
-    # tor_only:  request will only be executed if tor is available
-    # method:    'get or' 'post'
-    global TOR
-    tor_check = TOR
-    url = urllib.parse.urlparse(url).geturl()
-    session = requests.session()
-    if tor_check["status"] is True:
-        try:
-            # Activate TOR proxies
-            session.proxies = {
-                "http": "socks5h://0.0.0.0:" + TOR['port'],
-                "https": "socks5h://0.0.0.0:" + TOR['port'],
-            }
-
-            if method == "get":
-                request = session.get(url, timeout=60)
-            if method == "post":
-                request = session.post(url, timeout=60, data=payload)
-
-        except (
-                requests.exceptions.ConnectionError,
-                requests.exceptions.ReadTimeout,
-        ):
-            session.close()
-            return "ConnectionError"
-    else:
-        if tor_only:
-            return "Tor not available"
-        try:
-            if method == "get":
-                request = requests.get(url, timeout=30)
-            if method == "post":
-                request = requests.post(url, timeout=30, data=payload)
-
-        except requests.exceptions.ConnectionError:
-            session.close()
-            return "ConnectionError"
-
-    session.close()
-    return request
-
 
 # Generic Requests will try each of these before failing
 REALTIME_PROVIDER_PRIORITY = [
@@ -593,14 +438,7 @@ config = load_config()
 
 # Loop through all providers to get the first non-empty df
 def price_data(ticker):
-    GBTC_PROVIDER_PRIORITY = [
-        'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock', 'bitmex'
-    ]
-    if ticker == 'GBTC':
-        provider_list = GBTC_PROVIDER_PRIORITY
-    else:
-        provider_list = HISTORICAL_PROVIDER_PRIORITY
-
+    provider_list = HISTORICAL_PROVIDER_PRIORITY
     for provider in provider_list:
         price_data = PriceData(ticker, PROVIDER_LIST[provider])
         if price_data.df is not None:
@@ -612,13 +450,8 @@ def price_data(ticker):
 def price_data_fx(ticker, diags=False):
     prices = None
     FX = fx_rate()['base']
-    GBTC_PROVIDER_PRIORITY = [
-        'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock', 'bitmex'
-    ]
-    if ticker == 'GBTC':
-        provider_list = GBTC_PROVIDER_PRIORITY
-    else:
-        provider_list = HISTORICAL_PROVIDER_PRIORITY
+
+    provider_list = HISTORICAL_PROVIDER_PRIORITY
 
     for provider in provider_list:
         price_data = PriceData(ticker, PROVIDER_LIST[provider], diags)
@@ -667,7 +500,6 @@ def price_grabber_rt_full(ticker, priority_list=['cc', 'aa', 'fp']):
     return None
 
 
-@MWT(timeout=300)
 def price_data_rt_full(ticker, provider):
     # Function to get a complete data set for realtime prices
     # Loop through the providers to get the following info:
@@ -685,7 +517,8 @@ def price_data_rt_full(ticker, provider):
     # separated so it can be memoized for a period of time (this price will
     # not refresh as frequently)
     # default: timeout=30
-    from warden_modules import (FX, FX_RATE)
+    FX = load_config()['PORTFOLIO']['base_fx']
+    FX_RATE = fx_rate()['fx_rate']
     if provider == 'cc':
         multi_price = multiple_price_grab(ticker, 'USD,' + FX)
         try:
@@ -726,30 +559,20 @@ def price_data_rt_full(ticker, provider):
             source = 'Alphavantage'
             notes = None
 
-            # Start Notes methods for specific assets. For example, for
-            # GBTC we report the premium to BTC
-            if ticker == 'GBTC':
-                fairvalue, premium = GBTC_premium(
-                    float(data['Global Quote']['05. price']))
-                fairvalue = "{0:,.2f}".format(fairvalue)
-                premium = "{0:,.2f}".format(premium * 100)
-                notes = "Fair Value: " + fairvalue + "<br>Premium: " + premium + "%"
-            return (price, last_update, high, low, chg, mktcap, last_up_source,
-                    volume, source, notes)
         except Exception:
             return None
 
     if provider == 'fp':
         try:
-            globalURL = 'https://financialmodelingprep.com/api/v3/stock/real-time-price/'
-            globalURL += ticker
+            globalURL = 'https://financialmodelingprep.com/api/v3/quote-short/'
+            globalURL += ticker + '?apikey=' + load_config()['API']['fmp']
             data = tor_request(globalURL).json()
-            price = float(data['price']) * FX_RATE
+            price = float(data[0]['price']) * FX_RATE
             high = '-'
             low = '-'
             chg = 0
             mktcap = '-'
-            volume = '-'
+            volume = float(data[0]['volume']) * FX_RATE
             last_up_source = '-'
             last_update = '-'
             source = 'FP Modeling API'
@@ -839,7 +662,7 @@ def get_price_ondate(ticker, date):
         price_class = price_data(ticker)
         price_ondate = price_class.price_ondate(date)
         return (price_ondate)
-    except Exception as e:
+    except Exception:
         return (0)
 
 
@@ -863,106 +686,6 @@ def fx_price_ondate(base, cross, date):
         return (conversion)
     except Exception:
         return (1)
-
-
-# THE BELOW METHODS return lists of avaiable tickers and names
-# under each of the providers.
-# See routes /assetlist?term=<keyword>
-
-def asset_list_alphavantage(term=None):
-    import csv
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    master_list = []
-    if term is None:
-        term = ""
-    # Alphavantage Currency List - CSV
-    filename = os.path.join(basedir, 'static/csv_files/physical_currency_list.csv')
-    with open(filename, newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            if term.upper() in row[0].upper() or term in row[1].upper():
-                master_list.append(
-                    {
-                        'symbol': row[0],
-                        'name': row[1],
-                        'provider': 'aa_fx'
-                    }
-                )
-    # Alphavantage Digital Currency list
-    filename = os.path.join(basedir, 'static/csv_files/digital_currency_list.csv')
-    with open(filename, newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            if term.upper() in row[0].upper() or term.upper() in row[1].upper():
-                master_list.append(
-                    {
-                        'symbol': row[0],
-                        'name': row[1],
-                        'provider': 'aa_digital'
-                    }
-                )
-    # Alphavantage Stock Search EndPoint
-    try:
-        url = 'https://www.alphavantage.co/query?function=SYMBOL_SEARCH'
-        url += '&keywords=' + term
-        url += '&apikey=' + config['API']['alphavantage']
-        result = requests.get(url).json()
-        result = result['bestMatches']
-        for element in result:
-            master_list.append(
-                {
-                    'symbol': element['1. symbol'],
-                    'name': element['2. name'],
-                    'provider': 'aa_stock',
-                    'notes': element['3. type'] + ' ' + element['4. region'],
-                    'fx': element['8. currency']
-                }
-            )
-    except Exception:
-        pass
-    return (master_list)
-
-
-def asset_list_cc(term=None):
-    master_list = []
-    try:
-        url = 'https://min-api.cryptocompare.com/data/all/coinlist'
-        result = requests.get(url).json()
-        result = result['Data']
-        for key, value in result.items():
-            if term.upper() in value['Symbol'].upper() or term.upper() in value['FullName'].upper().upper():
-                master_list.append(
-                    {
-                        'symbol': value['Symbol'],
-                        'name': value['FullName'],
-                        'provider': 'cc_digital'
-                    }
-                )
-    except Exception:
-        pass
-
-    return (master_list)
-
-
-def asset_list_fp(term=None):
-    master_list = []
-    try:
-        url = f'https://financialmodelingprep.com/api/v3/search?query={term}&limit=10&apikey=d44fb36a0c62da8ff9b1b40b47802000'
-        result = requests.get(url).json()
-        for item in result:
-            master_list.append(
-                {
-                    'symbol': item['symbol'],
-                    'name': item['name'],
-                    'provider': 'fp_stock',
-                    'notes': item['exchangeShortName'],
-                    'fx': item['currency']
-                }
-            )
-    except Exception:
-        pass
-
-    return (master_list)
 
 
 # _____________________________________________
