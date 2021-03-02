@@ -485,7 +485,7 @@ def GBTC_premium(price):
     # Calculates the current GBTC premium in percentage points
     # to BTC (see https://grayscale.co/bitcoin-trust/)
     SHARES = 0.00095812  # as of 8/1/2020
-    fairvalue = price_data_rt("BTC") * SHARES
+    fairvalue = realtime_price("BTC")['price'] * SHARES
     premium = (price / fairvalue) - 1
     return fairvalue, premium
 

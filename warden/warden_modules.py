@@ -12,8 +12,12 @@ from flask import flash, current_app
 from flask_login import current_user
 from pathlib import Path
 from specter_importer import Specter
-from pricing_engine.engine import fx_rate
+from pricing_engine.engine import (fx_rate,
+                                   price_ondate, fx_price_ondate, realtime_price,
+                                   historical_prices)
+from pricing_engine.cryptocompare import multiple_price_grab
 from warden_decorators import MWT, timing
+from utils import load_config
 
 
 # Returns the current application path
@@ -189,8 +193,8 @@ def specter_df(save_files=False, sort_by='trade_date'):
         get_date = datetime.strptime(date_input, "%Y-%m-%d")
         # Create price object
         try:
-            fx = fx_price_ondate("USD", current_app.fx['code'], get_date)
-            price = (get_price_ondate("BTC", get_date).close) * fx
+            fx = fx_price_ondate('USD', current_app.fx['code'], get_date)
+            price = price_ondate("BTC", get_date)['close'] * fx
         except Exception as e:
             logging.error("Not Found. Error: " + str(e))
             price = 0
@@ -469,7 +473,7 @@ def positions():
 
 
 def single_price(ticker):
-    return (price_data_rt(ticker), datetime.now())
+    return (realtime_price(ticker)['price'], datetime.now())
 
 
 @ MWT(timeout=200)
@@ -482,118 +486,96 @@ def list_tickers():
 
 @ MWT(timeout=2)
 def positions_dynamic():
+    fx = load_config()['PORTFOLIO']['base_fx']
     # This method is the realtime updater for the front page. It gets the
     # position information from positions above and returns a dataframe
     # with all the realtime pricing and positions data - this method
     # should be called from an AJAX request at the front page in order
     # to reduce loading time.
     df = positions()
-    if df.empty:
-        return(df)
     # Drop all currencies from table
     df = df[df['is_currency'] == False]
     # check if trade_asset_ticker is set as index. If so, move to column
-    # This happens on some memoized functions - need to understand why
-    # The below is a temporary fix
     df = df.reset_index()
     if df is None:
         return None, None
     tickers_string = ",".join(list_tickers())
     # Let's try to get as many prices as possible into the df with a
     # single request - first get all the prices in current currency and USD
-    multi_price = multiple_price_grab(tickers_string,
-                                      'USD,' + fx_rate()['base'])
-
-    # PARSER Function to find the ticker price inside the matrix. First part
+    multi_price = multiple_price_grab(tickers_string, 'USD,' + fx)
+    # PARSER Function to fing the ticker price inside the matrix. First part
     # looks into the cryptocompare matrix. In the exception, if price is not
     # found, it sends a request to other providers
 
     def find_data(ticker):
         notes = None
+        last_up_source = None
+        source = None
         try:
-            if ticker == 'GBTC':
-                raise KeyError
             # Parse the cryptocompare data
-            FX = current_app.settings['PORTFOLIO']['base_fx']
-            price = multi_price["RAW"][ticker][FX]["PRICE"]
+            price = multi_price["RAW"][ticker][fx]["PRICE"]
+            # GBTC should not be requested from multi_price as there is a
+            # coin with same ticker
+            if ticker in ['GBTC', 'MSTR', 'TSLA', 'SQ']:
+                raise KeyError
             price = float(price)
-            high = float(multi_price["RAW"][ticker][FX]["HIGHDAY"])
-            low = float(multi_price["RAW"][ticker][FX]["LOWDAY"])
-            chg = multi_price["RAW"][ticker][FX]["CHANGEPCT24HOUR"]
-            mktcap = multi_price["DISPLAY"][ticker][FX]["MKTCAP"]
-            volume = multi_price["DISPLAY"][ticker][FX]["VOLUME24HOURTO"]
-            last_up_source = multi_price["RAW"][ticker][FX]["LASTUPDATE"]
-            source = multi_price["DISPLAY"][ticker][FX]["LASTMARKET"]
+            high = float(multi_price["RAW"][ticker][
+                fx]["HIGHDAY"])
+            low = float(multi_price["RAW"][ticker][
+                fx]["LOWDAY"])
+            chg = multi_price["RAW"][ticker][fx]["CHANGEPCT24HOUR"]
+            mktcap = multi_price["DISPLAY"][ticker][fx]["MKTCAP"]
+            volume = multi_price["DISPLAY"][ticker][fx]["VOLUME24HOURTO"]
+            last_up_source = multi_price["RAW"][ticker][fx]["LASTUPDATE"]
+            source = multi_price["DISPLAY"][ticker][fx]["LASTMARKET"]
             last_update = datetime.now()
-
-            # PUMP NGU Checker
-            up_alert = 5
-            down_alert = -5
-            try:
-                if ticker.lower() == 'btc' and chg < down_alert:
-                    from message_handler import Message
-                    current_app.message_handler.clean_category('NGU Tech')
-                    message = Message(category='NGU Tech',
-                                      message_txt='BTC Price ↓',
-                                      notes=f"<span class='text-danger'>BTC is dropping {'{:.2f}'.format(chg)}%. Time to stack some sats.</span>"
-                                      )
-                    current_app.message_handler.add_message(message)
-                if ticker.lower() == 'btc' and chg > up_alert:
-                    from message_handler import Message
-                    current_app.message_handler.clean_category('NGU Tech')
-                    message = Message(category='NGU Tech',
-                                      message_txt='BTC Price ↑ 🚀',
-                                      notes=f"<span class='text-success'>BTC is up {'{:.2f}'.format(chg)}%. Pump it.</span>"
-                                      )
-                    current_app.message_handler.add_message(message)
-            except Exception:
-                pass
-
         except (KeyError, TypeError):
             # Couldn't find price with CryptoCompare. Let's try a different source
             # and populate data in the same format [aa = alphavantage]
             try:
-                if ticker == 'GBTC':
-                    raise KeyError
-                single_price = price_data_rt_full(ticker, 'aa')
+                single_price = realtime_price(ticker)
                 if single_price is None:
                     raise KeyError
-                price = single_price[0]
-                high = single_price[2]
-                low = single_price[3]
-                (_, last_update, _, _, chg, mktcap, last_up_source, volume,
-                 source, notes) = single_price
-            except Exception:
-                # Let's try a final time using Financial Modeling Prep API
+                price = single_price['price']
+                last_up_source = last_update = single_price['time']
+
                 try:
-                    single_price = price_data_rt_full(ticker, 'fp')
-                    if single_price is None:
-                        raise KeyError
-                    price = single_price[0]
-                    high = single_price[2]
-                    low = single_price[3]
-                    (_, last_update, _, _, chg, mktcap, last_up_source, volume,
-                     source, notes) = single_price
+                    chg = single_price['chg']
                 except Exception:
-                    try:
-                        # Finally, if realtime price is unavailable, find the latest
-                        # saved value in historical prices
-                        # Create a price class
-                        price_class = price_data(ticker)
-                        if price_class is None:
-                            raise KeyError
-                        price = float(
-                            price_class.df['close'].iloc[0]) * fx_rate()['fx_rate']
-                        high = float(price_class.df['high'].iloc[0]) * fx_rate()['fx_rate']
-                        low = float(price_class.df['low'].iloc[0]) * fx_rate()['fx_rate']
-                        volume = FX + "  " + "{0:,.0f}".format(
-                            float(price_class.df['volume'].iloc[0]) * fx_rate()['fx_rate'])
-                        mktcap = chg = 0
-                        source = last_up_source = 'Historical Data'
-                        last_update = price_class.df.index[0]
-                    except Exception:
-                        price = high = low = chg = mktcap = last_up_source = last_update = volume = 0
-                        source = '-'
+                    chg = 0
+
+                try:
+                    source = last_up_source = single_price['source']
+                except Exception:
+                    source = last_up_source = '-'
+
+                try:
+                    high = single_price['high']
+                    low = single_price['low']
+                    mktcap = volume = '-'
+                except Exception:
+                    mktcap = high = low = volume = '-'
+
+            except Exception:
+                try:
+                    # Finally, if realtime price is unavailable, find the latest
+                    # saved value in historical prices
+                    # Create a price class
+                    price_class = historical_prices(ticker, fx)
+                    if price_class is None:
+                        raise KeyError
+                    price = float(price_class.df['close_converted'].iloc[0])
+                    high = '-'
+                    low = '-'
+                    volume = '-'
+                    mktcap = chg = 0
+                    source = last_up_source = 'Historical Data'
+                    last_update = price_class.df.index[0]
+                except Exception as e:
+                    price = high = low = chg = mktcap = last_up_source = last_update = volume = 0
+                    source = '-'
+                    logging.error(f"There was an error getting the price for {ticker}." +
+                                  f"Error: {e}")
         return price, last_update, high, low, chg, mktcap, last_up_source, volume, source, notes
 
     df = apply_and_concat(df, 'trade_asset_ticker', find_data, [
@@ -602,8 +584,9 @@ def positions_dynamic():
     ])
     # Now create additional columns with calculations
     df['position_fx'] = df['price'] * df['trade_quantity']
+
     df['allocation'] = df['position_fx'] / df['position_fx'].sum()
-    df['change_fx'] = df['position_fx'] * df['24h_change'] / 100
+    df['change_fx'] = df['position_fx'] * df['24h_change'].astype(float) / 100
     # Pnl and Cost calculations
     df['breakeven'] = df['cash_value_fx'] / df['trade_quantity']
     df['pnl_gross'] = df['position_fx'] - df['cash_value_fx']
@@ -664,6 +647,7 @@ def positions_dynamic():
             tmp_dict['y'] = round(df.loc[ticker, 'allocation'] * 100, 2)
             tmp_dict['name'] = ticker
             pie_data.append(tmp_dict)
+
     return (df, pie_data)
 
 

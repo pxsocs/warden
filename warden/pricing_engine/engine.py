@@ -131,7 +131,7 @@ realtime_mapping = {
 }
 
 
-def realtime_price(ticker, fx='USD', source=None):
+def realtime_price(ticker, fx='USD', source=None, parsed=True):
     '''
     Gets realtime price from first provider available and returns
     result = {
@@ -167,18 +167,18 @@ def realtime_price(ticker, fx='USD', source=None):
     # Gets from each source
     for src in source_list:
         if src == 'alphavantage_currency':
-            results = aa_realtime(ticker, fx, 'CURRENCY_EXCHANGE_RATE')
+            results = aa_realtime(ticker, fx, 'CURRENCY_EXCHANGE_RATE', parsed=parsed)
         if src == 'alphavantage_global':
-            results = aa_realtime(ticker, fx, 'GLOBAL_QUOTE')
+            results = aa_realtime(ticker, fx, 'GLOBAL_QUOTE', parsed=parsed)
         if src == 'cryptocompare':
-            results = cc_realtime(ticker, fx)
+            results = cc_realtime(ticker, fx, parsed=parsed)
         if src == 'fmp':
-            results = fmp_realtime(ticker)
+            results = fmp_realtime(ticker, parsed=parsed)
         if src == 'twelvedata':
-            results = td_realtime(ticker)
+            results = td_realtime(ticker, parsed=parsed)
         # Check if data is valid
         if results is not None:
-            if 'price' in results:
+            if parsed and 'price' in results:
                 if results['price'] is not None:
                     return (results)
 
@@ -189,7 +189,7 @@ def GBTC_premium(price):
     # Calculates the current GBTC premium in percentage points
     # to BTC (see https://grayscale.co/bitcoin-trust/)
     SHARES = 0.00095812  # as of 8/1/2020
-    fairvalue = price_data_rt("BTC") * SHARES
+    fairvalue = realtime_price("BTC")['price'] * SHARES
     premium = (price / fairvalue) - 1
     return fairvalue, premium
 
@@ -200,9 +200,6 @@ def fx_rate():
 
     # This grabs the realtime current currency conversion against USD
     try:
-        if fx == 'USD':
-            raise Exception('USD does not need conversion to USD')
-        # get fx rate
         rate = {}
         rate['base'] = fx
         rate['symbol'] = fxsymbol(fx)
@@ -210,12 +207,32 @@ def fx_rate():
         rate['name_plural'] = fxsymbol(fx, 'name_plural')
         rate['cross'] = "USD" + " / " + fx
         try:
-            fxrate = realtime_price(fx, fx='USD', source='alphavantage_currency')
-            rate['fx_rate'] = 1 / (float()))
+            fxrate = realtime_price(fx, fx='USD', source='alphavantage_currency')['price']
+            rate['fx_rate'] = 1 / (float(fxrate['price']))
         except Exception:
-            rate['fx_rate']=1
+            rate['fx_rate'] = 1
     except Exception as e:
-        rate={}
-        rate['error']=("Error: " + str(e))
-        rate['fx_rate']=1
+        rate = {}
+        rate['error'] = ("Error: " + str(e))
+        rate['fx_rate'] = 1
     return (rate)
+
+
+def fx_price_ondate(base, cross, date):
+    # Gets price conversion on date between 2 currencies
+    # on a specific date
+    try:
+        if base == 'USD':
+            price_base = 1
+        else:
+            base_class = price_ondate(base, date)
+            price_base = base_class['close']
+        if cross == 'USD':
+            price_cross = 1
+        else:
+            cross_class = price_ondate(cross, date)
+            price_cross = cross_class['close']
+        conversion = float(price_base) / float(price_cross)
+        return (conversion)
+    except Exception:
+        return (1)

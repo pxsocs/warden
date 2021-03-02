@@ -133,3 +133,23 @@ def asset_list(term=None):
         pass
 
     return (master_list)
+
+
+# For Tables that need multiple prices at the same time, it's quicker to get
+# a single price request
+# This will attempt to get all prices from cryptocompare api and return a single df
+# If a price for a security is not found, other rt providers will be used.
+def multiple_price_grab(tickers, fx):
+    # tickers should be in comma sep string format like "BTC,ETH,LTC"
+    baseURL = \
+        "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="\
+        + tickers + "&tsyms=" + fx + "&&api_key=" + api
+    try:
+        request = tor_request(baseURL)
+    except requests.exceptions.ConnectionError:
+        return ("ConnectionError")
+    try:
+        data = request.json()
+    except AttributeError:
+        data = "ConnectionError"
+    return (data)

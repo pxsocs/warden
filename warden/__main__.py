@@ -1,5 +1,3 @@
-from config import Config
-from utils import (create_config, diags, runningInDocker)
 from yaspin import yaspin
 import logging
 import subprocess
@@ -20,8 +18,6 @@ from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
-from ansi_management import (warning, success, error, info, clear_screen, bold,
-                             muted, yellow, blue)
 
 
 # Make sure current libraries are found in path
@@ -31,6 +27,7 @@ sys.path.append(current_path)
 
 def create_app():
     # Config of Logging
+    from config import Config
     formatter = "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
     logging.basicConfig(
         handlers=[RotatingFileHandler(
@@ -49,11 +46,14 @@ def create_app():
 
 
 def create_tor():
+    from ansi_management import (warning, success, error, info, clear_screen, bold,
+                                 muted, yellow, blue)
+    from config import Config
     # ----------------------------------------------
     #                 Test Tor
     # ----------------------------------------------
     with yaspin(text="Testing Tor", color="cyan") as spinner:
-        from warden_pricing_engine import test_tor
+        from connections import test_tor
         tor = test_tor()
         if tor['status']:
             logging.info(success("Tor Connected"))
@@ -91,6 +91,10 @@ def create_tor():
 # ------------------------------------
 # Application Factory
 def init_app(app):
+    from ansi_management import (warning, success, error, info, clear_screen, bold,
+                                 muted, yellow, blue)
+    from utils import (create_config, runningInDocker)
+    from config import Config
     warnings.filterwarnings('ignore')
     # Create the empty Mail instance
     # mail = Mail()
@@ -271,7 +275,10 @@ def get_local_ip():
     return (local_ip_address)
 
 
-def main(debug=False):
+def main(debug=False, reloader=False):
+    from utils import (create_config, runningInDocker)
+    from ansi_management import (warning, success, error, info, clear_screen, bold,
+                                 muted, yellow, blue)
 
     # Make sure current libraries are found in path
     current_path = os.path.abspath(os.path.dirname(__file__))
@@ -300,6 +307,7 @@ def main(debug=False):
         print(yellow("  [i] Please Wait... Shutting down."))
         # Delete Debug File
         try:
+            from config import Config
             os.remove(Config.debug_file)
         except FileNotFoundError:
             pass
@@ -372,7 +380,7 @@ def main(debug=False):
             threaded=True,
             host=app.settings['SERVER'].get('host'),
             port=app.settings['SERVER'].getint('port'),
-            use_reloader=False)
+            use_reloader=reloader)
 
     if app.settings['SERVER'].getboolean('onion_server'):
         from tor import stop_hidden_services
@@ -381,9 +389,15 @@ def main(debug=False):
 
 if __name__ == '__main__':
     # Run Diagnostic Function
+    from ansi_management import yellow
     debug = False
+    reloader = False
     if "debug" in sys.argv:
         print("")
         print(yellow("  [i] DEBUG MODE: ON"))
         debug = True
-    main(debug=debug)
+    if "reloader" in sys.argv:
+        print("")
+        print(yellow("  [i] RELOAD MODE: ON"))
+        reloader = True
+    main(debug=debug, reloader=reloader)

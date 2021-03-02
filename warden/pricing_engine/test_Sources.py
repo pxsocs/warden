@@ -4,7 +4,8 @@
 import unittest
 from utils import load_config
 from pricing_engine.engine import (apikey, realtime_price,
-                                   historical_prices, price_ondate)
+                                   historical_prices, price_ondate,
+                                   fx_price_ondate)
 from pricing_engine.alphavantage import realtime, historical
 from pricing_engine.cryptocompare import realtime as cc_realtime
 from pricing_engine.cryptocompare import historical as cc_historical
@@ -24,7 +25,7 @@ class TestPricing(unittest.TestCase):
     def test_realtime_parsed(self):
         ticker_list = ['BTC', 'GBTC', 'ETH', 'IBM', 'MSTR', 'TSLA']
         for ticker in ticker_list:
-            results = realtime_price(ticker)
+            results = realtime_price(ticker)['price']
             self.assertIsNotNone(results, f'Could not get realtime price for {ticker}')
 
     # Test price_ondate
@@ -35,7 +36,15 @@ class TestPricing(unittest.TestCase):
             for ticker in tickers:
                 price_ondate(ticker, date)
 
-    # Test Historical PRICES
+    def test_fx_price_ondate(self):
+        date = '1/1/20'
+        result = fx_price_ondate('USD', 'BRL', date)
+        print(result)
+        result = fx_price_ondate('EUR', 'BRL', date)
+        print(result)
+        result = fx_price_ondate('BRL', 'USD', date)
+        print(result)
+
     def test_historical_parsed(self):
         # Sources directly
 

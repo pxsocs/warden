@@ -99,10 +99,14 @@ def realtime(ticker, fx='USD', function='CURRENCY_EXCHANGE_RATE', parsed=True):
                     'symbol': ticker,
                     'name': None,
                     'price': data['Global Quote']['05. price'],
+                    'high': data['Global Quote']['03. high'],
+                    'open': data['Global Quote']['02. open'],
+                    'chg': data['Global Quote']['10. change percent'],
+                    'volume': data['Global Quote']['06. volume'],
                     'fx': 'USD',
                     'time': data['Global Quote']['07. latest trading day'],
                     'timezone': 'US/Eastern',
-                    'source': 'alphavantage'
+                    'source': 'Alphavantage Stocks'
                 }
                 return result
         except Exception:

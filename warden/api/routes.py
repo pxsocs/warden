@@ -1,13 +1,14 @@
 from flask import (Blueprint, flash,  request, current_app,  jsonify, Response)
 from warden_modules import (warden_metadata,
-                            positions_dynamic, get_price_ondate,
+                            positions_dynamic,
                             generatenav, specter_df,
                             current_path, regenerate_nav,
                             home_path)
 from connections import tor_request
+from pricing_engine.engine import price_ondate
 from flask_login import login_required, current_user
 from random import randrange
-from pricing_engine.engine import fx_rate
+from pricing_engine.engine import fx_rate, realtime_price
 from utils import heatmap_generator
 from models import Trades, AccountInfo, TickerInfo
 from datetime import datetime, timedelta
@@ -138,13 +139,13 @@ def positions_json():
     # This serves the main page
     try:
         dfdyn, piedata = positions_dynamic()
-        btc_price = price_data_rt("BTC") * fx_rate()['fx_rate']
+        btc_price = realtime_price("BTC")['price'] * fx_rate()['fx_rate']
         dfdyn = dfdyn.to_dict(orient='index')
     except Exception:
         dfdyn = piedata = None
         btc_price = 0
 
-    btc = price_data_rt("BTC")
+    btc = realtime_price("BTC")
     if not btc:
         btc = 0
 
@@ -163,13 +164,13 @@ def positions_json():
 @ api.route("/realtime_btc", methods=["GET"])
 @login_required
 def realtime_btc():
-    try:
-        fx_details = fx_rate()
-        fx_r = {'cross': fx_details['symbol'], 'fx_rate': fx_details['fx_rate']}
-        fx_r['btc_usd'] = price_data_rt("BTC")
-        fx_r['btc_fx'] = fx_r['btc_usd'] * fx_r['fx_rate']
-    except Exception:
-        fx_r = 0
+    # try:
+    fx_details = fx_rate()
+    fx_r = {'cross': fx_details['symbol'], 'fx_rate': fx_details['fx_rate']}
+    fx_r['btc_usd'] = realtime_price("BTC")['price']
+    fx_r['btc_fx'] = fx_r['btc_usd'] * fx_r['fx_rate']
+    # except Exception:
+    #     fx_r = 0
     return json.dumps(fx_r)
 
 
@@ -358,7 +359,7 @@ def getprice_ondate():
         get_date = datetime.strptime(date_input, "%Y-%m-%d")
         # Create price object
         try:
-            price = str(get_price_ondate(ticker, get_date).close)
+            price = str(price_ondate(ticker, get_date).close)
         except Exception as e:
             price = "Not Found. Error: " + str(e)
         return price
