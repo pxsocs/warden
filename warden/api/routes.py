@@ -5,7 +5,7 @@ from warden_modules import (warden_metadata,
                             current_path, regenerate_nav,
                             home_path)
 from connections import tor_request
-from pricing_engine.engine import price_ondate
+from pricing_engine.engine import price_ondate, historical_prices
 from flask_login import login_required, current_user
 from random import randrange
 from pricing_engine.engine import fx_rate, realtime_price
@@ -145,7 +145,7 @@ def positions_json():
         dfdyn = piedata = None
         btc_price = 0
 
-    btc = realtime_price("BTC")
+    btc = realtime_price("BTC")['price']
     if not btc:
         btc = 0
 
@@ -218,16 +218,16 @@ def portstats():
     meta["start_date"] = (data.index.min()).date().strftime("%B %d, %Y")
     meta["end_date"] = data.index.max().date().strftime("%B %d, %Y")
     meta["start_nav"] = data["NAV_fx"][0]
-    meta["end_nav"] = data["NAV_fx"][-1].astype(float)
-    meta["max_nav"] = data["NAV_fx"].max().astype(float)
+    meta["end_nav"] = float(data["NAV_fx"][-1])
+    meta["max_nav"] = float(data["NAV_fx"].max())
     meta["max_nav_date"] = data[
         data["NAV_fx"] == data["NAV_fx"].max()].index.strftime("%B %d, %Y")[0]
-    meta["min_nav"] = data["NAV_fx"].min().astype(float)
+    meta["min_nav"] = float(data["NAV_fx"].min())
     meta["min_nav_date"] = data[
         data["NAV_fx"] == data["NAV_fx"].min()].index.strftime("%B %d, %Y")[0]
     meta["end_portvalue"] = data["PORT_fx_pos"][-1].astype(float)
     meta["end_portvalue_usd"] = meta["end_portvalue"] / fx_rate()['fx_rate']
-    meta["max_portvalue"] = data["PORT_fx_pos"].max().astype(float)
+    meta["max_portvalue"] = data["PORT_fx_pos"].astype(float).max()
     meta["max_port_date"] = data[data["PORT_fx_pos"] == data["PORT_fx_pos"].
                                  max()].index.strftime("%B %d, %Y")[0]
     meta["min_portvalue"] = round(data["PORT_fx_pos"].min(), 0)
@@ -419,7 +419,8 @@ def heatmapbenchmark_json():
     start_date -= timedelta(days=1)  # start on t-1 of first trade
 
     # Generate price Table now for the ticker and trim to match portfolio
-    data = price_data_fx(ticker)
+    fx = current_app.settings['PORTFOLIO']['base_fx']
+    data = historical_prices(ticker, fx)
     mask = data.index >= start_date
     data = data.loc[mask]
 
@@ -628,7 +629,8 @@ def portfolio_compare_json():
             continue
 
         # Generate price Table now for the ticker and trim to match portfolio
-        data = price_data_fx(ticker)
+        fx = current_app.settings['PORTFOLIO']['base_fx']
+        data = historical_prices(ticker, fx=fx)
         # If notification is an error, skip this ticker
         if data is None:
             messages = data.errors
@@ -706,43 +708,6 @@ def portfolio_compare_json():
     return nav_only.to_json()
 
 
-@api.route("/test_price", methods=["GET"])
-@login_required
-def test_price():
-    try:
-        # Tests a price using a provider and returns price data
-        provider = PROVIDER_LIST[request.args.get("provider")]
-        rtprovider = request.args.get("rtprovider")
-        ticker = request.args.get("ticker")
-        price_data = PriceData(ticker, provider)
-        data = {}
-
-        data['provider'] = {
-            'name': provider.name,
-            'errors': provider.errors,
-            'base_url': provider.base_url,
-            'doc_link': provider.doc_link
-        }
-
-        data['price_data'] = {
-            'ticker': ticker,
-            'last_update': price_data.last_update.strftime('%m/%d/%Y'),
-            'first_update': price_data.first_update.strftime('%m/%d/%Y'),
-            'last_close': float(price_data.last_close),
-            'errors': price_data.errors
-        }
-
-        if rtprovider:
-            data['realtime'] = {
-                'price': float(price_data.realtime(PROVIDER_LIST[rtprovider]))
-            }
-
-    except Exception as e:
-        return json.dumps({"error": f"Check API keys or connection: {e}"})
-
-    return (data)
-
-
 @api.route('/log')
 @login_required
 def progress_log():
@@ -771,7 +736,8 @@ def assetlist():
     if len(q) < 2:
         return jsonify(jsonlist)
     # Get list of available tickers from pricing APIs
-    jsonlist.extend(asset_list_alphavantage(q))
+    from pricing_engine.alphavantage import asset_list
+    jsonlist.extend(asset_list(q))
     # jsonlist.extend(asset_list_cc(q))
     # jsonlist.extend(asset_list_fp(q))
 

@@ -28,13 +28,15 @@
                     <td class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
                         title="Market Value in BTC">
                         <span id="pvaluebtc">
-                            &#8383 {{(portfolio_data['BTC']['trade_quantity'] | jformat(4))}}
+                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                height="30"></img>
                         </span>
                     </td>
                     <td class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
                         title="Market Value in Sats">
                         <span id="pvaluesats">
-                            {{(portfolio_data['BTC']['trade_quantity'] * 100000000) | jformat(0)}} sats
+                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                height="30"></img>
                         </span>
                     </td>
                     <td></td>

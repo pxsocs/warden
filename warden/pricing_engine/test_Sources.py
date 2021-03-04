@@ -30,20 +30,18 @@ class TestPricing(unittest.TestCase):
 
     # Test price_ondate
     def test_price_ondate(self):
-        dates = ['1/1/20']
+        dates = ['1/1/19']
         tickers = ['BTC', 'GBTC']
         for date in dates:
             for ticker in tickers:
-                price_ondate(ticker, date)
+                price = price_ondate(ticker, date)
+                print(price)
 
     def test_fx_price_ondate(self):
         date = '1/1/20'
-        result = fx_price_ondate('USD', 'BRL', date)
-        print(result)
-        result = fx_price_ondate('EUR', 'BRL', date)
-        print(result)
-        result = fx_price_ondate('BRL', 'USD', date)
-        print(result)
+        fx_price_ondate('USD', 'BRL', date)
+        fx_price_ondate('EUR', 'BRL', date)
+        fx_price_ondate('BRL', 'USD', date)
 
     def test_historical_parsed(self):
         # Sources directly

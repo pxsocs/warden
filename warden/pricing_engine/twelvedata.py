@@ -118,7 +118,6 @@ def historical(ticker, parsed=True):
                 })
             df.set_index('date', inplace=True)
             df_save = df[['close', 'open', 'high', 'low', 'volume']]
-            df_save.index = pd.to_datetime(df.index)
         except Exception:
             df_save = pd.DataFrame()
         return (df_save)

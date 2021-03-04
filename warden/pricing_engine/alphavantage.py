@@ -225,7 +225,6 @@ def historical(ticker, function='TIME_SERIES_DAILY_ADJUSTED', fx='USD', parsed=T
                     })
                 df_save = df[['close', 'open', 'high', 'low']]
                 df_save.index.names = ['date']
-                df_save.index = pd.to_datetime(df.index)
             except Exception:
                 df_save = pd.DataFrame()
             return (df_save)

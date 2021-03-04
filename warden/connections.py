@@ -13,7 +13,7 @@ def test_tor():
     if load_config().has_option('TOR', 'port'):
         tor_port = load_config()['TOR']['port']
     else:
-        tor_port = 9150
+        tor_port = 9050
 
     try:
         time_before = time()  # Save Ping time to compare
@@ -68,7 +68,7 @@ def test_tor():
     return response
 
 
-def tor_request(url, tor_only=True, method="get", payload=None):
+def tor_request(url, tor_only=False, method="get", payload=None):
     # Tor requests takes arguments:
     # url:       url to get or post
     # tor_only:  request will only be executed if tor is available
@@ -76,7 +76,7 @@ def tor_request(url, tor_only=True, method="get", payload=None):
     if load_config().has_option('TOR', 'port'):
         tor_port = load_config()['TOR']['port']
     else:
-        tor_port = 9150
+        tor_port = 9050
 
     url = urllib.parse.urlparse(url).geturl()
     session = requests.session()
@@ -94,25 +94,16 @@ def tor_request(url, tor_only=True, method="get", payload=None):
             request = session.post(url, timeout=60, data=payload)
         session.close()
 
-    except (
-            requests.exceptions.ConnectionError,
-            requests.exceptions.ReadTimeout,
-    ):
-        return "ConnectionError"
-
     except Exception:
+
         if tor_only:
             return "Tor not available"
-        try:
-            if method == "get":
-                request = requests.get(url, timeout=30)
-            if method == "post":
-                request = requests.post(url, timeout=30, data=payload)
 
-            logging.warning(f'OpenNet Request (Tor could not be used) url: {url}')
+        if method == "get":
+            request = requests.get(url, timeout=30)
+        if method == "post":
+            request = requests.post(url, timeout=30, data=payload)
 
-        except requests.exceptions.ConnectionError:
-            return "ConnectionError"
+        logging.warning(f'OpenNet Request (Tor could not be used) url: {url}')
 
-    session.close()
     return request

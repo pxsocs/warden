@@ -30,6 +30,15 @@ def price_ondate(ticker, date_input):
         return (None)
 
 
+# The below is a priority list for some usually accessed tickers
+mapping = {
+    'BTC': ['cryptocompare', 'alphavantage_currency'],
+    'GBTC': ['fmp', 'twelvedata', 'alphavantage_global'],
+    'ETH': ['cryptocompare', 'alphavantage_currency'],
+    'MSTR': ['fmp', 'twelvedata', 'alphavantage_global']
+}
+
+
 def historical_prices(ticker, fx='USD', source=None):
     '''
     RETURNS a DF with
@@ -46,7 +55,7 @@ def historical_prices(ticker, fx='USD', source=None):
         raise TypeError("source has to be a list of strings - can be one string inside a list")
 
     try:
-        source_list = realtime_mapping[ticker]
+        source_list = mapping[ticker]
     except KeyError:
         source_list = [
             'cryptocompare',
@@ -96,7 +105,6 @@ def historical_prices(ticker, fx='USD', source=None):
             # Include fx column and convert to currency if needed
             if fx != 'USD':
                 # Get a currency df
-                print(fx)
                 df_fx = aa_historical(fx, function='FX_DAILY')
                 df_fx.index = pd.to_datetime(df_fx.index)
                 df_fx = df_fx.rename(columns={'close': 'fx_close'})
@@ -115,20 +123,16 @@ def historical_prices(ticker, fx='USD', source=None):
             else:
                 results['fx_close'] = 1
                 results['close_converted'] = results['close'].astype(float)
+
             # Save this file to be used during the same day instead of calling API
             pickle_it(action='save', filename=filename, data=results)
             return (results)
+        else:
+            logging.info(f"Source {src} does not return any data for {ticker}. Trying other sources.")
+    if results.empty:
+        logging.warning(f"Could not retrieve a df for {ticker} from any source")
 
     return (results)
-
-
-# The below is a priority list for some usually accessed tickers
-realtime_mapping = {
-    'BTC': ['cryptocompare', 'alphavantage_currency'],
-    'GBTC': ['fmp', 'twelvedata', 'alphavantage_global'],
-    'ETH': ['cryptocompare', 'alphavantage_currency'],
-    'MSTR': ['fmp', 'twelvedata', 'alphavantage_global']
-}
 
 
 def realtime_price(ticker, fx='USD', source=None, parsed=True):
@@ -148,7 +152,7 @@ def realtime_price(ticker, fx='USD', source=None, parsed=True):
         raise TypeError("source has to be a list of strings - can be one string inside a list")
 
     try:
-        source_list = realtime_mapping[ticker]
+        source_list = mapping[ticker]
     except KeyError:
         source_list = [
             'cryptocompare',

@@ -481,6 +481,7 @@ def list_tickers():
     df = transactions_fx()
     # Now let's create our main dataframe with information for each ticker
     list_of_tickers = df['trade_asset_ticker'].unique().tolist()
+    list_of_tickers = [ticker.upper() for ticker in list_of_tickers]
     return (list_of_tickers)
 
 
@@ -500,12 +501,16 @@ def positions_dynamic():
     if df is None:
         return None, None
     tickers_string = ",".join(list_tickers())
+    # Make sure the Bitcoin price is retrieved even if not in portfolio
+    if not 'BTC' in tickers_string and tickers_string is not None:
+        tickers_string += ',BTC'
     # Let's try to get as many prices as possible into the df with a
     # single request - first get all the prices in current currency and USD
     multi_price = multiple_price_grab(tickers_string, 'USD,' + fx)
     # PARSER Function to fing the ticker price inside the matrix. First part
     # looks into the cryptocompare matrix. In the exception, if price is not
     # found, it sends a request to other providers
+    btc_price = None
 
     def find_data(ticker):
         notes = None
@@ -576,6 +581,11 @@ def positions_dynamic():
                     source = '-'
                     logging.error(f"There was an error getting the price for {ticker}." +
                                   f"Error: {e}")
+
+        if ticker.upper() == 'BTC':
+            nonlocal btc_price
+            btc_price = price
+
         return price, last_update, high, low, chg, mktcap, last_up_source, volume, source, notes
 
     df = apply_and_concat(df, 'trade_asset_ticker', find_data, [
@@ -584,6 +594,7 @@ def positions_dynamic():
     ])
     # Now create additional columns with calculations
     df['position_fx'] = df['price'] * df['trade_quantity']
+    df['position_btc'] = df['price'] * df['trade_quantity'] / btc_price
 
     df['allocation'] = df['position_fx'] / df['position_fx'].sum()
     df['change_fx'] = df['position_fx'] * df['24h_change'].astype(float) / 100
@@ -707,6 +718,10 @@ def generatenav(user='warden', force=False, filter=None):
 
     # Create a list of all tickers that were traded in this portfolio
     tickers = list_tickers()
+    if 'BTC' not in tickers:
+        tickers.append('BTC')
+
+    fx = current_app.settings['PORTFOLIO']['base_fx']
 
     # Create an empty DF, fill with dates and fill with operation and prices then NAV
     dailynav = pd.DataFrame(columns=['date'])
@@ -725,7 +740,7 @@ def generatenav(user='warden', force=False, filter=None):
             continue
         try:
             # Create a new PriceData class for this ticker
-            prices = price_data_fx(id)
+            prices = historical_prices(id, fx=fx)
             if prices is None:
                 save_nav = False
                 raise ValueError
@@ -739,11 +754,9 @@ def generatenav(user='warden', force=False, filter=None):
                 prices = prices.to_frame()
 
             dailynav = pd.merge(dailynav, prices, on='date', how='left')
-
             # Replace NaN with prev value, if no prev value then zero
+            dailynav[id + '_price'].fillna(method='backfill', inplace=True)
             dailynav[id + '_price'].fillna(method='ffill', inplace=True)
-            dailynav[id + '_price'].fillna(0, inplace=True)
-
             # Now let's find trades for this ticker and include in dailynav
             tradedf = df[[
                 'trade_asset_ticker', 'trade_quantity', 'cash_value_fx'
@@ -844,6 +857,8 @@ def generatenav(user='warden', force=False, filter=None):
     dailynav['NAV_fx'] = dailynav['port_perc_factor_fx'].cumprod()
     dailynav['NAV_fx'] = dailynav['NAV_fx'] * 100
     dailynav['PORT_ac_CFs_fx'] = dailynav['PORT_cash_value_fx'].cumsum()
+
+    dailynav['PORT_VALUE_BTC'] = dailynav['PORT_fx_pos'] / dailynav['BTC_price']
 
     # Save NAV Locally as Pickle
     if save_nav:

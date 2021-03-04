@@ -470,6 +470,9 @@ function realtime_table() {
             var fx = data.user.symbol
             // Parse the json
             $('#pvalue').html(formatNumber(data.positions.Total.position_fx, 0, fx)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
+            $('#pvaluebtc').html(formatNumber(data.positions.Total.position_btc, 6, '₿ ')).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
+            $('#pvaluesats').html(formatNumber(data.positions.Total.position_btc * 100000000, 0, '丰 ')).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
+
             $('#end_portvalue').html(formatNumber(data.positions.Total.position_fx, 0)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
 
             posbtc = data.positions.Total.position_fx / data.btc
