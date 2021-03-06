@@ -1,6 +1,7 @@
 import csv
 import hashlib
 import logging
+import secrets
 import os
 from datetime import datetime
 
@@ -10,10 +11,10 @@ from flask import (Blueprint, flash, redirect, render_template, request,
                    send_file, url_for, current_app)
 from flask_login import current_user, login_required
 
-from models import Trades
+from models import Trades, AccountInfo
 from forms import ImportCSV
 from utils import home_path
-from warden_modules import transactions_fx
+from warden_modules import transactions_fx, clean_float
 
 csv_routes = Blueprint('csv_routes', __name__)
 
@@ -52,12 +53,8 @@ def importcsv():
         if form.validate_on_submit():
             if form.submit.data:
                 if form.csvfile.data:
-                    test_file = "thewarden/dailydata/test.csv"
-                    filename = os.path.join(current_path(), test_file)
-                    os.makedirs(os.path.dirname(filename), exist_ok=True)
-
-                    filename = "thewarden/dailydata/" + form.csvfile.data.filename
-                    filename = os.path.join(current_path(), filename)
+                    filename = form.csvfile.data.filename
+                    filename = os.path.join(home_path(), filename)
                     form.csvfile.data.save(filename)
 
                     csv_reader = open(filename, "r", encoding="utf-8")
@@ -72,6 +69,7 @@ def importcsv():
                     csvfile=csvfile,
                     filename=filename,
                 )
+
     if request.method == "GET":
         filename = request.args.get("f")
         if filename:
@@ -80,22 +78,23 @@ def importcsv():
 
             errors = 0
             errorlist = []
-            a = 0  # skip first line where field names are
+            line_counter = 0  # skip first line where field names are
 
             accounts = AccountInfo.query.filter_by(
                 user_id=current_user.username).order_by(
                     AccountInfo.account_longname)
 
             for line in csv_reader:
-                if a != 0:
+                if line_counter != 0:
                     items = line.split(",")
                     random_hex = secrets.token_hex(21)
 
                     # Check if there is any data on this line:
                     empty = True
-                    for l in range(0, 10):
+                    # 10 columns expected
+                    for x in range(0, 10):
                         try:
-                            if items[l] != "":
+                            if items[x] != "":
                                 empty = False
                         except IndexError:
                             pass
@@ -108,7 +107,7 @@ def importcsv():
                     except ValueError:
                         tradedate = datetime.now()
                         errors = errors + 1
-                        errorlist.append(f"missing date on line: {a}")
+                        errorlist.append(f"missing date on line: {line_counter}")
 
                     # Check the Operation Type
                     try:
@@ -118,59 +117,53 @@ def importcsv():
                         elif "S" in items[2]:
                             qop = -1
                             operation = "S"
-                        elif "D" in items[2]:
-                            qop = 1
-                            operation = "D"
-                        elif "W" in items[2]:
-                            qop = -1
-                            operation = "W"
                         else:
                             qop = 0
                             operation = "X"
                             errors = errors + 1
-                            errorlist.append(f"missing operation on line {a}")
+                            errorlist.append(f"missing operation on line {line_counter}")
                     except IndexError:
                         qop = 0
                         operation = "X"
                         errors = errors + 1
-                        errorlist.append(f"missing operation on line {a}")
+                        errorlist.append(f"missing operation on line {line_counter}")
 
                     # Import Quantity
                     try:
                         if items[4].replace(" ", "") != "":
-                            quant = abs(cleancsv(items[4])) * qop
+                            quant = abs(clean_float(items[4])) * qop
                         else:
                             quant = 0
                     except ValueError:
                         quant = 0
                         errors = errors + 1
                         errorlist.append(
-                            f"Quantity error on line {a} - quantity \
+                            f"Quantity error on line {line_counter} - quantity \
                             {items[4]} could not be converted")
 
                     # Import Price
                     try:
                         if items[5].replace(" ", "") != "":
-                            price = cleancsv(items[5])
+                            price = clean_float(items[5])
                         else:
                             price = 0
                     except ValueError:
                         price = 0
                         errors = errors + 1
-                        errorlist.append(f"Price error on line {a} - price \
+                        errorlist.append(f"Price error on line {line_counter} - price \
                             {items[5]} could not be converted")
 
                     # Import Fees
                     try:
                         if items[6].replace(" ", "").replace("\n", "") != "":
-                            fees = cleancsv(items[6])
+                            fees = abs(clean_float(items[6]))
                         else:
                             fees = 0
                     except ValueError:
                         fees = 0
                         errors = errors + 1
                         errorlist.append(
-                            f"error #{errors}: Fee error on line {a} - Fee --\
+                            f"error #{errors}: Fee error on line {line_counter} - Fee --\
                             {items[6]}-- could not be converted")
 
                     # Import Notes
@@ -185,24 +178,15 @@ def importcsv():
                     except ValueError:
                         account = ""
                         errors = errors + 1
-                        errorlist.append(f"Missing account on line {a}")
+                        errorlist.append(f"Missing account on line {line_counter}")
 
                     # Import Asset Symbol
                     try:
                         ticker = items[3].replace(" ", "")
-                        if ticker != "USD":
-                            listcrypto = listofcrypto.query.filter_by(
-                                symbol=ticker)
-                            if listcrypto is None:
-                                errors = errors + 1
-                                errorlist.append(
-                                    f"ticker {ticker} in line {a} \
-                                    imported but not found in pricing list")
-
                     except ValueError:
                         ticker = ""
                         errors = errors + 1
-                        errorlist.append(f"Missing ticker on line {a}")
+                        errorlist.append(f"Missing ticker on line {line_counter}")
 
                     # Find Trade Reference, if none, assign one
                     try:
@@ -214,15 +198,15 @@ def importcsv():
                     # Import Cash Value - if none, calculate
                     try:
                         if items[7].replace(" ", "").replace("\n", "") != "":
-                            cashvalue = cleancsv(items[7])
+                            cashvalue = clean_float(items[7])
                         else:
-                            cashvalue = ((price) * (quant)) + fees
+                            cashvalue = ((price) * (quant)) - abs(fees)
                     except ValueError:
                         cashvalue = 0
                         errors = errors + 1
                         errorlist.append(
                             f"error #{errors}: Cash_Value error on line \
-                             {a} - Cash_Value --{items[7]}-- could not \
+                             {line_counter} - Cash_Value --{items[7]}-- could not \
                              be converted")
 
                     trade = Trades(
@@ -238,9 +222,8 @@ def importcsv():
                         cash_value=qop * cashvalue,
                         trade_reference_id=tradeid,
                     )
-                    db.session.add(trade)
-                    db.session.commit()
-                    regenerate_nav()
+                    current_app.db.session.add(trade)
+                    current_app.db.session.commit()
 
                     # Check if current account is in list, if not, include
 
@@ -250,34 +233,10 @@ def importcsv():
                     if not curacc:
                         account = AccountInfo(user_id=current_user.username,
                                               account_longname=account)
-                        db.session.add(account)
-                        db.session.commit()
+                        current_app.db.session.add(account)
+                        current_app.db.session.commit()
 
-                a = a + 1
-
-            # re-generates the NAV on the background
-            # re-generates the NAV on the background - delete First
-            # the local NAV file so it's not used.
-            usernamehash = hashlib.sha256(
-                current_user.username.encode("utf-8")).hexdigest()
-            filename = "thewarden/nav_data/" + usernamehash + ".nav"
-            filename = os.path.join(current_path(), filename)
-            logging.info(f"[newtrade] {filename} marked for deletion.")
-            # Since this function can be run as a thread,
-            # it's safer to delete the current NAV file if it exists.
-            # This avoids other tasks reading the local file which
-            # is outdated
-            try:
-                os.remove(filename)
-                logging.info("[importcsv] Local NAV file deleted")
-            except OSError:
-                logging.info("[importcsv] Local NAV file not found" +
-                             " for removal - continuing")
-            generatenav_thread = threading.Thread(target=generatenav,
-                                                  args=(current_user.username,
-                                                        True))
-            logging.info("[importcsv] Change to database - generate NAV")
-            generatenav_thread.start()
+                line_counter += 1
 
             if errors == 0:
                 flash("CSV Import successful", "success")
