@@ -70,12 +70,12 @@ def alert_activity():
     # Don't send any alerts as activity still being downloaded
     if current_app.downloading:
         return alerts
-    ack_file = 'warden/txs_diff.pkl'
+    ack_file = 'txs_diff.pkl'
     try:
         data = pickle_it(action='load', filename=ack_file)
         if data == 'file not found':
             raise FileNotFoundError
-        if data['changes_detected_on'] != None:
+        if data['changes_detected_on'] is not None:
             return (True)
         else:
             return (False)
@@ -180,7 +180,7 @@ def realtime_btc():
 @login_required
 def dismiss_notification():
     # Run the df and clean the files (True)
-    specter_df(True)
+    specter_df(delete_files=True)
     flash("Notification dismissed. New CheckPoint created.", "success")
     return json.dumps("Done")
 

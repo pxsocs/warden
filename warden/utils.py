@@ -57,6 +57,13 @@ def pickle_it(action='load', filename=None, data=None):
     from warden_modules import home_path
     filename = 'warden/' + filename
     filename = os.path.join(home_path(), filename)
+    if action == 'delete':
+        try:
+            os.remove(filename)
+            return('deleted')
+        except Exception:
+            return('failed')
+
     if action == 'load':
         try:
             with open(filename, 'rb') as handle:

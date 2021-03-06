@@ -122,7 +122,7 @@ class Trades():
         return (vars(self))
 
 
-def specter_df(save_files=False, sort_by='trade_date'):
+def specter_df(delete_files=False, sort_by='trade_date'):
     df = pd.DataFrame()
     try:
         t = current_app.specter.refresh_txs(load=True)['txlist']
@@ -223,13 +223,14 @@ def specter_df(save_files=False, sort_by='trade_date'):
         'amount': 2,
         'status': 'Test_line',
         'trade_account': 'trezor',
-        'loaded': False
+        'loaded': False,
+        'trade_blockchain_id': 'xxsxmssxkxsjsxkxsx'
     }
     # Comment / Uncomment code below for testing of including new transactions
     # Remove last 2 transactions here
     # df.drop(df.tail(2).index, inplace=True)
     # add transaction above
-    df = df.append(tester, ignore_index=True)
+    # df = df.append(tester, ignore_index=True)
 
     # END TEST LINE ----------------------------------------------------
 
@@ -238,6 +239,12 @@ def specter_df(save_files=False, sort_by='trade_date'):
     old_df_file = 'old_df.pkl'
     ack_file = 'txs_diff.pkl'
     # -----------------------------------------
+
+    # Activity checkpoint will be created. Delete all old files.
+    if delete_files:
+        pickle_it(action='delete', filename=df_pkl)
+        pickle_it(action='delete', filename=old_df_file)
+        pickle_it(action='delete', filename=ack_file)
 
     # save this latest df to a file
     pickle_it(action='save', filename=df_pkl, data=df)
