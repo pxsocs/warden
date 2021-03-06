@@ -503,6 +503,7 @@ function realtime_table() {
                     $('#' + key + '_price').html(formatNumber(value.price, 2, fx, '')).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
                     $('#' + key + '_24hchg').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
                     $('#' + key + '_position').html(formatNumber(value.position_fx, 0, fx, ''));
+                    $('#' + key + '_btc_position').html(formatNumber(value.position_btc, 4, '', ''));
                     $('#' + key + '_allocation').html(formatNumber(value.allocation * 100, 2, '', '%'));
 
                     // FIFO Table values

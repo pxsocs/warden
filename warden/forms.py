@@ -6,6 +6,7 @@ from warden_modules import fx_list
 from wtforms import StringField, SubmitField, SelectField, PasswordField
 from wtforms.fields.html5 import DateField
 from models import User
+from flask_wtf.file import FileField, FileAllowed
 
 
 # Form used to register new users and save password
@@ -83,3 +84,12 @@ class TradeForm(FlaskForm):
             raise ValidationError("Quantity has to be a positive number")
         if quant == "":
             raise ValidationError("Quantity can't be empty")
+
+
+class ImportCSV(FlaskForm):
+    csvfile = FileField('Import CSV File', validators=[FileAllowed(['csv'])])
+    submit = SubmitField('Open')
+
+    def validate_csvfile(sef, csvfile):
+        if csvfile.data is None:
+            raise ValidationError("Please select a file")

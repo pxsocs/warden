@@ -24,53 +24,49 @@
                                 height="30"></img>
                         </span>
                     </td>
-                    <td></td>
-                    <td class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
-                        title="Market Value in BTC">
-                        <span id="pvaluebtc">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
-                                height="30"></img>
-                        </span>
-                    </td>
-                    <td class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
-                        title="Market Value in Sats">
-                        <span id="pvaluesats">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
-                                height="30"></img>
-                        </span>
-                    </td>
-                    <td></td>
                     <td id="chg1" class="redgreen border-bottom hinumber text-right">
                         <span id="">
                             <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
                                 height="30"></img>
                         </span>
                     </td>
-                    <td></td>
                     <td id="chg2" class="redgreen border-bottom hinumber text-right">
                         <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
                             height="30"></img>
                     </td>
+                    <td></td>
+                    <td class="border-bottom hinumber text-right" data-toggle="tooltip" data-placement="top"
+                        title="Market Value in BTC">
+                        <span id="pvaluebtc">
+                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                height="30"></img>
+                        </span>
+                    </td>
+                    <td class="border-bottom hinumber text-right" data-toggle="tooltip" data-placement="top"
+                        title="Market Value in Sats">
+                        <span id="pvaluesats">
+                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                height="30"></img>
+                        </span>
+                    </td>
                 </tr>
                 <tr>
-                    <td class="small">
+                    <td class="small text-left">
                         portfolio value
                     </td>
-                    <td></td>
-                    <td class="small">
-                        portfolio value
-                    </td>
-                    <td class="small">
-                        portfolio value
-                    </td>
-                    <td></td>
                     <td class="small text-right">
                         24hr change
                     </td>
-                    <td></td>
                     <td class="small text-right">
                         24hr change
-
+                    </td>
+                    <td>
+                    </td>
+                    <td class="small text-right">
+                        portfolio value
+                    </td>
+                    <td class="small text-right">
+                        portfolio value
                     </td>
 
                 </tr>
@@ -164,6 +160,9 @@
                         <th class="text-right">
                             Balance ({{current_app.fx['symbol']}})
                         </th>
+                        <th class="text-right">
+                            Balance (₿)
+                        </th>
                         <th class="text-right small">
                             % of total
                         </th>
@@ -211,6 +210,13 @@
 
                         <td class="text-right align-middle">
                             <span id="{{position}}_position">
+                                <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                    height="30"></img>
+                            </span>
+                        </td>
+
+                        <td class="text-right align-middle">
+                            <span id="{{position}}_btc_position">
                                 <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
                                     height="30"></img>
                             </span>
@@ -1136,7 +1142,7 @@
                 <i>
                     <sup>1</sup> All returns in this page are in {{current_app.fx['name_plural'].title()}}.
                     <br>
-                    {%if current_app.fx['symbol'] != 'USD'%}
+                    {%if current_app.fx['code'] != 'USD'%}
                     This means that the returns include the asset returns plus the currency return in the period.
                     <br>For example, if Bitcoin in USD is up 5% and the {{current_app.fx['name']}} is
                     up

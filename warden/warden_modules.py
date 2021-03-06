@@ -17,7 +17,7 @@ from pricing_engine.engine import (fx_rate,
                                    historical_prices)
 from pricing_engine.cryptocompare import multiple_price_grab
 from warden_decorators import MWT, timing
-from utils import load_config
+from utils import load_config, pickle_it
 
 
 # Returns the current application path
@@ -78,42 +78,23 @@ def warden_metadata():
     meta['wallet_list'] = current_app.specter.wallet_alias_list()
 
     # Load pickle with previous checkpoint df
-    df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
-    try:
-        meta['df_old'] = pd.read_pickle(df_pkl)
-    except IOError:
-        meta['df_old'] = None
+    df_pkl = 'txs_pf.pkl'
+    data = pickle_it(action='load', filename=df_pkl)
+    if not isinstance(data, pd.DataFrame):
+        if data == 'file not found':
+            meta['df_old'] = None
+    else:
+        meta['df_old'] = data
 
     # load difference / changes in addresses from file
-    ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
-    meta['old_new_df_old'] = None
-    meta['old_new_df_new'] = None
-    try:
-        with open(ack_file) as data_file:
-            meta['ack_file'] = json.loads(data_file.read())
-            # Make a list of missing transactions by id and added transactions by id
-            if ('deleted' in meta['ack_file']) or (
-                    'added' in meta['ack_file']):
-                df_old = meta['df_old']
-                df_old['old_new'] = 'old'
-                df_new = meta['full_df']
-                df_new['old_new'] = 'new'
-                # merge two df
-                df_merge = pd.concat([df_old, df_new])
-                df_merge = df_merge.reset_index(drop=True)
-                # Group by TxID
-                df_gpby = df_merge.groupby(['txid', 'amount'])
-                # Get index of all unique records
-                idx = [x[0] for x in df_gpby.groups.values() if len(x) == 1]
-                # Reindex / Filter
-                df_merge = df_merge.reindex(idx)
-                meta['old_new_df_old'] = df_merge.loc[df_merge['old_new'] ==
-                                                      'old']
-                meta['old_new_df_new'] = df_merge.loc[df_merge['old_new'] ==
-                                                      'new']
-
-    except IOError:
+    ack_file = 'txs_diff.pkl'
+    data = pickle_it(action='load', filename=ack_file)
+    if data == 'file not found':
         meta['ack_file'] = None
+    else:
+        meta['ack_file'] = data
+        meta['old_new_df_old'] = data['deleted']
+        meta['old_new_df_new'] = data['added']
 
     return (meta)
 
@@ -224,105 +205,90 @@ def specter_df(save_files=False, sort_by='trade_date'):
     except Exception:
         df['cash_value'] = 0
 
-    # Hash the Pandas df for quick comparison for changes
-    from pandas.util import hash_pandas_object
-    df['checksum'] = df['trade_blockchain_id']
-    df['checksum'] = hash_pandas_object(df['checksum'], index=False)
-    # Every time this function runs, it will save a checksum and full df
-    # This is used to make a quick check if there were changes
-    # If there are changes, a notification method is started to alert user
+    df['loaded'] = False
 
     # TEST LINE ------------- Make this a new transaction forced into df
-    # tester = {
-    #     'trade_date': datetime.now(),
-    #     'trade_currency': 'USD',
-    #     'trade_fees': 0,
-    #     'trade_quantity': 2,
-    #     'trade_multiplier': 1,
-    #     'trade_price': 10000,
-    #     'trade_asset_ticker': 'BTC',
-    #     'trade_operation': 'B',
-    #     'checksum': (5 * (10**19)),
-    #     'txid': 'test',
-    #     'address': 'test_address',
-    #     'amount': 2,
-    #     'status': 'Test_line',
-    #     'trade_account': 'trezor'
-    # }
+    tester = {
+        'trade_date': datetime.now(),
+        'trade_currency': 'USD',
+        'trade_fees': 0,
+        'trade_quantity': 1,
+        'trade_multiplier': 1,
+        'trade_price': 10000,
+        'trade_asset_ticker': 'BTC',
+        'trade_operation': 'B',
+        'checksum': (5 * (10**19)),
+        'txid': 'test',
+        'address': 'test_address',
+        'amount': 2,
+        'status': 'Test_line',
+        'trade_account': 'trezor',
+        'loaded': False
+    }
     # Comment / Uncomment code below for testing of including new transactions
     # Remove last 2 transactions here
     # df.drop(df.tail(2).index, inplace=True)
     # add transaction above
-    # df = df.append(tester, ignore_index=True)
+    df = df.append(tester, ignore_index=True)
 
     # END TEST LINE ----------------------------------------------------
 
     # Files ----------------------------------
-    checksum_file = os.path.join(home_path(),
-                                 'warden/txs_checksum.json')
-    ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
-    df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
+    df_pkl = 'txs_pf.pkl'
+    old_df_file = 'old_df.pkl'
+    ack_file = 'txs_diff.pkl'
     # -----------------------------------------
 
-    # Create checksum
-    rows_hash = df['checksum'].tolist()
-    all_hash = sum(rows_hash)
+    # save this latest df to a file
+    pickle_it(action='save', filename=df_pkl, data=df)
 
     try:
-        # Loads the all_hash file - first check
-        with open(checksum_file) as data_file:
-            json_all = json.loads(data_file.read())
-            json_all_hash = sum(json_all)
-            data_file.close()
+        # Loads the old df to check for activity
+        df_loaded = pickle_it(action='load', filename=old_df_file)
+        if not isinstance(df_loaded, pd.DataFrame):
+            if df_loaded == "file not found":
+                raise FileNotFoundError
 
-        if json_all_hash != all_hash:
+        df_loaded['loaded'] = True
+
+        # Find differences in old vs. new
+        df_check = pd.concat([df, df_loaded]).drop_duplicates(
+            subset='trade_blockchain_id', keep=False)
+
+        if not df_check.empty:
             # Let's find which checksums are different and compile a list - save this list
             # so it can be used on main page to highlight changes
-            with open(checksum_file) as data_file:
-                old_list = json.loads(data_file.read())
-                data_file.close()
-            new_list = rows_hash
+            df_old = df_check[df_check['loaded']]
+            df_new = df_check[~df_check['loaded']]
 
-            # find differences
-            # force int on both
-            old_list = [int(n) for n in old_list]
-            new_list = [int(n) for n in new_list]
-            deleted_addresses = list(set(old_list).difference(new_list))
-            added_addresses = list(set(new_list).difference(old_list))
+            json_save = {
+                'changes_detected_on': datetime.now().strftime("%I:%M %p on %B %d, %Y"),
+                'deleted': df_old,
+                'added': df_new
+            }
+            # If activity is detected, don't delete the old df by saving new df over
+            save_files = False
 
-            if deleted_addresses != None or added_addresses != None:
-                # Save these to a file
-                json_save = {
-                    'changes_detected_on':
-                    datetime.now().strftime("%I:%M %p on %B %d, %Y"),
-                    'deleted':
-                    deleted_addresses,
-                    'added':
-                    added_addresses
-                }
+        else:
+            json_save = {
+                'changes_detected_on': None,
+                'deleted': None,
+                'added': None
+            }
+            save_files = True
 
-                with open(ack_file, 'w') as fp:
-                    json.dump(json_save, fp)
+        # Save the dict above to be accessed later
+        pickle_it(action='save', filename=ack_file, data=json_save)
 
-    except Exception:
+    except FileNotFoundError:
         # Files not found - let's save a new checkpoint
         save_files = True
 
     # Sort
     df = df.sort_values(by=[sort_by], ascending=False)
 
-    # If Balance change is acknowledge, reset by saving the files
-
-    # Acknowledge list is reduced in a separate function that acknowledges address changes
     if save_files:
-        # saves to json and pickle files
-        with open(checksum_file, 'w') as fp:
-            json.dump(rows_hash, fp)
-
-        with open(ack_file, 'w') as fp:
-            json.dump('', fp)
-
-        df.to_pickle(df_pkl)
+        pickle_it(action='save', filename=old_df_file, data=df)
 
     return (df)
 
@@ -644,7 +610,7 @@ def positions_dynamic():
     columns_sum = [
         'cash_value_fx', 'trade_fees_fx', 'position_fx', 'allocation',
         'change_fx', 'pnl_gross', 'pnl_net', 'LIFO_unreal', 'FIFO_unreal',
-        'LIFO_real', 'FIFO_real'
+        'LIFO_real', 'FIFO_real', 'position_btc'
     ]
     for field in columns_sum:
         df.loc['Total', field] = df[field].sum()

@@ -9,7 +9,7 @@ from pricing_engine.engine import price_ondate, historical_prices
 from flask_login import login_required, current_user
 from random import randrange
 from pricing_engine.engine import fx_rate, realtime_price
-from utils import heatmap_generator
+from utils import heatmap_generator, pickle_it
 from models import Trades, AccountInfo, TickerInfo
 from datetime import datetime, timedelta
 from dateutil import parser
@@ -27,8 +27,6 @@ import requests
 
 
 api = Blueprint('api', __name__)
-
-# Returns a JSON with Test Response on TOR
 
 
 @api.route("/gitreleases", methods=["GET"])
@@ -50,8 +48,8 @@ def gitreleases():
 @api.route("/txs_json", methods=['GET'])
 @login_required
 def txs_json():
-    df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
-    tx_df = pd.read_pickle(df_pkl)
+    df_pkl = 'warden/txs_pf.pkl'
+    tx_df = pickle_it(action='load', filename=df_pkl)
     return tx_df.to_json(orient='table')
 
 
@@ -72,12 +70,15 @@ def alert_activity():
     # Don't send any alerts as activity still being downloaded
     if current_app.downloading:
         return alerts
-    ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
+    ack_file = 'warden/txs_diff.pkl'
     try:
-        with open(ack_file) as data_file:
-            data = json.loads(data_file.read())
-        if ('deleted' in data) or ('added' in data):
+        data = pickle_it(action='load', filename=ack_file)
+        if data == 'file not found':
+            raise FileNotFoundError
+        if data['changes_detected_on'] != None:
             return (True)
+        else:
+            return (False)
     except Exception:
         return (False)
 
@@ -325,7 +326,7 @@ def stackchartdatajson():
     # Generate data for Stack chart
     # Filter to Only BTC Positions
     try:
-        data['BTC_cum'] = data['BTC_quant'].cumsum()
+        data['BTC_cum'] = data['PORT_VALUE_BTC']
         stackchart = data[["BTC_cum"]]
         # dates need to be in Epoch time for Highcharts
         stackchart.index = (stackchart.index - datetime(1970, 1, 1)).total_seconds()

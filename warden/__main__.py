@@ -207,9 +207,11 @@ def init_app(app):
     from routes import warden
     from errors.handlers import errors
     from api.routes import api
+    from csv_routes.routes import csv_routes
     app.register_blueprint(warden)
     app.register_blueprint(errors)
     app.register_blueprint(api)
+    app.register_blueprint(csv_routes)
 
     # For the first load, just get a saved file if available
     # The background jobs will update later

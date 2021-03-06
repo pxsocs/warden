@@ -1,0 +1,5 @@
+TimeStamp,Account,Operator,Asset,Quantity,Price,Fee,Cash_Value,Notes,trade_reference_id
+2018-06-06 00:00:00,Cash App,B,BTC,0.1,7000.0,100.0,800.0,Trade 1,7203dfc1b6d49f08c346e49b8893526cb8f6007bc6
+2018-06-06 00:00:00,Bank 1,W,USD,-800.0,1.0,0.0,-800.0,Matching Trade for trade id:                                <7203dfc1b6d49f08c346e49b8893526cb8f6007bc6 > - included as a pair,7203dfc1b6d49f08c346e49b8893526cb8f6007bc6
+2019-06-06 00:00:00,Hardware Wallet,B,BTC,0.1262662,7600.0,0.0,959.62312,,912daeef03ed1ddb0172230ede5917d9c6c382e86c
+2019-06-06 00:00:00,Bank of MoonLand,W,USD,959.62,1.0,0.0,-959.62312,Matching Trade for trade id:                                <912daeef03ed1ddb0172230ede5917d9c6c382e86c > - included as a pair,912daeef03ed1ddb0172230ede5917d9c6c382e86c

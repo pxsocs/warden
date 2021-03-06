@@ -138,9 +138,13 @@
                 <div class="collapse show" id="collapse_trades"">
                     <div class=" list-group bg-transparent text-white">
                     <a class="sidebar-subitem" href="{{ url_for('warden.trade_transactions') }}"><i
-                            class="fas fa-list fa-lg"></i>&nbsp;&nbsp;List Trades</a>
+                            class="fas fa-list fa-lg"></i>&nbsp;&nbsp;List & Edit Trades</a>
                     <a class="sidebar-subitem" href="{{ url_for('warden.newtrade') }}"><i
                             class="fas fa-plus-square fa-lg"></i>&nbsp;&nbsp;Include New Trade</a>
+
+                    <a class="sidebar-subitem" id="downloadcsv" href="{{ url_for('csv_routes.exportcsv') }}"><i
+                            class="fas fa-download fa-lg"></i>&nbsp;&nbsp;Download transactions</a>
+
                 </div>
 
 
