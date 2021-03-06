@@ -4,51 +4,12 @@ import hashlib
 import inspect
 import os
 import time
+import logging
 from functools import wraps
 from glob import glob
+from utils import home_path
 
-import pandas as pd
-
-
-def clean_all():
-    # pandas memoization clean
-    del_cached()
-
-
-def pd_cache(func):
-    # Caches a Pandas DF into file for later use
-    # Memoization version for pandas DF
-    try:
-        os.mkdir('.pd_cache')
-    except Exception:
-        pass
-
-    @wraps(func)
-    def cache(*args, **kw):
-        # Get raw code of function as str and hash it
-        func_code = ''.join(inspect.getsourcelines(func)[0]).encode('utf-8')
-        hsh = hashlib.md5(func_code).hexdigest()[:6]
-        f = '.pd_cache/' + func.__name__ + '_' + hsh + '.pkl'
-        if os.path.exists(f):
-            df = pd.read_pickle(f)
-            return df
-
-        # Delete any file name that has `cached_[func_name]_[6_chars]_.pkl`
-        for cached in glob('./.pd_cache/'+func.__name__+'_*.pkl'):
-            if (len(cached) - len(func.__name__)) == 20:
-                os.remove(cached)
-        # Write new
-        df = func(*args, **kw)
-        df.to_pickle(f)
-        return df
-
-    return cache
-
-
-def del_cached():
-    cached = os.listdir('./.pd_cache/')
-    if len(cached) > 0:
-        [os.remove(x) for x in cached]
+from utils import pickle_it
 
 
 class memoized(object):

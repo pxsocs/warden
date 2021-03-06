@@ -5,7 +5,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from warden_modules import (warden_metadata, positions,
                             generatenav, specter_df,
                             regenerate_nav,
-                            home_path)
+                            home_path, clean_float)
 from pricing_engine.engine import fx_rate
 
 from forms import RegistrationForm, LoginForm, TradeForm
@@ -13,7 +13,7 @@ from forms import RegistrationForm, LoginForm, TradeForm
 from werkzeug.security import check_password_hash, generate_password_hash
 from warden_decorators import timing
 from models import User, AccountInfo, Trades
-from utils import update_config, heatmap_generator, pickle_it, cleancsv
+from utils import update_config, heatmap_generator, pickle_it
 from operator import itemgetter
 from packaging import version
 
@@ -550,9 +550,9 @@ def newtrade():
             cvfail = False
 
             try:
-                p = float(cleancsv(form.trade_price.data))
-                q = float(cleancsv(form.trade_quantity.data))
-                f = float(cleancsv(form.trade_fees.data))
+                p = float(clean_float(form.trade_price.data))
+                q = float(clean_float(form.trade_quantity.data))
+                f = float(clean_float(form.trade_fees.data))
                 cv = qop * (q * p) + f
 
             except ValueError:
@@ -675,9 +675,9 @@ def edittransaction():
             cvfail = False
 
             try:
-                p = float(cleancsv(form.trade_price.data))
-                q = float(cleancsv(form.trade_quantity.data))
-                f = float(cleancsv(form.trade_fees.data))
+                p = float(clean_float(form.trade_price.data))
+                q = float(clean_float(form.trade_quantity.data))
+                f = float(clean_float(form.trade_fees.data))
                 cv = qop * (q * p) + f
 
             except ValueError:
@@ -694,8 +694,8 @@ def edittransaction():
             trade.trade_currency = form.trade_currency.data
             trade.trade_operation = form.trade_operation.data
             trade.trade_quantity = float(form.trade_quantity.data) * qop
-            trade.trade_price = float(cleancsv(form.trade_price.data))
-            trade.trade_fees = float(cleancsv(form.trade_fees.data))
+            trade.trade_price = float(clean_float(form.trade_price.data))
+            trade.trade_fees = float(clean_float(form.trade_fees.data))
             trade.trade_account = form.trade_account.data
             trade.trade_notes = form.trade_notes.data
             trade.cash_value = cv

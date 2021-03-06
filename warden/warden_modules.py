@@ -335,6 +335,7 @@ def find_fx(row, fx=None):
     return price
 
 
+@ MWT(timeout=20)
 def transactions_fx():
     # Gets the transaction table and fills with fx information
     # Note that it uses the currency exchange for the date of transaction
@@ -405,7 +406,7 @@ def clean_float(text):  # Function to clean CSV fields - leave only digits and .
         if char in acceptable:
             str = str + char
     if str == '':
-        return None
+        return 0
     str = float(str)
     return (str)
 
@@ -430,7 +431,6 @@ def cleandate(text):  # Function to clean Date fields
 
 
 # PORTFOLIO UTILITIES
-
 
 def positions():
     # Method to create a user's position table
@@ -485,7 +485,6 @@ def list_tickers():
     return (list_of_tickers)
 
 
-@ MWT(timeout=2)
 def positions_dynamic():
     fx = load_config()['PORTFOLIO']['base_fx']
     # This method is the realtime updater for the front page. It gets the
@@ -502,7 +501,7 @@ def positions_dynamic():
         return None, None
     tickers_string = ",".join(list_tickers())
     # Make sure the Bitcoin price is retrieved even if not in portfolio
-    if not 'BTC' in tickers_string and tickers_string is not None:
+    if ('BTC' not in tickers_string) and (tickers_string is not None):
         tickers_string += ',BTC'
     # Let's try to get as many prices as possible into the df with a
     # single request - first get all the prices in current currency and USD
@@ -541,7 +540,7 @@ def positions_dynamic():
                 single_price = realtime_price(ticker)
                 if single_price is None:
                     raise KeyError
-                price = single_price['price']
+                price = clean_float(single_price['price'])
                 last_up_source = last_update = single_price['time']
 
                 try:
@@ -569,7 +568,7 @@ def positions_dynamic():
                     price_class = historical_prices(ticker, fx)
                     if price_class is None:
                         raise KeyError
-                    price = float(price_class.df['close_converted'].iloc[0])
+                    price = clean_float(price_class.df['close_converted'].iloc[0])
                     high = '-'
                     low = '-'
                     volume = '-'
@@ -585,7 +584,6 @@ def positions_dynamic():
         if ticker.upper() == 'BTC':
             nonlocal btc_price
             btc_price = price
-
         return price, last_update, high, low, chg, mktcap, last_up_source, volume, source, notes
 
     df = apply_and_concat(df, 'trade_asset_ticker', find_data, [
@@ -596,8 +594,14 @@ def positions_dynamic():
     df['position_fx'] = df['price'] * df['trade_quantity']
     df['position_btc'] = df['price'] * df['trade_quantity'] / btc_price
 
+    # Force some fields to float and clean
+    float_fields = ['price', '24h_high', '24h_low', '24h_change', 'mktcap', 'volume']
+    for field in float_fields:
+        df[field] = df[field].apply(clean_float)
+
     df['allocation'] = df['position_fx'] / df['position_fx'].sum()
     df['change_fx'] = df['position_fx'] * df['24h_change'].astype(float) / 100
+
     # Pnl and Cost calculations
     df['breakeven'] = df['cash_value_fx'] / df['trade_quantity']
     df['pnl_gross'] = df['position_fx'] - df['cash_value_fx']
@@ -617,7 +621,6 @@ def positions_dynamic():
     # this is used to hide small and closed positions at html
     df.loc[df.allocation <= 0, 'small_pos'] = 'True'
     df.loc[df.allocation >= 0, 'small_pos'] = 'False'
-
     # Prepare for delivery. Change index, add total
     df.set_index('trade_asset_ticker', inplace=True)
     df.loc['Total'] = 0
@@ -637,7 +640,6 @@ def positions_dynamic():
         ('trade_fees_fx', 'W'): 'trade_fees_fx_W'
     },
         inplace=True)
-
     # Need to add only some fields - strings can't be added for example
     columns_sum = [
         'cash_value_fx', 'trade_fees_fx', 'position_fx', 'allocation',
@@ -728,6 +730,7 @@ def generatenav(user='warden', force=False, filter=None):
     # Fill the dates from first trade until today
     dailynav['date'] = pd.date_range(start=start_date, end=end_date)
     dailynav = dailynav.set_index('date')
+    dailynav.index = dailynav.index.astype('datetime64[ns]')
     # Create empty fields
     dailynav['PORT_usd_pos'] = 0
     dailynav['PORT_fx_pos'] = 0
@@ -741,6 +744,7 @@ def generatenav(user='warden', force=False, filter=None):
         try:
             # Create a new PriceData class for this ticker
             prices = historical_prices(id, fx=fx)
+            prices.index = prices.index.astype('datetime64[ns]')
             if prices is None:
                 save_nav = False
                 raise ValueError
@@ -779,6 +783,7 @@ def generatenav(user='warden', force=False, filter=None):
             },
                 inplace=True)
             # merge
+            tradedf.index = tradedf.index.astype('datetime64[ns]')
             dailynav = pd.merge(dailynav, tradedf, on='date', how='left')
             # for empty days just trade quantity = 0, same for CV
             dailynav[id + '_quant'].fillna(0, inplace=True)
@@ -828,6 +833,8 @@ def generatenav(user='warden', force=False, filter=None):
         except KeyError:
             continue
 
+    # Drop duplicates
+    dailynav = dailynav[~dailynav.index.duplicated(keep='first')]
     # Create a new column with the portfolio change only due to market move
     # discounting all cash flows for that day
     dailynav['adj_portfolio_fx'] = dailynav['PORT_fx_pos'] -\

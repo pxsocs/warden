@@ -34,8 +34,7 @@ class TestPricing(unittest.TestCase):
         tickers = ['BTC', 'GBTC']
         for date in dates:
             for ticker in tickers:
-                price = price_ondate(ticker, date)
-                print(price)
+                price_ondate(ticker, date)
 
     def test_fx_price_ondate(self):
         date = '1/1/20'
@@ -53,7 +52,6 @@ class TestPricing(unittest.TestCase):
 
         # BTC converted to BRL
         result = historical_prices('BTC', fx='EUR')
-        print(result)
         self.assertIsInstance(result, pd.DataFrame, 'BTC BRL')
         self.assertFalse(result.empty, 'BTC BRL')
 
@@ -73,10 +71,10 @@ class TestPricing(unittest.TestCase):
         self.assertFalse(result.empty, 'BTC CC')
 
         # GBTC from fmp
-        result = fmp_historical('GBTC')
+        result = td_historical('GBTC')
         # if FP API calls reached limit it will raise an error
-        # self.assertIsInstance(result, pd.DataFrame, 'GBTC FMP')
-        # self.assertFalse(result.empty, 'GBTC FMP')
+        self.assertIsInstance(result, pd.DataFrame, 'GBTC 12D')
+        self.assertFalse(result.empty, 'GBTC 12d')
 
         # Test Auto grabber using engine.py historical_prices
         ticker_list = ['BTC', 'GBTC', 'IBM']

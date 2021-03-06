@@ -3,8 +3,10 @@ import pandas as pd
 import os
 import logging
 from datetime import datetime
+from warden_decorators import MWT
 
 
+@ MWT(timeout=10)
 def apikey(source, required=True):
     # GET API_KEY
     if load_config().has_option('API', source):
@@ -16,12 +18,15 @@ def apikey(source, required=True):
     return API_KEY
 
 
+@ MWT(timeout=200)
 def price_ondate(ticker, date_input):
     df = historical_prices(ticker)
     if df.empty:
         return None
     try:
         dt = pd.to_datetime(date_input)
+        df.index = df.index.astype('datetime64[ns]')
+        df = df[~df.index.duplicated(keep='first')]
         idx = df.iloc[df.index.get_loc(dt, method='nearest')]
         return (idx)
     except Exception as e:
@@ -33,12 +38,13 @@ def price_ondate(ticker, date_input):
 # The below is a priority list for some usually accessed tickers
 mapping = {
     'BTC': ['cryptocompare', 'alphavantage_currency'],
-    'GBTC': ['fmp', 'twelvedata', 'alphavantage_global'],
+    'GBTC': ['alphavantage_global', 'twelvedata', 'fmp'],
     'ETH': ['cryptocompare', 'alphavantage_currency'],
-    'MSTR': ['fmp', 'twelvedata', 'alphavantage_global']
+    'MSTR': ['alphavantage_global', 'twelvedata', 'fmp'],
 }
 
 
+@ MWT(timeout=200)
 def historical_prices(ticker, fx='USD', source=None):
     '''
     RETURNS a DF with
@@ -60,9 +66,9 @@ def historical_prices(ticker, fx='USD', source=None):
         source_list = [
             'cryptocompare',
             'alphavantage_currency',
-            'fmp',
             'alphavantage_global',
-            'twelvedata'
+            'twelvedata',
+            'fmp'
         ]
 
     from pricing_engine.alphavantage import historical as aa_historical
@@ -107,6 +113,7 @@ def historical_prices(ticker, fx='USD', source=None):
                 # Get a currency df
                 df_fx = aa_historical(fx, function='FX_DAILY')
                 df_fx.index = pd.to_datetime(df_fx.index)
+                df_fx = df_fx.loc[~df_fx.index.duplicated(keep='first')]
                 df_fx = df_fx.rename(columns={'close': 'fx_close'})
                 df_fx = df_fx[['fx_close']]
                 df_fx['fx_close'] = pd.to_numeric(df_fx.fx_close,
@@ -114,10 +121,12 @@ def historical_prices(ticker, fx='USD', source=None):
                 df_fx['fx_close'] = 1 / df_fx['fx_close']
 
                 # Merge the two dfs:
+                results = results.loc[~results.index.duplicated(keep='first')]
                 merge_df = pd.merge(results, df_fx, on='date', how='inner')
                 merge_df['close'] = merge_df['close'].astype(float)
                 merge_df['close_converted'] = merge_df['close'] * merge_df[
                     'fx_close']
+
                 results = merge_df
 
             else:
@@ -135,6 +144,7 @@ def historical_prices(ticker, fx='USD', source=None):
     return (results)
 
 
+@ MWT(timeout=5)
 def realtime_price(ticker, fx='USD', source=None, parsed=True):
     '''
     Gets realtime price from first provider available and returns
@@ -157,9 +167,9 @@ def realtime_price(ticker, fx='USD', source=None, parsed=True):
         source_list = [
             'cryptocompare',
             'alphavantage_currency',
-            'fmp',
             'alphavantage_global',
-            'twelvedata'
+            'twelvedata',
+            'fmp'
         ]
 
     from pricing_engine.alphavantage import realtime as aa_realtime
@@ -189,6 +199,7 @@ def realtime_price(ticker, fx='USD', source=None, parsed=True):
     return (results)
 
 
+@ MWT(timeout=200)
 def GBTC_premium(price):
     # Calculates the current GBTC premium in percentage points
     # to BTC (see https://grayscale.co/bitcoin-trust/)
@@ -198,6 +209,7 @@ def GBTC_premium(price):
     return fairvalue, premium
 
 
+@ MWT(timeout=200)
 def fx_rate():
     config = load_config()
     fx = config['PORTFOLIO']['base_fx']
@@ -222,6 +234,7 @@ def fx_rate():
     return (rate)
 
 
+@ MWT(timeout=200)
 def fx_price_ondate(base, cross, date):
     # Gets price conversion on date between 2 currencies
     # on a specific date
