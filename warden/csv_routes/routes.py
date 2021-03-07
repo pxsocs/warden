@@ -62,12 +62,13 @@ def importcsv():
                     csvfile = form.csvfile.data
 
                 return render_template(
-                    "importcsv.html",
+                    "warden/importcsv.html",
                     title="Import CSV File",
                     form=form,
                     csv=csv_reader,
                     csvfile=csvfile,
                     filename=filename,
+                    current_app=current_app
                 )
 
     if request.method == "GET":
@@ -220,7 +221,7 @@ def importcsv():
                         trade_fees=fees,
                         trade_notes=notes,
                         cash_value=qop * cashvalue,
-                        trade_reference_id=tradeid,
+                        trade_blockchain_id=tradeid,
                     )
                     current_app.db.session.add(trade)
                     current_app.db.session.commit()
@@ -251,10 +252,11 @@ def importcsv():
                 for error in errorlist:
                     flash(error, "warning")
 
-            return redirect(url_for("main.home"))
+            return redirect(url_for("warden.warden_page"))
 
-    return render_template("importcsv.html",
+    return render_template("warden/importcsv.html",
                            title="Import CSV File",
+                           current_app=current_app,
                            form=form)
 
 

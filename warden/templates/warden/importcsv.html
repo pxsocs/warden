@@ -1,0 +1,206 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <form method="POST" action="" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+
+                <legend class="border-bottom mb-4">Import CSV</legend>
+
+                <h6> CSV Instructions can be<a href="/csvtemplate"> found here.</a></h6>
+                </br></br>
+                {% if not csv %}
+                <div class="form-group">
+                    {{ form.csvfile.label() }}
+                    {{ form.csvfile(class="form-control-file") }}
+                    {% if form.csvfile.errors %}
+                    {% for error in form.csvfile.errors %}
+                    <span class="text-danger">{{ error }}</span></br>
+                    {% endfor %}
+                    {% endif %}
+
+                </div>
+
+                <div class="form-group">
+                    {{ form.submit(class="btn btn-outline-info")}}
+                </div>
+                {% endif %}
+
+                {% if csv %}
+                <input hidden class="form-control" type="text" placeholder="{{csvfile}}" {{csvfile}}>
+                <div class="form-group">
+                    <a href="/importcsv?f={{filename}}">
+                        <button id="importbutton" type="button" class="btn btn-outline-danger">IMPORT</button>
+                    </a>
+                </div>
+                {% endif %}
+
+
+
+
+            </fieldset>
+        </form>
+    </div>
+</div>
+{% if csv %}
+
+<div class="row">
+    <div class="col-sm-12">
+        <legend class="border-bottom mb-4">Please check your CSV below</legend>
+        <h6 class="text-danger"> CSV Files need to be in the format below. Please double check to make sure it matches
+            your
+            columns.</h6>
+        <h6 class="text-danger"> If the fields are not matching, please go back and check your csv file.</h6>
+
+        </br>
+        </br>
+
+        <table id="csvtable" class="table-small">
+            <tbody>
+                <tr>
+                    <th class="text-right"><button type="button" class="btn btn-outline-info">
+                            Trade Date</button></th>
+
+                    <th class="text-center">-> importing from -></th>
+
+                    <th class="text-left"><button type="button" class="btn btn-outline-info">
+                            {{csv.fieldnames[0]}} </button></th>
+                </tr>
+                <td colspan="3">&nbsp</td>
+                <tr>
+                    <th class="text-right"><button type="button" class="btn btn-outline-info">
+                            Account Name</button></th>
+
+                    <th class="text-center">-> importing from -></th>
+
+                    <th class="text-left"><button type="button" class="btn btn-outline-info">
+                            {{csv.fieldnames[1]}} </button></th>
+                </tr>
+                <td colspan="3">&nbsp</td>
+                <tr>
+                    <th class="text-right"><button type="button" class="btn btn-outline-info">
+                            B S D W (Buy / Sell / Deposit / Withdraw)</button></th>
+
+                    <th class="text-center">-> importing from -></th>
+
+                    <th class="text-left"><button type="button" class="btn btn-outline-info">
+                            {{csv.fieldnames[2]}} </button></th>
+                </tr>
+                <td colspan="3">&nbsp</td>
+                <tr>
+                    <th class="text-right"><button type="button" class="btn btn-outline-info">
+                            Asset (ticker)</button></th>
+
+                    <th class="text-center">-> importing from -></th>
+
+                    <th class="text-left"><button type="button" class="btn btn-outline-info">
+                            {{csv.fieldnames[3]}} </button></th>
+                </tr>
+                <td colspan="3">&nbsp</td>
+                <tr>
+                    <th class="text-right"><button type="button" class="btn btn-outline-info">
+                            Quantity</button></th>
+
+                    <th class="text-center">-> importing from -></th>
+
+                    <th class="text-left"><button type="button" class="btn btn-outline-info">
+                            {{csv.fieldnames[4]}} </button></th>
+                </tr>
+                <td colspan="3">&nbsp</td>
+                <tr>
+                    <th class="text-right"><button type="button" class="btn btn-outline-info">
+                            Price</button></th>
+
+                    <th class="text-center">-> importing from -></th>
+
+                    <th class="text-left"><button type="button" class="btn btn-outline-info">
+                            {{csv.fieldnames[5]}} </button></th>
+                </tr>
+                <td colspan="3">&nbsp</td>
+                <tr>
+                    <th class="text-right"><button type="button" class="btn btn-outline-info">
+                            Fees</button></th>
+
+                    <th class="text-center">-> importing from -></th>
+
+                    <th class="text-left"><button type="button" class="btn btn-outline-info">
+                            {{csv.fieldnames[6]}} </button></th>
+                </tr>
+                <td colspan="3">&nbsp</td>
+                <tr>
+                    <th class="text-right"><button type="button" class="btn btn-outline-info">
+                            Cash_Value</button></th>
+
+                    <th class="text-center">-> importing from -></th>
+
+                    <th class="text-left"><button type="button" class="btn btn-outline-info">
+                            {{csv.fieldnames[7]}} </button></th>
+                </tr>
+
+                <td colspan="3">&nbsp</td>
+                <tr>
+                    <th class="text-right"><button type="button" class="btn btn-outline-info">
+                            Notes</button></th>
+
+                    <th class="text-center">-> importing from -></th>
+
+                    <th class="text-left"><button type="button" class="btn btn-outline-info">
+                            {{csv.fieldnames[8]}} </button></th>
+                </tr>
+                <td colspan="3">&nbsp</td>
+                <tr>
+                    <th class="text-right"><button type="button" class="btn btn-outline-info">
+                            Trade_ID</button></th>
+
+                    <th class="text-center">-> importing from -></th>
+
+                    <th class="text-left"><button type="button" class="btn btn-outline-info">
+                            {{csv.fieldnames[9]}} </button></th>
+                </tr>
+
+
+        </table>
+
+
+
+    </div>
+</div>
+{% endif %}
+</br>
+</br>
+</br>
+
+</div>
+
+{% if csv %}
+<div class="row">
+    <div class="col-sm-12">
+        <h5>Your CSV File Structure (first row = Field Names)</h5>
+
+        <table id="csvtable" class="table">
+            <tbody>
+
+
+                <tr>
+                    {% for item in csv.fieldnames %}
+                    <th>{{item}}</th>
+                    {% endfor %}
+                </tr>
+                {% for item in csv %}
+                <tr>
+                    {% for key in csv.fieldnames %}
+                    <td>{{item[key]}}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+</div>
+{% endif %}
+
+<script src="/static/importcsv.js"></script>
+
+{% endblock content %}

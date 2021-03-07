@@ -18,6 +18,7 @@ from pricing_engine.engine import (fx_rate,
 from pricing_engine.cryptocompare import multiple_price_grab
 from warden_decorators import MWT, timing
 from utils import load_config, pickle_it
+from dateutil import parser
 
 
 # Returns the current application path
@@ -557,6 +558,17 @@ def positions_dynamic():
         if ticker.upper() == 'BTC':
             nonlocal btc_price
             btc_price = price
+
+        # check if 24hr change is indeed 24h or data is old, if so 24hr change = 0
+        try:
+            checker = last_update
+            if not isinstance(checker, datetime):
+                checker = parser.parse(last_update)
+            if checker < (datetime.now() - timedelta(days=1)):
+                chg = 0
+        except Exception:
+            pass
+
         return price, last_update, high, low, chg, mktcap, last_up_source, volume, source, notes
 
     df = apply_and_concat(df, 'trade_asset_ticker', find_data, [
