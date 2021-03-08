@@ -88,7 +88,7 @@ class TradeForm(FlaskForm):
 
 class ImportCSV(FlaskForm):
     csvfile = FileField('Import CSV File', validators=[FileAllowed(['csv'])])
-    submit = SubmitField('Open')
+    submit = SubmitField('Open File')
 
     def validate_csvfile(sef, csvfile):
         if csvfile.data is None:

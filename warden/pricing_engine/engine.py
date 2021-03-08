@@ -57,6 +57,8 @@ def historical_prices(ticker, fx='USD', source=None):
         }
     '''
 
+    ticker = ticker.replace(' ', '')
+
     if source and type(source) != list:
         raise TypeError("source has to be a list of strings - can be one string inside a list")
 
@@ -158,6 +160,7 @@ def realtime_price(ticker, fx='USD', source=None, parsed=True):
             'source':
         }
     '''
+    ticker = ticker.replace(' ', '')
     if source and type(source) != list:
         raise TypeError("source has to be a list of strings - can be one string inside a list")
 

@@ -7,7 +7,8 @@ from flask.globals import current_app
 from warden_modules import regenerate_nav
 from specter_importer import Specter
 from config import Config
-from utils import fxsymbol
+from utils import fxsymbol, pickle_it
+from datetime import datetime
 from message_handler import Message
 
 
@@ -189,3 +190,41 @@ def specter_test(force=False):
         messages = str(e)
 
     return (return_dict, messages)
+
+
+# System Health methods === These are essential checks for WARden to run
+# They should run on background and save a pickle to be checked at every
+# page request
+
+# Check if realtime prices are working
+
+def test_RealTimeBTC():
+    from pricing_engine.engine import realtime_price
+    ticker = 'BTC'
+    results = realtime_price(ticker)
+    run_time = datetime.now()
+
+    if results is None:
+        health = False
+        price = None
+        error_message = 'Realtime Price returned None'
+    try:
+        price = results['price']
+        health = True
+        error_message = None
+    except Exception as e:
+        health = False
+        price = None
+        error_message = f"Realtime Price returned an error: {e}"
+
+    data = {
+        'health': health,
+        'price': price,
+        'error_message': error_message,
+        'run_time': run_time
+    }
+
+    filename = 'status_realtime_btc.pkl'
+    pickle_it(action='save', filename=filename, data=data)
+
+    return (data)

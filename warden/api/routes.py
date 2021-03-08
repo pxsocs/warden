@@ -85,6 +85,18 @@ def alert_activity():
 
 # API End Point checks for wallet activity
 
+# Gets a local pickle file and dumps - does not work with pandas df
+# Do not include extension pkl on argument
+@api.route("/get_pickle", methods=['GET'])
+@login_required
+def get_pickle():
+    filename = request.args.get("filename")
+    if not filename:
+        return None
+    filename += ".pkl"
+    data_loader = pickle_it(action='load', filename=filename)
+    return (json.dumps(data_loader, default=lambda o: '<not serializable>'))
+
 
 @api.route("/check_activity", methods=['GET'])
 @login_required

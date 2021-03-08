@@ -43,11 +43,10 @@ class Trades(db.Model):
                         db.ForeignKey("user.id"),
                         nullable=False)
     trade_inputon = db.Column(db.DateTime,
-                              nullable=False,
-                              default=datetime.utcnow)
+                              default=datetime.utcnow())
     trade_date = db.Column(db.DateTime,
                            nullable=False,
-                           default=datetime.utcnow)
+                           default=datetime.utcnow())
     trade_currency = db.Column(db.String(3), nullable=False, default="USD")
     trade_asset_ticker = db.Column(db.String(20), nullable=False)
     trade_account = db.Column(db.String(20), nullable=False)

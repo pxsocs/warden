@@ -742,7 +742,7 @@ def deltrade():
 
         if trade is None:
             flash(f"Trade id: {id} not found. Nothing done.", "warning")
-            return redirect(url_for("main.home"))
+            return redirect(url_for("warden.warden_page"))
 
         if trade.user_id != current_user.username:
             abort(403)
@@ -756,6 +756,31 @@ def deltrade():
     else:
         return redirect(url_for("warden.warden_page"))
 
+
+@warden.route("/delalltrades", methods=["GET"])
+@login_required
+# This deletes all trades from database - use with caution. Should not
+# be called directly as it will delete all trades without confirmation!
+def delalltrades():
+
+    transactions = Trades.query.filter_by(
+        user_id=current_user.username).order_by(Trades.trade_date)
+
+    if transactions.count() == 0:
+        return render_template("warden/empty_txs.html",
+                               title="Empty Transaction List",
+                               current_app=current_app,
+                               current_user=fx_rate())
+
+    if request.method == "GET":
+        Trades.query.filter_by(user_id=current_user.username).delete()
+        current_app.db.session.commit()
+        regenerate_nav()
+        flash("ALL TRANSACTIONS WERE DELETED", "danger")
+        return redirect(url_for("warden.warden_page"))
+
+    else:
+        return redirect(url_for("warden.warden_page"))
 
 # -------------------------------------------------
 #  START JINJA 2 Filters

@@ -107,76 +107,78 @@ class TestPricing(unittest.TestCase):
     # ALPHAVANTAGE TESTS
     # =====================================
 
-    # def test_aa_found_api(self):
-    #     config = load_config()
-    #     self.assertEqual(config.has_option('API', 'alphavantage'), True)
-    #     api_key = apikey('alphavantage', True)
-    #     self.assertNotEqual(api_key, None)
+    def test_aa_found_api(self):
+        config = load_config()
+        self.assertEqual(config.has_option('API', 'alphavantage'), True)
+        api_key = apikey('alphavantage', True)
+        self.assertNotEqual(api_key, None)
 
-    # def test_aa_realtime(self):
-    #     ticker_list = [('BTC', 'CURRENCY_EXCHANGE_RATE'),
-    #                    ('GBTC', 'GLOBAL_QUOTE'),
-    #                    ('AAPL', 'GLOBAL_QUOTE'),
-    #                    ('ETH', 'CURRENCY_EXCHANGE_RATE'),
-    #                    ('EUR', 'CURRENCY_EXCHANGE_RATE'),
-    #                    ('USD', 'CURRENCY_EXCHANGE_RATE')]
-    #     for ticker in ticker_list:
-    #         realtime(ticker=ticker[0], function=ticker[1])
+    def test_aa_realtime(self):
+        ticker_list = [('BTC', 'CURRENCY_EXCHANGE_RATE'),
+                       ('GBTC', 'GLOBAL_QUOTE'),
+                       ('AAPL', 'GLOBAL_QUOTE'),
+                       ('ETH', 'CURRENCY_EXCHANGE_RATE'),
+                       ('EUR', 'CURRENCY_EXCHANGE_RATE'),
+                       ('USD', 'CURRENCY_EXCHANGE_RATE')]
+        for ticker in ticker_list:
+            realtime(ticker=ticker[0], function=ticker[1])
 
-    # def test_aa_historical(self):
-    #     ticker_list = [('BTC', 'DIGITAL_CURRENCY_DAILY'),
-    #                    ('GBTC', 'TIME_SERIES_DAILY_ADJUSTED'),
-    #                    ('AAPL', 'TIME_SERIES_DAILY_ADJUSTED'),
-    #                    ('ETH', 'DIGITAL_CURRENCY_DAILY'),
-    #                    ('EUR', 'FX_DAILY'),
-    #                    ('USD', 'FX_DAILY')]
-    #     for ticker in ticker_list:
-    #         historical(ticker=ticker[0], function=ticker[1])
+    def test_aa_historical(self):
+        ticker_list = [('BTC', 'DIGITAL_CURRENCY_DAILY'),
+                       ('GBTC', 'TIME_SERIES_DAILY_ADJUSTED'),
+                       ('AAPL', 'TIME_SERIES_DAILY_ADJUSTED'),
+                       ('ETH', 'DIGITAL_CURRENCY_DAILY'),
+                       ('EUR', 'FX_DAILY'),
+                       ('USD', 'FX_DAILY')]
+        for ticker in ticker_list:
+            historical(ticker=ticker[0], function=ticker[1])
 
     # =====================================
     # CRYPTOCOMPARE TESTS
     # =====================================
 
-    # def test_cc_found_api(self):
-    #     config = load_config()
-    #     self.assertEqual(config.has_option('API', 'cryptocompare'), True)
-    #     api_key = apikey('cryptocompare', True)
-    #     self.assertNotEqual(api_key, None)
+    def test_cc_found_api(self):
+        config = load_config()
+        self.assertEqual(config.has_option('API', 'cryptocompare'), True)
+        api_key = apikey('cryptocompare', True)
+        self.assertNotEqual(api_key, None)
 
-    # def test_cc_realtime(self):
-    #     ticker_list = [('BTC', 'USD'),
-    #                    ('BTC', 'EUR'),
-    #                    ('ETH', 'BTC,USD,GBP'),
-    #                    ('ETH', 'BRL')]
-    #     for ticker in ticker_list:
-    #         cc_realtime(ticker=ticker[0], fxs=ticker[1])
+    def test_cc_realtime(self):
+        ticker_list = [('BTC', 'USD'),
+                       ('BTC', 'EUR'),
+                       ('ETH', 'BTC,USD,GBP'),
+                       ('ETH', 'BRL')]
+        for ticker in ticker_list:
+            cc_realtime(ticker=ticker[0], fxs=ticker[1])
 
-    # def test_cc_historical(self):
-    #     ticker_list = [('BTC', 'USD'),
-    #                    ('BTC', 'EUR'),
-    #                    ('ETH', 'BRL')]
-    #     for ticker in ticker_list:
-    #         cc_historical(ticker=ticker[0], fx=ticker[1])
+    def test_cc_historical(self):
+        ticker_list = [('BTC', 'USD'),
+                       ('BTC', 'EUR'),
+                       ('ETH', 'BRL')]
+        for ticker in ticker_list:
+            cc_historical(ticker=ticker[0], fx=ticker[1])
 
     # =====================================
     # FMP TESTS
     # =====================================
 
-    # def test_fmp_found_api(self):
-    #     config = load_config()
-    #     self.assertEqual(config.has_option('API', 'fmp'), True)
-    #     api_key = apikey('fmp', True)
-    #     self.assertNotEqual(api_key, None)
+    def test_fmp_found_api(self):
+        config = load_config()
+        self.assertEqual(config.has_option('API', 'fmp'), True)
+        api_key = apikey('fmp', True)
+        self.assertNotEqual(api_key, None)
 
-    # def test_fmp_realtime(self):
-    #     ticker_list = ['BTC', 'AAPL', 'GBTC', 'IBM']
-    #     for ticker in ticker_list:
-    #         fmp_realtime(ticker=ticker)
+    def test_fmp_realtime(self):
+        ticker_list = ['BTC', 'AAPL', 'GBTC', 'IBM']
+        for ticker in ticker_list:
+            fmp_realtime(ticker=ticker)
 
-    # def test_fmp_historical(self):
-    #     ticker_list = ['BTC', 'AAPL', 'GBTC', 'IBM']
-    #     for ticker in ticker_list:
-    #         fmp_historical(ticker=ticker)
+    def test_fmp_historical(self):
+        ticker_list = ['BTC', 'AAPL', 'GBTC', 'IBM']
+        for ticker in ticker_list:
+            fmp_historical(ticker=ticker)
+
+
 if __name__ == '__main__':
     print("Running tests... Please wait...")
 

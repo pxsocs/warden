@@ -7,8 +7,13 @@
       <h4 class='text-info'>
         No Transactions Found
       </h4>
-      <h5>Maybe you are new here?</br>
-        You can start by manually including some <a href="{{url_for('warden.newtrade')}}">transactions</a>.</h5>
+      <h5>Maybe you are new here?</br></br>
+        You can start by manually including some <a href="{{url_for('warden.newtrade')}}">transactions</a>.</br>
+        </br>
+        If you have a CSV with your transactions you can <a href='/importcsv'>import it</a>.</br>
+        </br>
+        Or try <a href='/specter_auth'>connecting Specter Server</a> to automatically get wallet transactions.
+      </h5>
     </div>
 
     <div class="col-sm-4">
