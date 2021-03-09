@@ -176,8 +176,9 @@
                     <tr id="ticker{{position}}">
 
                         <th class="align-middle" scope="row">
-
-                            {{position}}
+                            <a href='/price_and_position?ticker={{position}}'>
+                                {{position}}
+                            </a>
 
                         </th>
 
@@ -627,7 +628,11 @@
                         {% if position != "TOTAL" %}
                         <tr id="tickerfifo_{{position}}">
 
-                            <th class="align-middle">{{position}}</th>
+                            <th class="align-middle">
+                                <a href='/price_and_position?ticker={{position}}'>
+                                    {{position}}
+                                </a>
+                            </th>
 
                             <td class="text-right align-middle">
                                 <span id="{{position}}_F_position">
@@ -766,7 +771,9 @@
 
 
                         <th class="align-middle" scope="row">
-                            {{position}}
+                            <a href='/price_and_position?ticker={{position}}'>
+                                {{position}}
+                            </a>
                         </th>
 
                         <td class="text-right align-middle hinumbersmall">

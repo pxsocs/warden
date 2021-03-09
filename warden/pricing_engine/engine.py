@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import logging
 from datetime import datetime
+from dateutil import parser
 from warden_decorators import MWT
 
 
@@ -133,10 +134,20 @@ def historical_prices(ticker, fx='USD', source=None):
 
             else:
                 results['fx_close'] = 1
-                results['close_converted'] = results['close'].astype(float)
+                results['close_converted'] = pd.to_numeric(results.close,
+                                                           errors='coerce')
 
+            results.index = results.index.astype('datetime64[ns]')
             # Save this file to be used during the same day instead of calling API
             pickle_it(action='save', filename=filename, data=results)
+            # save metadata as well
+            metadata = {
+                'source': src,
+                'last_update': datetime.utcnow()
+            }
+            filemeta = (ticker + "_" + fx + ".meta")
+            pickle_it(action='save', filename=filemeta, data=metadata)
+
             return (results)
         else:
             logging.info(f"Source {src} does not return any data for {ticker}. Trying other sources.")
@@ -197,6 +208,10 @@ def realtime_price(ticker, fx='USD', source=None, parsed=True):
         if results is not None:
             if parsed and 'price' in results:
                 if results['price'] is not None:
+                    from warden_modules import clean_float
+                    if isinstance(results['time'], str):
+                        results['time'] = parser.parse(results['time'])
+                    results['price'] = clean_float(results['price'])
                     return (results)
 
     return (results)

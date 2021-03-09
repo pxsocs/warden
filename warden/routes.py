@@ -5,13 +5,12 @@ from flask_login import login_user, logout_user, current_user, login_required
 from warden_modules import (warden_metadata, positions,
                             generatenav, specter_df,
                             regenerate_nav,
-                            home_path, clean_float)
-from pricing_engine.engine import fx_rate
+                            home_path, clean_float, transactions_fx)
+from pricing_engine.engine import fx_rate, historical_prices, realtime_price
 
 from forms import RegistrationForm, LoginForm, TradeForm
 
 from werkzeug.security import check_password_hash, generate_password_hash
-from warden_decorators import timing
 from models import User, AccountInfo, Trades
 from utils import update_config, heatmap_generator, pickle_it
 from operator import itemgetter
@@ -24,7 +23,7 @@ import json
 import os
 import urllib
 import requests
-import secrets
+import pandas as pd
 
 warden = Blueprint("warden",
                    __name__,
@@ -465,6 +464,68 @@ def portfolio_compare():
                            title="Portfolio Comparison",
                            current_app=current_app,
                            current_user=fx_rate())
+
+
+@warden.route("/price_and_position", methods=["GET"])
+@login_required
+def price_and_position():
+    # Gets price and position data for a specific ticker
+    ticker = request.args.get("ticker")
+    fx = request.args.get("fx")
+    if fx is None:
+        fx = fx_rate()['base']
+
+    # Gets Price and market data first
+    realtime_data = realtime_price(ticker=ticker, fx=fx)
+    historical_data = historical_prices(ticker=ticker, fx=fx)
+    historical_data.index = historical_data.index.astype('datetime64[ns]')
+
+    filemeta = (ticker + "_" + fx + ".meta")
+    historical_meta = pickle_it(action='load', filename=filemeta)
+
+    price_chart = historical_data[["close"]].copy()
+    # dates need to be in Epoch time for Highcharts
+    price_chart.index = price_chart.index.astype('datetime64[ns]')
+    price_chart.index = (price_chart.index - datetime(1970, 1, 1)).total_seconds()
+    price_chart.index = price_chart.index * 1000
+    price_chart.index = price_chart.index.astype(np.int64)
+    price_chart = price_chart.to_dict()
+    price_chart = price_chart["close"]
+
+    # Now gets position data
+    df = positions()
+    if isinstance(df, pd.DataFrame):
+        if not df.empty:
+            df = df[df['trade_asset_ticker'] == ticker]
+
+    df_trades = transactions_fx()
+    position_chart = None
+    if isinstance(df_trades, pd.DataFrame):
+        df_trades = df_trades[df_trades['trade_asset_ticker'] == ticker]
+        if not df_trades.empty:
+            df_trades = df_trades.sort_index(ascending=True)
+            df_trades['trade_quantity_cum'] = df_trades['trade_quantity'].cumsum()
+            position_chart = df_trades[["trade_quantity_cum"]].copy()
+            # dates need to be in Epoch time for Highcharts
+            position_chart.index = position_chart.index.astype('datetime64[ns]')
+            position_chart.index = (position_chart.index - datetime(1970, 1, 1)).total_seconds()
+            position_chart.index = position_chart.index * 1000
+            position_chart.index = position_chart.index.astype(np.int64)
+            position_chart = position_chart.to_dict()
+            position_chart = position_chart["trade_quantity_cum"]
+
+    return render_template("warden/price_and_position.html",
+                           title="Ticker Price and Positions",
+                           current_app=current_app,
+                           current_user=fx_rate(),
+                           realtime_data=realtime_data,
+                           historical_data=historical_data,
+                           historical_meta=historical_meta,
+                           positions=df,
+                           ticker=ticker,
+                           fx=fx,
+                           price_chart=price_chart,
+                           position_chart=position_chart)
 
 
 # Show debug info
