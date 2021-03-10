@@ -42,6 +42,11 @@ def before_request():
     if request.endpoint in exclude_list:
         return
 
+    # if no users found, send to setup
+    users = User.query.all()
+    if users == []:
+        return redirect(url_for("user_routes.initial_setup"))
+
     # Create empty status dictionary
     meta = {
         'tor': current_app.tor,
@@ -112,12 +117,6 @@ def register():
 
 @warden.route("/login", methods=["GET", "POST"])
 def login():
-
-    # if no users found, send to register
-    users = User.query.all()
-    if users == []:
-        flash('Looks like it is your first time running the app. Welcome', 'success')
-        return redirect(url_for("warden.register"))
 
     if current_user.is_authenticated:
         return redirect(url_for("warden.warden_page"))

@@ -175,18 +175,24 @@ def init_app(app):
 
     # CHECK FOR UPGRADE
     repo_url = 'https://api.github.com/repos/pxsocs/specter_warden/releases'
-    github_version = tor_request(repo_url).json()[0]['tag_name']
+    try:
+        github_version = tor_request(repo_url).json()[0]['tag_name']
+    except Exception:
+        github_version = None
 
-    print(f"  [i] Newest WARden version available: {github_version}")
-    parsed_github = version.parse(github_version)
-    parsed_version = version.parse(current_version)
+    if github_version:
+        print(f"  [i] Newest WARden version available: {github_version}")
+        parsed_github = version.parse(github_version)
+        parsed_version = version.parse(current_version)
 
-    app.warden_status['needs_upgrade'] = False
-    if parsed_github > parsed_version:
-        print(warning("  [i] Upgrade Available"))
-        app.warden_status['needs_upgrade'] = True
-    if parsed_github == parsed_version:
-        print(success("  [i] You are running the latest version"))
+        app.warden_status['needs_upgrade'] = False
+        if parsed_github > parsed_version:
+            print(warning("  [i] Upgrade Available"))
+            app.warden_status['needs_upgrade'] = True
+        if parsed_github == parsed_version:
+            print(success("  [i] You are running the latest version"))
+    else:
+        print(warning("  [!] Could not check GitHub for updates"))
 
     print("")
     print("  [i] Loading...")
@@ -235,10 +241,12 @@ def init_app(app):
     from errors.handlers import errors
     from api.routes import api
     from csv_routes.routes import csv_routes
+    from user_routes.routes import user_routes
     app.register_blueprint(warden)
     app.register_blueprint(errors)
     app.register_blueprint(api)
     app.register_blueprint(csv_routes)
+    app.register_blueprint(user_routes)
 
     # For the first load, just get a saved file if available
     # The background jobs will update later

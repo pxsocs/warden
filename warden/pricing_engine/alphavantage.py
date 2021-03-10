@@ -5,7 +5,7 @@ import os
 from pricing_engine.engine import apikey
 from connections import tor_request
 import pandas as pd
-
+from warden_modules import current_path
 # docs
 # https://www.alphavantage.co/documentation/
 
@@ -256,12 +256,11 @@ def historical(ticker, function='TIME_SERIES_DAILY_ADJUSTED', fx='USD', parsed=T
 
 def asset_list(term=None):
     import csv
-    basedir = os.path.abspath(os.path.dirname(__file__))
     master_list = []
     if term is None:
         term = ""
     # Alphavantage Currency List - CSV
-    filename = os.path.join(basedir, 'static/csv_files/physical_currency_list.csv')
+    filename = os.path.join(current_path(), 'static/csv_files/physical_currency_list.csv')
     with open(filename, newline='') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
@@ -274,7 +273,7 @@ def asset_list(term=None):
                     }
                 )
     # Alphavantage Digital Currency list
-    filename = os.path.join(basedir, 'static/csv_files/digital_currency_list.csv')
+    filename = os.path.join(current_path(), 'static/csv_files/digital_currency_list.csv')
     with open(filename, newline='') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:

@@ -211,7 +211,7 @@ function positionChart(data, ticker, fx) {
             enabled: false
         },
         rangeSelector: {
-            selected: 1,
+            selected: 5,
             style: {
                 fontSize: '10px'
             }
@@ -270,7 +270,7 @@ function positionChart(data, ticker, fx) {
         },
 
         series: [{
-            type: 'area',
+            type: 'column',
             name: 'Quantity',
             // The line below maps the dictionary coming from Python into
             // the data needed for highcharts. It's weird but the *1 is

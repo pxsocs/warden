@@ -157,8 +157,10 @@ def positions_json():
     except Exception:
         dfdyn = piedata = None
         btc_price = 0
-
-    btc = realtime_price("BTC")['price']
+    try:
+        btc = realtime_price("BTC")['price']
+    except TypeError:
+        btc = 0
     if not btc:
         btc = 0
 
