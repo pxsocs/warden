@@ -370,6 +370,8 @@ def transactions_fx():
 
 
 def clean_float(text):  # Function to clean CSV fields - leave only digits and .
+    if isinstance(text, int):
+        return (float(text))
     if isinstance(text, float):
         return (text)
     if text is None:

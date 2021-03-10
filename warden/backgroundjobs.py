@@ -192,11 +192,23 @@ def specter_test(force=False):
     return (return_dict, messages)
 
 
-# System Health methods === These are essential checks for WARden to run
+# System Health methods === Checks for WARden to run some services
+# some are critical
 # They should run on background and save a pickle to be checked at every
 # page request
 
 # Check if realtime prices are working
+
+action_on_not_health = {
+    "RealTimeBTC": "warning",
+    "TORRunning": "sidebar",
+    "specterRunning": "sidebar",
+    "noInternet": "critical",
+    "noTXs": "setup",
+    "noUserAccounts": "setup",
+    "noConfig": "createconfig",
+}
+
 
 def test_RealTimeBTC():
     from pricing_engine.engine import realtime_price

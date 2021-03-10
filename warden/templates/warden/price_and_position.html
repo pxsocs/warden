@@ -278,7 +278,7 @@ function positionChart(data, ticker, fx) {
             data: Object.keys(data).map((key) => [((key * 1)), parseFloat(data[key])]),
             turboThreshold: 0,
             tooltip: {
-                pointFormat: "{point.y:,.0f}"
+                pointFormat: "{point.y:,.4f}"
             }
         }]
     });

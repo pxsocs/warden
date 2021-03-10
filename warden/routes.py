@@ -52,7 +52,8 @@ def before_request():
     session['status'] = json.dumps(meta)
 
     if not current_app.specter.specter_auth:
-        flash("Authentication to Specter Failed. Check credentials.", "danger")
+        pass
+        # flash("Authentication to Specter Failed. Check credentials.", "danger")
 
     # Check if still downloading data, if so load files
     if current_app.downloading:

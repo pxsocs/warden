@@ -11,6 +11,7 @@ import emoji
 import time
 import sqlite3
 from logging.handlers import RotatingFileHandler
+from packaging import version
 from ansi.colour import fg
 from flask import Flask
 from flask_login import LoginManager, current_user
@@ -95,6 +96,7 @@ def init_app(app):
                                  muted, yellow, blue)
     from utils import (create_config, runningInDocker)
     from config import Config
+    from connections import tor_request
     warnings.filterwarnings('ignore')
     # Create the empty Mail instance
     # mail = Mail()
@@ -107,16 +109,18 @@ def init_app(app):
     # app.settings['PORTFOLIO']['RENEW_NAV']
     # --------------------------------------------
     config_file = Config.config_file
-
+    app.warden_status = {}
     # Config
     config_settings = configparser.ConfigParser()
     if os.path.isfile(config_file):
         config_settings.read(config_file)
+        app.warden_status['initial_setup'] = False
         print(success("✅ Config Loaded from config.ini - edit it for customization"))
     else:
         print(error("  Config File could not be loaded, created a new one with default values..."))
         create_config(config_file)
         config_settings.read(config_file)
+        app.warden_status['initial_setup'] = True
 
     table_error = False
     try:
@@ -155,13 +159,36 @@ def init_app(app):
     try:
         version_file = Config.version_file
         with open(version_file, 'r') as file:
-            version = file.read().replace('\n', '')
+            current_version = file.read().replace('\n', '')
     except Exception:
-        version = 'unknown'
+        current_version = 'unknown'
     with app.app_context():
-        app.version = version
+        app.version = current_version
 
-    print(f"  [i] Running WARden version: {version}")
+    # Check if there are any users on database, if not, needs initial setup
+    from models import User
+    users = User.query.all()
+    if users == []:
+        app.warden_status['initial_setup'] = True
+
+    print(f"  [i] Running WARden version: {current_version}")
+
+    # CHECK FOR UPGRADE
+    repo_url = 'https://api.github.com/repos/pxsocs/specter_warden/releases'
+    github_version = tor_request(repo_url).json()[0]['tag_name']
+
+    print(f"  [i] Newest WARden version available: {github_version}")
+    parsed_github = version.parse(github_version)
+    parsed_version = version.parse(current_version)
+
+    app.warden_status['needs_upgrade'] = False
+    if parsed_github > parsed_version:
+        print(warning("  [i] Upgrade Available"))
+        app.warden_status['needs_upgrade'] = True
+    if parsed_github == parsed_version:
+        print(success("  [i] You are running the latest version"))
+
+    print("")
     print("  [i] Loading...")
 
     # Check if config.ini exists
@@ -215,7 +242,7 @@ def init_app(app):
 
     # For the first load, just get a saved file if available
     # The background jobs will update later
-    print("  [i] Checking if Specter Server was configured...")
+    print("  [i] Checking Specter Server...")
     print("")
     with app.app_context():
         from specter_importer import Specter
