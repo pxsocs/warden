@@ -35,7 +35,7 @@ def exportcsv():
         user_id=current_user.username).order_by(Trades.trade_date)
 
     if transactions.count() == 0:
-        return render_template("empty.html")
+        return render_template("empty_txs.html")
 
     filename = (current_user.username + "_" +
                 datetime.now().strftime("%Y%m%d") + ".")

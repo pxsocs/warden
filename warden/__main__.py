@@ -330,7 +330,6 @@ def main(debug=False, reloader=False):
 
     if runningInDocker():
         print(success(f"✅ Running inside docker container {emoji.emojize(':whale:')} Getting some James Bartley vibes..."))
-        # Try to start Tor if in docker container
         print("")
 
     app = create_app()

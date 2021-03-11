@@ -15,6 +15,7 @@ from models import User, AccountInfo, Trades
 from utils import update_config, heatmap_generator, pickle_it
 from operator import itemgetter
 from packaging import version
+from connections import tor_request
 
 from datetime import datetime
 import jinja2
@@ -37,7 +38,7 @@ def before_request():
     # to run even in setup mode
     exclude_list = [
         "warden.setup", "warden.specter_auth", "warden.login", "warden.register",
-        "warden.logout"
+        "warden.logout", "warden.show_broadcast", "warden.show_log", "warden.config_ini"
     ]
     if request.endpoint in exclude_list:
         return
@@ -49,11 +50,14 @@ def before_request():
 
     txs = transactions_fx()
     if txs.empty:
+        form = TradeForm()
+        form.trade_currency.data = current_app.fx['code']
+        form.trade_date.data = datetime.utcnow()
         return render_template("warden/empty_txs.html",
                                title="Empty Transaction List",
                                current_app=current_app,
                                current_user=fx_rate(),
-                               form=TradeForm())
+                               form=form)
 
     # Create empty status dictionary
     meta = {
@@ -297,27 +301,35 @@ def update_fx():
 
 
 @warden.route('/specter_auth', methods=['GET', 'POST'])
+@login_required
 def specter_auth():
     if request.method == 'GET':
+
         templateData = {
             "title": "Login to Specter",
             "donated": donate_check(),
             "current_app": current_app,
             "current_user": current_user
         }
-        return (render_template('warden/specter_connect.html', **templateData))
+        return (render_template('warden/specter_auth.html', **templateData))
 
     if request.method == 'POST':
         from message_handler import Message
         current_app.message_handler.clean_category('Specter Connection')
         url = request.form.get('url')
-        if url[-1] != '/':
-            url += '/'
-        if (not url.startswith('http://')) or (not url.startswith('http://')):
-            url = 'http://' + url
+        # Parse it
+        from urllib.parse import urlparse
+        parse_object = urlparse(url)
+        url = parse_object.scheme + '://' + parse_object.netloc + '/'
+
         # Try to ping this url
+        if 'onion' not in url:
+            status_code = requests.head(url).status_code
+        else:
+            status_code = tor_request(url).status_code
+
         try:
-            if int(requests.head(url).status_code) < 400:
+            if int(status_code) < 400:
                 message = Message(category='Specter Connection',
                                   message_txt='Pinging URL',
                                   notes=f"{url}<br> ping <span class='text-success'>✅ Success</span>"
@@ -326,8 +338,24 @@ def specter_auth():
             else:
                 flash('Please check Specter URL (unreacheable)', 'danger')
                 return redirect(url_for('warden.specter_auth'))
-        except Exception:
-            flash('Please check Specter URL (unreacheable)', 'danger')
+        except Exception as e:
+            flash(f'Error Connecting. Error: {e}', 'danger')
+            return redirect(url_for('warden.specter_auth'))
+
+        # Try to authenticate
+        try:
+            current_app.specter.base_url = url
+            current_app.specter.login_url = url + 'auth/login'
+            current_app.specter.tx_url = url + 'wallets/wallets_overview/txlist'
+            current_app.specter.core_url = url + 'settings/bitcoin_core?'
+            current_app.specter.login_payload = {
+                'username': request.form.get('username'),
+                'password': request.form.get('password')
+            }
+            session = current_app.specter.init_session()
+            session.close()
+        except Exception as e:
+            flash(f'Error logging in to Specter: {e}', 'danger')
             return redirect(url_for('warden.specter_auth'))
 
         current_app.settings['SPECTER']['specter_url'] = url
@@ -335,39 +363,8 @@ def specter_auth():
         current_app.settings['SPECTER']['specter_password'] = request.form.get('password')
         update_config()
 
-        # Recreate the specter class
-        from specter_importer import Specter
-        current_app.specter = Specter()
-
-        from backgroundjobs import specter_test
-        specter_dict, specter_messages = specter_test(force=True)
-        if specter_messages is not None:
-            if 'Connection refused' in specter_messages:
-                flash('Having some difficulty reaching Specter Server. ' +
-                      f'Please make sure it is running at {current_app.specter.base_url}', 'warning')
-                return redirect(url_for('warden.specter_auth'))
-            if 'Unauthorized Login' in specter_messages:
-                flash('Invalid Credentials or URL. Try again. ', 'danger')
-                return redirect(url_for('warden.specter_auth'))
-
-        # Update Config
-        # Limit the Number of txs to avoid delays in checking
-        # when user has many txs
-        current_app.specter.tx_payload['limit'] = 50
-        txs = current_app.specter.refresh_txs(load=False)
-        try:
-            message = Message(category='Specter Connection',
-                              message_txt='Downloading Txs',
-                              notes=f"<span class='text-success'>✅ Was able to download {len(txs['txlist'])}/50 test transactions</span>"
-                              )
-            current_app.message_handler.add_message(message)
-        except Exception:
-            flash('Something went wrong. Check your console for a message. Or try again.', 'danger')
-            return redirect(url_for('warden.specter_auth'))
-
-        flash("Success. Connected to Specter Server.", "success")
+        flash("Success. Connected to Specter Server. Downloading Transactions...", "success")
         # Now allow download of all txs in background on next run
-        current_app.specter.tx_payload['limit'] = 0
         current_app.downloading = True
         return redirect(url_for('warden.warden_page'))
 
@@ -670,11 +667,14 @@ def trade_transactions():
     transactions = Trades.query.filter_by(user_id=current_user.username)
 
     if transactions.count() == 0:
+        form = TradeForm()
+        form.trade_currency.data = current_app.fx['code']
+        form.trade_date.data = datetime.utcnow()
         return render_template("warden/empty_txs.html",
                                title="Empty Transaction List",
                                current_app=current_app,
                                current_user=fx_rate(),
-                               form=TradeForm())
+                               form=form)
 
     return render_template("warden/trade_transactions.html",
                            title="Transaction History",
@@ -821,11 +821,14 @@ def delalltrades():
         user_id=current_user.username).order_by(Trades.trade_date)
 
     if transactions.count() == 0:
+        form = TradeForm()
+        form.trade_currency.data = current_app.fx['code']
+        form.trade_date.data = datetime.utcnow()
         return render_template("warden/empty_txs.html",
                                title="Empty Transaction List",
                                current_app=current_app,
                                current_user=fx_rate(),
-                               form=TradeForm())
+                               form=form)
 
     if request.method == "GET":
         Trades.query.filter_by(user_id=current_user.username).delete()

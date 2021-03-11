@@ -38,24 +38,6 @@ def background_specter_update():
                           )
     app.message_handler.add_message(message)
 
-    # Ping URL
-    try:
-        result = requests.get(app.specter.base_url)
-        if result.ok:
-            app.specter.specter_reached = True
-            message = Message(category='Background Job',
-                              message_txt="<span class='text-success'>Specter Server Reached</span>")
-        else:
-            app.specter.specter_reached = False
-            message = Message(category='Background Job',
-                              message_txt="<span class='text-danger'>Could not reach Specter Server</span>")
-    except Exception as e:
-        app.specter.specter_reached = False
-        message = Message(category='Background Job',
-                          message_txt=f"<span class='text-danger'>Error pinging Specter: {e}</span>")
-    # Write message
-    app.message_handler.add_message(message)
-
     # Authenticate
     try:
         app.specter.init_session()

@@ -1,155 +1,133 @@
 {% extends "warden/warden_layout.html" %}
 {% block content %}
 
-<style>
-  body {
-    background-color: #333333;
-    background-size: cover;
-  }
 
-  .section-center__full {
-    height: 45vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-</style>
+<div id="container-fluid" style='color:rgb(61, 61, 61); padding-bottom: 200px;'>
+  <section class="showcase">
 
-<div class='container-fluid' style='padding-bottom: 200px;'>
+    {%if not current_app.specter.specter_auth%}
+    <div class="content" style='color:rgb(61, 61, 61);'>
+      <img src='{{url_for('warden.static', filename='images/specter_icon.png')}}' width="50">
+      <h4>
+        Connect to Specter Server<br>
+      </h4>
 
-  <div class="row">
-    <div class='col-lg-12'>
-      <h1 class="text-white">Welcome to the WARden</h1>
-      <span class='text-white' style='font-size: 20px;'>Private Portfolio Tracker
-      </span>
+      <hr>
+
+      <form class='' action="{{ url_for('warden.specter_auth') }}" method="post">
+
+        <div class="row text-left">
+          <div class='col-2'>
+          </div>
+          <div class='col-10'>
+            <p>
+              <img src='{{url_for('warden.static', filename='images/Tor-logo.png')}}' width="35">
+              &nbsp;Onion Addresses are supported<small><br> (Go to Specter > Settings > Tor > Enable Tor
+                Hidden
+                Service)</small>
+            </p>
+          </div>
+        </div>
+
+        <div class="form-group row text-left">
+
+          <label for="colFormLabelLg" class="col-sm-2 col-form-label col-form-label">Specter Server
+            URL</label>
+          <div class="col-sm-10">
+
+            <input type="text" class="form-control form-control" name="url"
+              value="{{current_app.settings['SPECTER']['specter_url']}}">
+            <small class='text-left'>
+              <p style='padding-top:20px;'>Typically this is http://127.0.0.1:25441/ or
+                http://localhost:25441/</p>
+            </small>
+          </div>
+        </div>
+        <div class="form-group row text-left">
+          <label for="colFormLabelLg" class="col-sm-2 col-form-label col-form-label">Username<span
+              class='small text-muted'>&nbsp;&nbsp;(blank if
+              None)</span></label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control form-control" name="username"
+              value="{{current_app.settings['SPECTER']['specter_login']}}">
+          </div>
+        </div>
+        <div class="form-group row text-left">
+          <label for="colFormLabelLg" class="col-sm-2 col-form-label col-form-label">Password<span
+              class='small text-muted'>&nbsp;&nbsp;(blank if
+              None)</span></label>
+          <div class="col-sm-10 text-left">
+            <input type="password" class="form-control form-control" name="password"
+              value="{{current_app.settings['SPECTER']['specter_password']}}">
+            <br>
+            <button id='submit_button' type="submit" class="btn btn-lg btn-outline-primary">Connect</button>
+
+          </div>
+        </div>
+
+      </form>
+
+
+      <h5 class='text-left' style='padding-top:50px;''>Why connect to Specter Server?</h5>
+            <p class=' text-left'><i class="fas fa-ghost"></i>&nbsp;Automatically download Bitcoin transactions into
+        your
+        portfolio</p>
+        <p class='text-left'><i class="fas fa-ghost"></i>&nbsp;Wallet summary and activity notification</p>
+        <p class='text-left'><i class="fas fa-ghost"></i>&nbsp;Check your stack progress</p>
+        <br>
+        <h5 class='text-left'>Is it safe?</h5>
+        <p class='text-left'>
+          <i class="fas fa-plug"></i>&nbsp;The WARden will connect to Specter Server the same way your browser
+          does.</p>
+        <p class='text-left'>
+          <i class="fab fa-github"></i>&nbsp;But don't trust us, check the code to see how it's done (check
+          file
+          <a class='' style="text-decoration : none" href='https://github.com/pxsocs/specter_warden/'><span
+              style='color: darkgreen'>specter_importer.py</span></a>).
+        </p>
+        <p class='text-left'><i class="fas fa-file-import"></i>&nbsp;Alternatively, you can choose not to
+          connect
+          Specter Server and manually import a csv
+          file with your
+          transactions later.</p>
+
+
     </div>
-  </div>
+    {%else%}
+    <div class="content col-4" style='color:rgb(61, 61, 61); padding-top: 50px; padding-left:50px;'>
+      <h4><i class="fas fa-ghost"></i>&nbsp;&nbsp;Connected to Specter Server</h4>
+      <br>
+      <p>
+        <i class="far fa-check-square text-success"></i>&nbsp;
+        Specter Server running at: <span class='float-right'><a href="{{current_app.specter.base_url}}"
+            target='_blank'>{{current_app.specter.base_url}}</a></span>
+      </p>
+      <p>
+        <i class="far fa-check-square text-success"></i>&nbsp;
+        Running Specter Version: <span class='float-right'>{{current_app.specter.home_parser()['version']}}</span>
+      </p>
+      <p>
+        <i class="far fa-check-square text-success"></i>&nbsp;
+        Running Bitcoin Core Version:
+        <span
+          class='float-right'>{{current_app.specter.home_parser()['bitcoin_core_data']['Bitcoin Core Version']}}</span>
+      </p>
+    </div>
+    {%endif%}
 
-  <div class='content-section' style='background-color: #333333;'>
+  </section>
 
+  <section class="showcase">
 
-    <h4 class='text-white'>
-      Login to Specter Server
-      <img src='{{url_for('warden.static', filename='images/specter_icon.png')}}' width="30">
-    </h4>
-
-    </br>
-
-
-    <form class='text-white' action="{{ url_for('warden.specter_auth') }}" method="post">
-      <div class="form-group row">
-        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label">Specter Server URL</label>
-        <div class="col-sm-9">
-          <input type="text" class="form-control form-control" name="url"
-            value="{{current_app.settings['SPECTER']['specter_url']}}">
-          <small>
-            <p style='padding-top:20px;'>Typically this is http://127.0.0.1:25441/ or http://localhost:25441/</p>
-          </small>
-          <p>
-            <img src='{{url_for('warden.static', filename='images/Tor-logo.png')}}' width="35">
-            &nbsp;Onion Addresses are supported<small><br> (Go to Specter > Settings > Tor > Enable Tor Hidden
-              Service)</small>
-          </p>
-
-
-        </div>
-      </div>
-      <div class="form-group row">
-        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label">Username<br>(blank if
-          None)</label>
-        <div class="col-sm-9">
-          <input type="text" class="form-control form-control" name="username"
-            value="{{current_app.settings['SPECTER']['specter_login']}}">
-        </div>
-      </div>
-      <div class="form-group row">
-        <label for="colFormLabelLg" class="col-sm-3 col-form-label col-form-label">Password<br>(blank if
-          None)</label>
-        <div class="col-sm-9">
-          <input type="password" class="form-control form-control" name="password"
-            value="{{current_app.settings['SPECTER']['specter_password']}}">
-        </div>
-      </div>
-
-      <div class="form-group row">
-        <div class="col-sm-3">
-        </div>
-        <div class="col-sm-9">
-          <button id='submit_button' type="submit" class="btn btn btn-secondary btn-block">Submit</button>
-        </div>
-      </div>
-    </form>
-  </div>
-
-
-  <div id="output" class='content-section' style='background-color: #f0f0f0;'>
-    <h6>Connection Log</h6>
-    Empty Log
-  </div>
-
-
+  </section>
 </div>
+
 
 <script>
   $('#submit_button').click(function () {
     $('#submit_button').html(
-      'Checking Credentials. Check Connection Log. Please Wait. This can take a few minutes...');
-    var intervalId = window.setInterval(function () {
-      run_ajax()
-    }, 1000);
+      'Checking Credentials.  Please Wait. This can take a while...');
   });
-
-  function run_ajax() {
-    table_header = `
-    <h6>Connection Log</h6>
-    <table class='table table-sm table-striped small-text' id='list_table_json'>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Category</th>
-            <th>Message</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-    <tbody>
-    `
-    table_footer = "</tbody></table>"
-    $.ajax({
-      type: "GET",
-      dataType: 'json',
-      url: "/broadcaster?category={{category}}",
-      success: function (data) {
-        $('#output').html('')
-        if (data == '') {
-          $('#output').html(
-            "<div class='small alert alert-info' role='alert'>No messages from this session yet. But monitoring realtime." +
-            "</div>"
-          )
-        } else {
-          /*console.log(data);*/
-          var event_data = '';
-          $.each(data, function (index, value) {
-            /*console.log(value);*/
-            event_data += '<tr>';
-            event_data += '<td>' + value.time_str + '</td>';
-            event_data += '<td>' + value.category + '</td>';
-            event_data += '<td>' + value.message_txt + '</td>';
-            event_data += '<td>' + value.notes + '</td>';
-            event_data += '</tr>';
-          });
-          $("#output").html(table_header + event_data + table_footer)
-
-        }
-
-      },
-      error: function (xhr, status, error) {
-        $('#output').html(
-          "<div class='small alert alert-danger' role='alert'>An error occured while refreshing debug data." +
-          "</div>"
-        )
-      }
-    });
-  }
 </script>
 
 {% endblock content %}
