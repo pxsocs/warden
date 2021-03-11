@@ -181,7 +181,8 @@ def warden_page():
                 "title": "No Transactions Found Yet",
                 "FX": current_app.settings['PORTFOLIO']['base_fx'],
                 "donated": donate_check(),
-                "current_app": current_app
+                "current_app": current_app,
+                "form": TradeForm()
             }
             return (render_template('warden/empty_txs.html', **templateData))
         else:
@@ -316,8 +317,9 @@ def specter_auth():
             "title": "Login to Specter",
             "donated": donate_check(),
             "current_app": current_app,
+            "current_user": current_user
         }
-        return (render_template('warden/specter_auth.html', **templateData))
+        return (render_template('warden/specter_connect.html', **templateData))
 
     if request.method == 'POST':
         from message_handler import Message
@@ -681,7 +683,8 @@ def trade_transactions():
         return render_template("warden/empty_txs.html",
                                title="Empty Transaction List",
                                current_app=current_app,
-                               current_user=fx_rate())
+                               current_user=fx_rate(),
+                               form=TradeForm())
 
     return render_template("warden/trade_transactions.html",
                            title="Transaction History",
@@ -831,7 +834,8 @@ def delalltrades():
         return render_template("warden/empty_txs.html",
                                title="Empty Transaction List",
                                current_app=current_app,
-                               current_user=fx_rate())
+                               current_user=fx_rate(),
+                               form=TradeForm())
 
     if request.method == "GET":
         Trades.query.filter_by(user_id=current_user.username).delete()
