@@ -1,15 +1,35 @@
 {%if current_user.is_authenticated%}
 {% extends "warden/warden_layout.html" %}
 {%endif%}
-{% block content %}
 
-{%if not current_user.is_authenticated%}
+{% block content %}
+{%if setup == True%}
 <link rel="stylesheet" href="{{url_for('warden.static', filename='css/welcome.css')}}">
 <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/font-awesome/css/all.css')}}">
 <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/bootstrap/css/bootstrap.min.css')}}">
 
 <title>The WARDen | Welcome | Connect to Specter</title>
 <link rel="icon" href="{{url_for('warden.static', filename='images/favicon-bitcoin.ico')}}" class="invert">
+
+<script src="{{url_for('warden.static', filename='dependencies/jquery/jquery-3.4.1.js')}}"></script>
+
+
+<div class='row'>
+    <div id='alertsection' class='col-12'>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div id="messagealert" class="alert alert-{{ category }}">
+            {{message}}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+    </div>
+</div>
+
 {%endif%}
 
 <div id="container" style='color:rgb(61, 61, 61);'>
@@ -199,4 +219,4 @@
     }
 </script>
 
-{%endblock%}
+{%endblock content%}

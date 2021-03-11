@@ -47,6 +47,14 @@ def before_request():
     if users == []:
         return redirect(url_for("user_routes.initial_setup"))
 
+    txs = transactions_fx()
+    if txs.empty:
+        return render_template("warden/empty_txs.html",
+                               title="Empty Transaction List",
+                               current_app=current_app,
+                               current_user=fx_rate(),
+                               form=TradeForm())
+
     # Create empty status dictionary
     meta = {
         'tor': current_app.tor,
@@ -56,42 +64,21 @@ def before_request():
     # Save this in Flask session
     session['status'] = json.dumps(meta)
 
-    if not current_app.specter.specter_auth:
-        pass
-        # flash("Authentication to Specter Failed. Check credentials.", "danger")
-
     # Check if still downloading data, if so load files
     if current_app.downloading:
         # No need to test if still downloading txs
-        flash("Downloading from Specter. Some transactions may be outdated or missing. Leave the app running to finish download.", "info")
-        # If local data is present, continue
-        data = pickle_it(action='load', filename='specter_txs.pkl')
-        if data != 'file not found':
-            return
-        else:
-            if request.endpoint != 'warden.specter_auth':
-                flash("Transactions file is empty. Check Specter Server settings and connection.", "warning")
-            return redirect(url_for('warden.specter_auth'))
+        flash("Downloading from Specter. In the mean time, some transactions may be outdated or missing. Leave the app running to finish download.", "info")
 
     # Check that Specter is > 1.1.0 version
     # (this is the version where tx API was implemented)
     try:
         specter_version = str(current_app.specter.home_parser()['version'])
+        if version.parse(specter_version) < version.parse("1.1.0"):
+            flash(f"Sorry, you need Specter version 1.1.0 or higher to connect to WARden. You are running version {specter_version}. Please upgrade.", "danger")
+            return redirect(url_for('warden.specter_auth'))
     # An error below means no file was ever created - probably needs setup
-    except KeyError:
-        # if no password set - send to register
-        users = User.query.all()
-        if users == []:
-            return redirect(url_for("warden.register"))
-        flash("Could not connect to Specter. Check credentials below.", "warning")
-        return redirect(url_for('warden.specter_auth'))
-
-    if version.parse(specter_version) < version.parse("1.1.0"):
-        flash(f"Sorry, you need Specter version 1.1.0 or higher to connect to WARden. You are running version {specter_version}. Please upgrade.", "danger")
-        return redirect(url_for('warden.specter_auth'))
-
-    # Update session status
-    session['status'] = json.dumps(meta)
+    except Exception:
+        pass
 
 
 @warden.route("/register", methods=["GET", "POST"])
@@ -310,7 +297,6 @@ def update_fx():
 
 
 @warden.route('/specter_auth', methods=['GET', 'POST'])
-@login_required
 def specter_auth():
     if request.method == 'GET':
         templateData = {
@@ -330,13 +316,17 @@ def specter_auth():
         if (not url.startswith('http://')) or (not url.startswith('http://')):
             url = 'http://' + url
         # Try to ping this url
-        if int(requests.head(url).status_code) < 400:
-            message = Message(category='Specter Connection',
-                              message_txt='Pinging URL',
-                              notes=f"{url}<br> ping <span class='text-success'>✅ Success</span>"
-                              )
-            current_app.message_handler.add_message(message)
-        else:
+        try:
+            if int(requests.head(url).status_code) < 400:
+                message = Message(category='Specter Connection',
+                                  message_txt='Pinging URL',
+                                  notes=f"{url}<br> ping <span class='text-success'>✅ Success</span>"
+                                  )
+                current_app.message_handler.add_message(message)
+            else:
+                flash('Please check Specter URL (unreacheable)', 'danger')
+                return redirect(url_for('warden.specter_auth'))
+        except Exception:
             flash('Please check Specter URL (unreacheable)', 'danger')
             return redirect(url_for('warden.specter_auth'))
 

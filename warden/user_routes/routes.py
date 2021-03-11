@@ -18,6 +18,7 @@ def initial_setup():
         return redirect(url_for("warden.warden_page"))
 
     page = request.args.get("page")
+    setup = request.args.get("setup")
     # initial setup will cycle through different pages
 
     if page is None or page == 'welcome' or page == '1':
@@ -34,7 +35,7 @@ def initial_setup():
             current_app.db.session.commit()
             flash(f"Account created for {form.username.data}", "success")
             login_user(user, remember=True)
-            return redirect("/initial_setup?page=3")
+            return redirect("/initial_setup?page=3&setup=True")
 
         return render_template("warden/register.html",
                                title="Welcome to the WARden | Register",
@@ -62,9 +63,12 @@ def initial_setup():
             specter_running = False
             url_reached = False
             for url in specter_typical_urls:
-                if int(requests.head(url).status_code) < 400:
-                    url_reached = True
-                    break
+                try:
+                    if int(requests.head(url).status_code) < 400:
+                        url_reached = True
+                        break
+                except Exception:
+                    pass
 
             # OK, if one found, let's see if auth is needed
             needs_auth = True
@@ -83,4 +87,5 @@ def initial_setup():
                                url_reached=url_reached,
                                specter_running=specter_running,
                                current_app=current_app,
-                               current_user=current_user)
+                               current_user=current_user,
+                               setup=setup)
