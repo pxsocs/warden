@@ -19,7 +19,7 @@ When connected to Specter Server 👻 [optional]:
 
 # INSTALLATION
 
-There are two methods to install the WARden. The recommended one is to install inside a docker container. This is typically more stable.
+There are two methods to install the WARden. The recommended one is to install inside a docker container. This is typically more stable in most systems.
 
 1. [Install using Docker](#docker_install)
 
