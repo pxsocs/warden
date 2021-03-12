@@ -51,7 +51,7 @@ def before_request():
 
     txs = transactions_fx()
     if txs.empty:
-        flash("No Transactions Found. You can start by including a transaction below.", "info")
+        flash("No Transactions Found. You can start by including a transaction below. You may also Connect to Specter or import a CSV file.", "info")
         return redirect(url_for("warden.newtrade"))
 
     # Create empty status dictionary
@@ -158,7 +158,7 @@ def warden_page():
     df = positions()
 
     if df.empty:
-        flash("No Transactions Found. You can start by including a transaction below.", "info")
+        flash("No Transactions Found. You can start by including a transaction below. You may also Connect to Specter or import a CSV file.", "info")
         return redirect(url_for("warden.newtrade"))
 
     if df.index.name != 'trade_asset_ticker':
