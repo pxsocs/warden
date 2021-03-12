@@ -174,7 +174,7 @@ def init_app(app):
     print(f"  [i] Running WARden version: {current_version}")
 
     # CHECK FOR UPGRADE
-    repo_url = 'https://api.github.com/repos/pxsocs/specter_warden/releases'
+    repo_url = 'https://api.github.com/repos/pxsocs/warden/releases'
     try:
         github_version = tor_request(repo_url).json()[0]['tag_name']
     except Exception:

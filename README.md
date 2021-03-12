@@ -12,12 +12,20 @@ This app was built with a couple of goals:
 
 - Easily track portfolio values in fiat
 
-When connected to Specter Server [optional]:
+When connected to Specter Server 👻 [optional]:
 
 - Monitors Wallets and Addresses for activity using your own node and notifies user of activity
-- Track your full node status
+- Track your Bitcoin node status
 
-## 🐳 Docker Container instructions (recommended):
+# INSTALLATION
+
+There are two methods to install the WARden. The recommended one is to install inside a docker container. This is typically more stable.
+
+1. [Install using Docker](#docker_install)
+
+2. [Regular Installation](#regular_install)
+
+## <a name="docker_install"></a> 🐳 Docker Container instructions (recommended):
 
 _If you don't want to have docker installed follow the regular instructions_
 
@@ -25,23 +33,42 @@ _If you don't want to have docker installed follow the regular instructions_
 
 > Docker needs to installed and running
 
-[Docker Install Instructions](https://docs.docker.com/get-docker/)
+[Docker Install Instructions for most OS systems can be found here](https://docs.docker.com/get-docker/)
 
-Build the container:
+Docker Installation Instructions for Debian (Most Raspberry Pi systems)
+
+```bash
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+```
+
+Then get your user name by typing:
+
+```bash
+w
+```
+
+Then add this user to the docker group:
+
+```bash
+sudo usermod -aG docker <your-user>
+```
+
+Downloadn and build the container:
 
 ```bash
 git clone https://github.com/pxsocs/warden
 cd warden
-./warden.sh --dockerbuild
+sudo ./warden.sh --dockerbuild
 ```
 
 Run:
 
 ```bash
-./warden.sh --dockerrun
+sudo ./warden.sh --dockerrun
 ```
 
-## Regular Instructions (without docker installation)
+## <a name="regular_install"></a> Regular Instructions (without docker installation)
 
 ```bash
 git clone https://github.com/pxsocs/warden
