@@ -32,7 +32,7 @@ api = Blueprint('api', __name__)
 @api.route("/gitreleases", methods=["GET"])
 @login_required
 def gitreleases():
-    url = 'https://api.github.com/repos/pxsocs/specter_warden/releases'
+    url = 'https://api.github.com/repos/pxsocs/warden/releases'
     request = tor_request(url)
     try:
         data = request.json()

@@ -1,7 +1,7 @@
 # Welcome to the WARden
 
-[![GitHub release](https://img.shields.io/github/release/pxsocs/specter_warden.svg)](https://GitHub.com/pxsocs/specter_warden/releases/)
-[![Open Source? Yes!](https://badgen.net/badge/Open%20Source%20%3F/Yes%21/blue?icon=github)](https://GitHub.com/pxsocs/specter_warden/releases/)
+[![GitHub release](https://img.shields.io/github/release/pxsocs/warden.svg)](https://GitHub.com/pxsocs/warden/releases/)
+[![Open Source? Yes!](https://badgen.net/badge/Open%20Source%20%3F/Yes%21/blue?icon=github)](https://GitHub.com/pxsocs/warden/releases/)
 [![Powered by NGU](https://img.shields.io/badge/Powered%20by-NGU%20Technology-orange.svg)](https://bitcoin.org)
 
 ### Requirements:
@@ -30,8 +30,8 @@ _If you don't want to have docker installed follow the regular instructions_
 Build the container:
 
 ```bash
-git clone https://github.com/pxsocs/specter_warden
-cd specter_warden
+git clone https://github.com/pxsocs/warden
+cd warden
 ./warden.sh --dockerbuild
 ```
 
@@ -44,8 +44,8 @@ Run:
 ## Regular Instructions (without docker installation)
 
 ```bash
-git clone https://github.com/pxsocs/specter_warden
-cd specter_warden
+git clone https://github.com/pxsocs/warden
+cd warden
 python3 -m pip install -r requirements.txt
 ```
 
@@ -63,7 +63,7 @@ git pull origin master
 
 ## Screenshot
 
-![Screenshot](https://raw.githubusercontent.com/pxsocs/specter_warden/master/warden/static/images/Screen%20Shot%202021-02-08%20at%209.19.28%20AM.png)
+![Screenshot](https://raw.githubusercontent.com/pxsocs/warden/master/warden/static/images/Screen%20Shot%202021-02-08%20at%209.19.28%20AM.png)
 
 ## This is an Open Source project
 

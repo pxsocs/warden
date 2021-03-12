@@ -6,7 +6,7 @@ from setuptools import setup, find_namespace_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-current_version = '0.9.0.7'
+current_version = '0.91'
 
 with open("src/alphazeta/warden/static/config/version.txt", "w") as text_file:
     print(f"{current_version}", file=text_file)
@@ -34,7 +34,7 @@ setup(
     description="Private Portfolio Tool - Specter Server Edition",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/pxsocs/specter_warden",
+    url="https://github.com/pxsocs/warden",
     include_package_data=True,
     package_dir={"": "src"},
     install_requires=reqs,
