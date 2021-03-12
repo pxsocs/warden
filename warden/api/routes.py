@@ -3,7 +3,7 @@ from warden_modules import (warden_metadata,
                             positions_dynamic,
                             generatenav, specter_df,
                             current_path, regenerate_nav,
-                            home_path)
+                            home_path, transactions_fx)
 from connections import tor_request
 from pricing_engine.engine import price_ondate, historical_prices
 from flask_login import login_required, current_user
@@ -428,7 +428,7 @@ def heatmapbenchmark_json():
     # Gather the first trade date in portfolio and store
     # used to match the matrixes later
     # Panda dataframe with transactions
-    df = specter_df()
+    df = transactions_fx()
     # Filter the df acccoring to filter passed as arguments
     df["trade_date"] = pd.to_datetime(df["trade_date"])
     start_date = df["trade_date"].min()

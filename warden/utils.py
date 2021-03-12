@@ -106,8 +106,8 @@ def fxsymbol(fx, output='symbol'):
 
 def heatmap_generator():
     # If no Transactions for this user, return empty.html
-    from warden_modules import specter_df, generatenav
-    transactions = specter_df()
+    from warden_modules import transactions_fx, generatenav
+    transactions = transactions_fx()
     if transactions.empty:
         return None, None, None, None
 
