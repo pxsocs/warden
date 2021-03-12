@@ -356,6 +356,7 @@
 
 
         <!-- START SPECTER Wallet List + Transactions  -->
+        {%if wallets_exist%}
         <div class="content-section table-responsive">
             <div class="row" style='padding-bottom: 20px;'>
                 <div class="col-sm-12">
@@ -581,7 +582,7 @@
 
             </table>
         </div>
-
+        {%endif%}
 
 
         <!-- START Cost Analysis section -->
@@ -848,6 +849,7 @@
 
 
         <!-- START Bitcoin Address Summary -->
+        {%if wallets_exist%}
         <div>
             <div class='row'>
                 <div class='col-6'>
@@ -1142,6 +1144,7 @@
             </div>
             <!-- END Bitcoin Address Summary -->
         </div>
+        {%endif%}
 
         <!-- Notes -->
         <div class='row'>

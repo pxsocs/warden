@@ -652,7 +652,9 @@ def positions_dynamic():
 
 
 @ MWT(timeout=10)
-def generatenav(user='warden', force=False, filter=None):
+def generatenav(user=None, force=False, filter=None):
+    if not user:
+        user = current_user.username
     PORTFOLIO_MIN_SIZE_NAV = 1
     RENEW_NAV = 10
     FX = current_app.settings['PORTFOLIO']['base_fx']
@@ -896,7 +898,10 @@ def regenerate_nav():
         clear_memory()
         MWT()._caches = {}
         MWT()._timeouts = {}
-        generatenav('specter_user', force=True)
+    except Exception:
+        pass
+    try:
+        generatenav(current_user.username, force=True)
     except Exception:
         return
 

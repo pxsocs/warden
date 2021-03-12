@@ -38,7 +38,8 @@ def before_request():
     # to run even in setup mode
     exclude_list = [
         "warden.setup", "warden.specter_auth", "warden.login", "warden.register",
-        "warden.logout", "warden.show_broadcast", "warden.show_log", "warden.config_ini"
+        "warden.logout", "warden.show_broadcast", "warden.show_log", "warden.config_ini",
+        "warden.newtrade"
     ]
     if request.endpoint in exclude_list:
         return
@@ -50,14 +51,8 @@ def before_request():
 
     txs = transactions_fx()
     if txs.empty:
-        form = TradeForm()
-        form.trade_currency.data = current_app.fx['code']
-        form.trade_date.data = datetime.utcnow()
-        return render_template("warden/empty_txs.html",
-                               title="Empty Transaction List",
-                               current_app=current_app,
-                               current_user=fx_rate(),
-                               form=form)
+        flash("No Transactions Found. You can start by including a transaction below.", "info")
+        return redirect(url_for("warden.newtrade"))
 
     # Create empty status dictionary
     meta = {
@@ -159,31 +154,13 @@ def warden_page():
     # data through javascript after loaded. This improves load time
     # and refresh speed.
     # Get positions and prepare df for delivery
-    try:
-        df = positions()
-    except Exception as e:
-        # Check if there is a tx file saved at all. If not,
-        # it means that it's downloading.
-        filename = 'specter_txs.pkl'
-        filename = 'warden/' + filename
-        filename = os.path.join(home_path(), filename)
-        if not os.path.isfile(filename):
-            templateData = {
-                "title": "No Transactions Found Yet",
-                "FX": current_app.settings['PORTFOLIO']['base_fx'],
-                "donated": donate_check(),
-                "current_app": current_app,
-                "form": TradeForm()
-            }
-            return (render_template('warden/empty_txs.html', **templateData))
-        else:
-            msg = f"An error ocurred while getting transactions: {e}"
-            abort(500, msg)
+
+    df = positions()
 
     if df.empty:
-        msg = "Specter has no transaction history or is down. Open Specter Server and check."
-        flash(msg, "warning")
-        abort(500, msg)
+        flash("No Transactions Found. You can start by including a transaction below.", "info")
+        return redirect(url_for("warden.newtrade"))
+
     if df.index.name != 'trade_asset_ticker':
         df.set_index('trade_asset_ticker', inplace=True)
     df = df[df['is_currency'] == 0].sort_index(ascending=True)
@@ -233,8 +210,8 @@ def warden_page():
     meta = warden_metadata()
 
     # Sort the wallets by balance
+    sorted_wallet_list = []
     try:
-        sorted_wallet_list = []
         for wallet in current_app.specter.wallet_alias_list():
             wallet_df = meta['full_df'].loc[meta['full_df']['wallet_alias'] == wallet]
             if wallet_df.empty:
@@ -242,12 +219,12 @@ def warden_page():
             else:
                 balance = wallet_df['amount'].sum()
             sorted_wallet_list.append((wallet, balance))
-    except Exception:
-        flash("No wallets found. Check Specter Server connections.", "danger")
-        abort(500, "Specter returned empty data. Check connections. Your node may be down.")
 
-    sorted_wallet_list = sorted(sorted_wallet_list, reverse=True, key=itemgetter(1))
-    sorted_wallet_list = [i[0] for i in sorted_wallet_list]
+        sorted_wallet_list = sorted(sorted_wallet_list, reverse=True, key=itemgetter(1))
+        sorted_wallet_list = [i[0] for i in sorted_wallet_list]
+        wallets_exist = True
+    except Exception:
+        wallets_exist = False
 
     from api.routes import alert_activity
     if not current_app.downloading:
@@ -263,7 +240,8 @@ def warden_page():
         "donated": donated,
         "alerts": activity,
         "current_app": current_app,
-        "sorted_wallet_list": sorted_wallet_list
+        "sorted_wallet_list": sorted_wallet_list,
+        "wallets_exist": wallets_exist
     }
     return (render_template('warden/warden.html', **templateData))
 
