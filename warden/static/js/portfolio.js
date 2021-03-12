@@ -470,6 +470,9 @@ function realtime_table() {
             var fx = data.user.symbol
             // Parse the json
             $('#pvalue').html(formatNumber(data.positions.Total.position_fx, 0, fx)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
+            $('#pvaluebtc').html(formatNumber(data.positions.Total.position_btc, 6, '₿ ')).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
+            $('#pvaluesats').html(formatNumber(data.positions.Total.position_btc * 100000000, 0, '丰 ')).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
+
             $('#end_portvalue').html(formatNumber(data.positions.Total.position_fx, 0)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
 
             posbtc = data.positions.Total.position_fx / data.btc
@@ -500,6 +503,7 @@ function realtime_table() {
                     $('#' + key + '_price').html(formatNumber(value.price, 2, fx, '')).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
                     $('#' + key + '_24hchg').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
                     $('#' + key + '_position').html(formatNumber(value.position_fx, 0, fx, ''));
+                    $('#' + key + '_btc_position').html(formatNumber(value.position_btc, 4, '', ''));
                     $('#' + key + '_allocation').html(formatNumber(value.allocation * 100, 2, '', '%'));
 
                     // FIFO Table values

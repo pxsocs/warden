@@ -57,18 +57,10 @@
       <div class="col-sm-4 text-right">
         <div class="input-group mb-3">
           <div class="input-group-prepend">
-            <span class="input-group-text" id="basic-addon1"
-              >Benchmark Ticker</span
-            >
+            <span class="input-group-text" id="basic-addon1">Benchmark Ticker</span>
           </div>
-          <input
-            id="b_ticker"
-            type="text"
-            class="form-control text-right change_monitor"
-            value="BTC"
-            aria-label="Username"
-            aria-describedby="basic-addon1"
-          />
+          <input id="b_ticker" type="text" class="form-control text-right change_monitor" value="BTC"
+            aria-label="Username" aria-describedby="basic-addon1" />
         </div>
       </div>
     </div>
@@ -96,9 +88,7 @@
 <div class="container-fluid">
   <div class="content-section large-table">
     <p class="lead">
-      Portfolio Returns Statistics in {{current_user['name_plural']}}<sup
-        >1</sup
-      >
+      Portfolio Returns Statistics in {{current_user['name_plural']}}<sup>1</sup>
     </p>
     <table class="table small table-condensed" style="width: 100%">
       <thead class="thead-light">
@@ -164,17 +154,19 @@
   </div>
 </div>
 
-<div class="row">
-  <div class="container-fluid">
-    <sup>1</sup> All returns in this page are in
-    {{current_user['name_plural']}}.
-    <br />
-    {%if current_user['name'] != 'US Dollar'%} This means that the returns
-    include the asset returns plus the currency return in the period.
-    <br />For example, if Bitcoin in USD is up 5% and the
-    {{current_user['name']}} is up 1%, the return will be 6.05% in
-    {{current_user['name_plural']}}. {%endif%}
+<div class='row'>
+  <div class="container-fluid small">
+    <i>
+      <sup>1</sup> All returns in this page are in {{current_app.fx['name_plural'].title()}}.
+      <br>
+      {%if current_app.fx['code'] != 'USD'%}
+      This means that the returns include the asset returns plus the currency return in the period.
+      <br>For example, if Bitcoin in USD is up 5% and the {{current_app.fx['name']}} is
+      up
+      1%, the
+      return will be 6.05% in {{FX}}.
+      {%endif%}
+    </i>
   </div>
 </div>
-
 {% endblock content %}

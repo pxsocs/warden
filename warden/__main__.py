@@ -1,5 +1,3 @@
-from config import Config
-from utils import (create_config, diags, runningInDocker)
 from yaspin import yaspin
 import logging
 import subprocess
@@ -11,7 +9,9 @@ import warnings
 import socket
 import emoji
 import time
+import sqlite3
 from logging.handlers import RotatingFileHandler
+from packaging import version
 from ansi.colour import fg
 from flask import Flask
 from flask_login import LoginManager, current_user
@@ -19,8 +19,6 @@ from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
-from ansi_management import (warning, success, error, info, clear_screen, bold,
-                             muted, yellow, blue)
 
 
 # Make sure current libraries are found in path
@@ -30,6 +28,7 @@ sys.path.append(current_path)
 
 def create_app():
     # Config of Logging
+    from config import Config
     formatter = "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
     logging.basicConfig(
         handlers=[RotatingFileHandler(
@@ -48,11 +47,14 @@ def create_app():
 
 
 def create_tor():
+    from ansi_management import (warning, success, error, info, clear_screen, bold,
+                                 muted, yellow, blue)
+    from config import Config
     # ----------------------------------------------
     #                 Test Tor
     # ----------------------------------------------
     with yaspin(text="Testing Tor", color="cyan") as spinner:
-        from warden_pricing_engine import test_tor
+        from connections import test_tor
         tor = test_tor()
         if tor['status']:
             logging.info(success("Tor Connected"))
@@ -90,6 +92,11 @@ def create_tor():
 # ------------------------------------
 # Application Factory
 def init_app(app):
+    from ansi_management import (warning, success, error, info, clear_screen, bold,
+                                 muted, yellow, blue)
+    from utils import (create_config, runningInDocker)
+    from config import Config
+    from connections import tor_request
     warnings.filterwarnings('ignore')
     # Create the empty Mail instance
     # mail = Mail()
@@ -102,28 +109,40 @@ def init_app(app):
     # app.settings['PORTFOLIO']['RENEW_NAV']
     # --------------------------------------------
     config_file = Config.config_file
-
+    app.warden_status = {}
     # Config
     config_settings = configparser.ConfigParser()
     if os.path.isfile(config_file):
         config_settings.read(config_file)
+        app.warden_status['initial_setup'] = False
         print(success("✅ Config Loaded from config.ini - edit it for customization"))
     else:
         print(error("  Config File could not be loaded, created a new one with default values..."))
         create_config(config_file)
         config_settings.read(config_file)
+        app.warden_status['initial_setup'] = True
 
-    # Check if password has been set
-    # if no password set - send to register
-    if not config_settings.has_option('SETUP', 'hash'):
-        print(yellow("  [i] This is a new setup. Welcome to WARden."))
-        print(yellow("  [i] No login password found. Will ask you to create a new one."))
+    table_error = False
+    try:
+        # create empty instance of LoginManager
+        app.login_manager = LoginManager()
+    except sqlite3.OperationalError:
+        table_error = True
 
-    # create empty instance of LoginManager
-    app.login_manager = LoginManager()
     # Create empty instance of SQLAlchemy
     app.db = SQLAlchemy()
     app.db.init_app(app)
+    # Import models so tables are created
+    from models import Trades, User, AccountInfo, TickerInfo, SpecterInfo
+    app.db.create_all()
+
+    #  There was an initial error on getting users
+    #  probably because tables were not created yet.
+    # The above create_all should have solved it so try again.
+    if table_error:
+        # create empty instance of LoginManager
+        app.login_manager = LoginManager()
+
     # If login required - go to login:
     app.login_manager.login_view = "warden.login"
     # To display messages - info class (Bootstrap)
@@ -140,13 +159,42 @@ def init_app(app):
     try:
         version_file = Config.version_file
         with open(version_file, 'r') as file:
-            version = file.read().replace('\n', '')
+            current_version = file.read().replace('\n', '')
     except Exception:
-        version = 'unknown'
+        current_version = 'unknown'
     with app.app_context():
-        app.version = version
+        app.version = current_version
 
-    print(f"  [i] Running WARden version: {version}")
+    # Check if there are any users on database, if not, needs initial setup
+    from models import User
+    users = User.query.all()
+    if users == []:
+        app.warden_status['initial_setup'] = True
+
+    print(f"  [i] Running WARden version: {current_version}")
+
+    # CHECK FOR UPGRADE
+    repo_url = 'https://api.github.com/repos/pxsocs/specter_warden/releases'
+    try:
+        github_version = tor_request(repo_url).json()[0]['tag_name']
+    except Exception:
+        github_version = None
+
+    if github_version:
+        print(f"  [i] Newest WARden version available: {github_version}")
+        parsed_github = version.parse(github_version)
+        parsed_version = version.parse(current_version)
+
+        app.warden_status['needs_upgrade'] = False
+        if parsed_github > parsed_version:
+            print(warning("  [i] Upgrade Available"))
+            app.warden_status['needs_upgrade'] = True
+        if parsed_github == parsed_version:
+            print(success("  [i] You are running the latest version"))
+    else:
+        print(warning("  [!] Could not check GitHub for updates"))
+
+    print("")
     print("  [i] Loading...")
 
     # Check if config.ini exists
@@ -154,7 +202,7 @@ def init_app(app):
         app.settings = config_settings
     with app.app_context():
         try:
-            from warden_pricing_engine import fxsymbol
+            from utils import fxsymbol
             app.fx = fxsymbol(config_settings['PORTFOLIO']['base_fx'], 'all')
         except KeyError:  # Problem with this config, reset
             print(error("  [!] Config File needs to be rebuilt"))
@@ -192,13 +240,17 @@ def init_app(app):
     from routes import warden
     from errors.handlers import errors
     from api.routes import api
+    from csv_routes.routes import csv_routes
+    from user_routes.routes import user_routes
     app.register_blueprint(warden)
     app.register_blueprint(errors)
     app.register_blueprint(api)
+    app.register_blueprint(csv_routes)
+    app.register_blueprint(user_routes)
 
     # For the first load, just get a saved file if available
     # The background jobs will update later
-    print("  [i] Checking if Specter Server was configured...")
+    print("  [i] Checking Specter Server...")
     print("")
     with app.app_context():
         from specter_importer import Specter
@@ -260,7 +312,10 @@ def get_local_ip():
     return (local_ip_address)
 
 
-def main(debug=False):
+def main(debug=False, reloader=False):
+    from utils import (create_config, runningInDocker)
+    from ansi_management import (warning, success, error, info, clear_screen, bold,
+                                 muted, yellow, blue)
 
     # Make sure current libraries are found in path
     current_path = os.path.abspath(os.path.dirname(__file__))
@@ -274,8 +329,7 @@ def main(debug=False):
     print("")
 
     if runningInDocker():
-        print(success(f"✅ Running inside docker container {emoji.emojize(':whale:')}"))
-        # Try to start Tor if in docker container
+        print(success(f"✅ Running inside docker container {emoji.emojize(':whale:')} Getting some James Bartley vibes..."))
         print("")
 
     app = create_app()
@@ -289,6 +343,7 @@ def main(debug=False):
         print(yellow("  [i] Please Wait... Shutting down."))
         # Delete Debug File
         try:
+            from config import Config
             os.remove(Config.debug_file)
         except FileNotFoundError:
             pass
@@ -361,7 +416,7 @@ def main(debug=False):
             threaded=True,
             host=app.settings['SERVER'].get('host'),
             port=app.settings['SERVER'].getint('port'),
-            use_reloader=False)
+            use_reloader=reloader)
 
     if app.settings['SERVER'].getboolean('onion_server'):
         from tor import stop_hidden_services
@@ -370,9 +425,15 @@ def main(debug=False):
 
 if __name__ == '__main__':
     # Run Diagnostic Function
+    from ansi_management import yellow
     debug = False
+    reloader = False
     if "debug" in sys.argv:
         print("")
         print(yellow("  [i] DEBUG MODE: ON"))
         debug = True
-    main(debug=debug)
+    if "reloader" in sys.argv:
+        print("")
+        print(yellow("  [i] RELOAD MODE: ON"))
+        reloader = True
+    main(debug=debug, reloader=reloader)

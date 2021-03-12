@@ -1,0 +1,186 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+{% if not csv %}
+<div class="row">
+    <div class="col-sm-9">
+        <div class="card" style="width: 100%;">
+            <div class="card-body">
+                <form method="POST" action="" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    <h5 class="card-title">Import CSV</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">Standard CSV file Template</h6>
+                    <p class="card-text"> CSV Instructions can be<a href="/csvtemplate"> found here.</a></p>
+                    <div class="form-group">
+                        {{ form.csvfile.label() }}
+                        {{ form.csvfile(class="form-control-file") }}
+                        {% if form.csvfile.errors %}
+                        {% for error in form.csvfile.errors %}
+                        <span class="text-danger">{{ error }}</span></br>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ form.submit(class="btn btn-outline-info btn-block")}}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endif %}
+
+{% if csv %}
+<div class="row">
+    <div class="col-sm-12">
+        <form method="POST" action="" enctype="multipart/form-data">
+            <input hidden class="form-control" type="text" placeholder="{{csvfile}}" {{csvfile}}>
+            <div class="form-group">
+                <a href="/importcsv?f={{filename}}">
+                    <button id="importbutton" type="button" class="btn btn-block btn-outline-success btn-lg">Click to
+                        Start Importing Transactions <> {{row_count | jformat(0)}} Found in CSV <i
+                                class="fas fa-file-import"></i>
+                    </button>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="row" style='padding-top: 40px;'>
+    <div class="col-sm-12">
+        <h5>Your CSV File Structure (first row = Field Names)</h5>
+        {% set longer = False %}
+        <table id="csvtable" class="table">
+            <tbody>
+                <tr>
+                    {% for item in csv.fieldnames %}
+                    <th>{{item}}</th>
+                    {% endfor %}
+                </tr>
+
+                {% for item in csv %}
+                {% if loop.index <= 20 %}
+                <tr>
+                    {% for key in csv.fieldnames %}
+                    <td>{{item[key]}}</td>
+                    {% endfor %}
+                </tr>
+                {%endif%}
+
+                {%if loop.index == 21%}
+                {% set longer = True %}
+                {%endif%}
+
+                {% endfor %}
+            </tbody>
+        </table>
+        {%if longer == True%}
+        <span class='alert alert-warning'>Some lines were not displayed. Only top 20 lines shown above</span>
+        {%endif%}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-12">
+        <legend class="border-bottom mb-4">Please review your CSV fields below</legend>
+        <h6 class="text-info"> Below is a preview of how your csv columns match the expected ones. Please review to make
+            sure they are correct. Then click <span class='text-success'>import</span>.</h6>
+
+        <table id="csvtable" class="table table-sm align-middle">
+            <tbdody>
+                <tr>
+                    <th>
+                        CSV Header&nbsp;<i class="fas fa-arrow-down"></i>
+                    </th>
+                    <td>
+                        {{csv.fieldnames[0]}}&nbsp;<i class="fas fa-arrow-down"></i>
+                    </td>
+                    <td>
+                        {{csv.fieldnames[1]}}&nbsp;<i class="fas fa-arrow-down"></i>
+                    </td>
+                    <td>
+                        {{csv.fieldnames[2]}}&nbsp;<i class="fas fa-arrow-down"></i>
+                    </td>
+                    <td>
+                        {{csv.fieldnames[3]}}&nbsp;<i class="fas fa-arrow-down"></i>
+                    </td>
+                    <td>
+                        {{csv.fieldnames[4]}}&nbsp;<i class="fas fa-arrow-down"></i>
+                    </td>
+                    <td>
+                        {{csv.fieldnames[5]}}&nbsp;<i class="fas fa-arrow-down"></i>
+                    </td>
+                    <td>
+                        {{csv.fieldnames[6]}}&nbsp;<i class="fas fa-arrow-down"></i>
+                    </td>
+                    <td>
+                        {{csv.fieldnames[7]}}&nbsp;<i class="fas fa-arrow-down"></i>
+                    </td>
+                    <td>
+                        {{csv.fieldnames[8]}}&nbsp;<i class="fas fa-arrow-down"></i>
+                    </td>
+                    <td>
+                        {{csv.fieldnames[9]}}&nbsp;<i class="fas fa-arrow-down"></i>
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Import Field
+                    </th>
+                    <td>
+                        Trade Date
+                    </td>
+                    <td>
+                        Account Name
+                    </td>
+                    <td>
+                        Operator (B/S)
+                    </td>
+                    <td>
+                        Ticker (asset)
+                    </td>
+                    <td>
+                        Quantity
+                    </td>
+                    <td>
+                        Price
+                    </td>
+                    <td>
+                        Fees
+                    </td>
+                    <td>
+                        Cash Value
+                    </td>
+                    <td>
+                        Notes
+                    </td>
+                    <td>
+                        Trade ID
+                    </td>
+                </tr>
+            </tbdody>
+        </table>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <form method="POST" action="" enctype="multipart/form-data">
+            <input hidden class="form-control" type="text" placeholder="{{csvfile}}" {{csvfile}}>
+            <div class="form-group">
+                <a href="/importcsv?f={{filename}}">
+                    <button id="importbutton_b" type="button" class="btn btn-block btn-outline-success btn-lg">Click to
+                        Start Importing Transactions <i class="fas fa-file-import"></i>
+                    </button>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+{% endif %}
+
+
+
+{% endblock content %}

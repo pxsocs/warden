@@ -1,0 +1,292 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+<!--  High Charts -->
+<script src="https://code.highcharts.com/stock/highstock.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="{{url_for('warden.static', filename='js/highcharts.js')}}"></script>
+
+<div class="row">
+    <div id="alerts" class="col-sm-12">
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-sm-6">
+            <h5>Price Data</h5>
+
+            <div id="pricechart" style="height: 300px;">
+                <span class="loadanim">&nbsp;Loading Price Chart...</span>
+            </div>
+
+            <span class='lead small'>Realtime Data for {{ticker}} in {{fx}}</span>
+            <ul class="list-group text-small">
+                <small>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Realtime Price
+                        <span class="align-right">{{fx | fxsymbol(output='symbol_native')}}
+                            {{realtime_data['price'] | jformat(2)}}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Last Refresh
+                        <span class="align-right">
+                            {{realtime_data['time']}} {{realtime_data['timezone']}}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Source
+                        <span class="align-right">
+                            {{realtime_data['source'].capitalize()}}</span>
+                    </li>
+                </small>
+            </ul>
+
+            <span class='lead small'>Historical Data for {{ticker}} in {{fx}}</span>
+            <ul class="list-group text-small">
+                <small>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Oldest Date
+                        <span class="align-right">
+                            {{historical_data.index.min().strftime('%d-%b-%Y')}}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Newest Date
+                        <span class="align-right">
+                            {{historical_data.index.max().strftime('%d-%b-%Y')}}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Source
+                        <span class="align-right">
+                            {{historical_meta['source'].capitalize()}}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Download time
+                        <span class="align-right">
+                            {{historical_meta['last_update'].strftime('%d-%b-%Y %H:%M:%S')}}
+                            {{realtime_data['timezone']}}</span>
+                    </li>
+                </small>
+            </ul>
+    </div>
+
+    <div class="col-sm-6">
+        
+            <h5>Portfolio Position Data</h5>
+            {%if not positions.empty%}
+            <div id="positionchart" style="height: 500px;">
+                <span class="loadanim">&nbsp;Loading Position Chart...</span>
+            </div>
+            <ul class="list-group text-small">
+                <small>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Position (quantity)
+                        <span class="align-right">
+                            {{positions['trade_quantity'].sum() | jformat(2)}}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Position ({{fx}})
+                        <span class="align-right">
+                            {{fx | fxsymbol(output='symbol_native')}} {{(positions['trade_quantity'].sum() * realtime_data['price']) | jformat(2)}}
+                        </span>
+                    </li>
+                </small>
+            </ul>
+
+            {%else%}
+            <div class='alert text-info' role='alert'>
+            No Trades found for {{ticker}} in portfolio
+            </div>
+            {%endif%}
+        
+    </div>
+</div>
+
+<script>
+
+$(document).ready(function () {
+var price_data = {{price_chart | tojson | safe}};
+var ticker = {{ticker | tojson | safe}};
+var fx = {{fx | tojson | safe}};
+var position_chart = {{position_chart | tojson | safe}};
+
+priceChart(price_data, ticker, fx);
+positionChart(position_chart, ticker, fx);
+
+});
+
+function priceChart(data, ticker, fx) {
+    var myChart = Highcharts.stockChart('pricechart', {
+        credits: {
+            text: ""
+        },
+        navigator: {
+            enabled: false
+        },
+        rangeSelector: {
+            selected: 1,
+            style: {
+                fontSize: '10px'
+            }
+        },
+        chart: {
+            zoomType: 'xy',
+            backgroundColor: "#FAFAFA",
+        },
+        title: {
+            text: '{{ticker}} Price',
+            style: {
+                fontSize: '12px'
+            }
+        },
+        subtitle: {
+            text: ''
+        },
+        xAxis: {
+            type: 'datetime'
+        },
+        yAxis: {
+            title: {
+                text: 'Closing Price '+ticker
+            },
+            startOnTick: false,
+            endOnTick: false
+        },
+        legend: {
+            enabled: false
+        },
+        plotOptions: {
+            area: {
+                fillColor: {
+                    linearGradient: {
+                        x1: 0,
+                        y1: 0,
+                        x2: 0,
+                        y2: 1
+                    },
+                    stops: [
+                        [0, Highcharts.getOptions().colors[0]],
+                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                    ]
+                },
+                marker: {
+                    radius: 2
+                },
+                lineWidth: 1,
+                states: {
+                    hover: {
+                        lineWidth: 1
+                    }
+                },
+                threshold: null
+            }
+        },
+
+        series: [{
+            type: 'line',
+            name: 'Price',
+            // The line below maps the dictionary coming from Python into
+            // the data needed for highcharts. It's weird but the *1 is
+            // needed, otherwise the date does not show on chart.
+            data: Object.keys(data).map((key) => [((key * 1)), parseFloat(data[key])]),
+            turboThreshold: 0,
+            tooltip: {
+                pointFormat: fx + " {point.y:,.0f}"
+            }
+        }]
+    });
+
+};
+
+
+function positionChart(data, ticker, fx) {
+    var myChart = Highcharts.stockChart('positionchart', {
+        credits: {
+            text: ""
+        },
+        navigator: {
+            enabled: false
+        },
+        rangeSelector: {
+            selected: 5,
+            style: {
+                fontSize: '10px'
+            }
+        },
+        chart: {
+            zoomType: 'xy',
+            backgroundColor: "#FAFAFA",
+        },
+        title: {
+            text: '{{ticker}} Position',
+            style: {
+                fontSize: '12px'
+            }
+        },
+        subtitle: {
+            text: ''
+        },
+        xAxis: {
+            type: 'datetime'
+        },
+        yAxis: {
+            title: {
+                text: ticker + ' Position'
+            },
+            startOnTick: false,
+            endOnTick: false
+        },
+        legend: {
+            enabled: false
+        },
+        plotOptions: {
+            area: {
+                fillColor: {
+                    linearGradient: {
+                        x1: 0,
+                        y1: 0,
+                        x2: 0,
+                        y2: 1
+                    },
+                    stops: [
+                        [0, Highcharts.getOptions().colors[0]],
+                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                    ]
+                },
+                marker: {
+                    radius: 2
+                },
+                lineWidth: 1,
+                states: {
+                    hover: {
+                        lineWidth: 1
+                    }
+                },
+                threshold: null
+            }
+        },
+
+        series: [{
+            type: 'column',
+            name: 'Quantity',
+            // The line below maps the dictionary coming from Python into
+            // the data needed for highcharts. It's weird but the *1 is
+            // needed, otherwise the date does not show on chart.
+            data: Object.keys(data).map((key) => [((key * 1)), parseFloat(data[key])]),
+            turboThreshold: 0,
+            tooltip: {
+                pointFormat: "{point.y:,.4f}"
+            }
+        }]
+    });
+
+};
+
+
+
+</script>
+
+{% endblock content %}

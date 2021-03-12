@@ -1,25 +1,20 @@
-# Welcome to WARden implementation for Specter Server
+# Welcome to the WARden
 
 [![GitHub release](https://img.shields.io/github/release/pxsocs/specter_warden.svg)](https://GitHub.com/pxsocs/specter_warden/releases/)
 [![Open Source? Yes!](https://badgen.net/badge/Open%20Source%20%3F/Yes%21/blue?icon=github)](https://GitHub.com/pxsocs/specter_warden/releases/)
 [![Powered by NGU](https://img.shields.io/badge/Powered%20by-NGU%20Technology-orange.svg)](https://bitcoin.org)
 
-This is a light weight version of the original WARden designed for integration with Specter Server.
-
-Installation instructions for Specter can be found [here](https://github.com/cryptoadvance/specter-desktop).
-
 ### Requirements:
-
-> 👻 Specter 1.1.0 or later
 
 > 🐍 Python 3.7 or later
 
-Transactions will be imported automatically from Specter.
-
 This app was built with a couple of goals:
 
-- Easily track portfolio values in fiat (private requests through Tor)
-- Monitor Wallets and Addresses for activity using your own node and notify user.
+- Easily track portfolio values in fiat
+
+When connected to Specter Server [optional]:
+
+- Monitors Wallets and Addresses for activity using your own node and notifies user of activity
 - Track your full node status
 
 ## 🐳 Docker Container instructions (recommended):
@@ -76,47 +71,11 @@ git pull origin master
 
 We believe Open Source is the future of development for bitcoin. There is no other way when transparency and privacy are critical.
 
-The code is not compiled and it can be easily audited.
-
-### Sats for Features
-
-As interest for the app grows and if the community contributes, new features will be added like:
-. Import of other transactions
-. Editing of transactions
-. Enhanced statistics - volatility, compare performance, heatmaps, ...
-. Specter implementation without MyNode
-. Email notifications
-. And suggested improvements
-
-But the app is also open source so anyone can contribute. Anyone looking to contribute / get a bounty is welcome.
+The code is not compiled and it can be easily audited. It can also be modified and distributed as anyone wishes.
 
 ## Privacy
 
 Most portfolio tracking tools ask for personal information and may track your IP and other information. Our experience is that even those who say they don't, may have log files at their systems that do track your IP and could be easily linked to your data.
-
-### Why NAV is important?
-
-NAV is particularly important to anyone #stackingsats since it tracks performance relative to current capital allocated.
-For example, a portfolio going from $100 to $200 may seem like it 2x but the performance really depends if any new capital was invested or divested during this period. **NAV adjusts for cash inflows and outflows.**
-
-## NAV Tracking
-
-NAV tracks performance based on amount of capital allocated. For example, a portfolio starts at $100.00 on day 0. On day 1, there is a capital inflow of an additional $50.00. Now, if on day 2, the Portfolio value is $200, it's easy to conclude that there's a $50.00 profit. But in terms of % appreciation, there are different ways to calculate performance.
-CB Calculates a daily NAV (starting at 100 on day zero).
-In this example:
-
-| Day | Portfolio Value\* | Cash Flow  | NAV | Performance |
-| --- | ----------------- | ---------- | --- | ----------- |
-| 0   | \$0.00            | + \$100.00 | 100 | --          |
-| 1   | \$110.00          | + \$50.00  | 110 | +10.00% (1) |
-| 2   | \$200.00          | None       | 125 | +25.00% (2) |
-
-> - Portfolio Market Value at beginning of day
->   (1) 10% = 110 / 100 - 1
->   (2) 25% = 200 / (110 + 50) - 1
-
-Tracking NAV is particularly helpful when #stackingsats. It calculates performance based on capital invested at any given time. A portfolio starting at $100 and ending at $200 at a given time frame, at first sight, may seem like is +100% but that depends entirely on amount of capital invested
-along that time frame.
 
 ### Troubleshooting
 
@@ -129,7 +88,6 @@ sudo apt-get -y install python3-pip
 > If you get a message that git was not found:
 
 ```bash
-
 sudo apt-get install git
 ```
 

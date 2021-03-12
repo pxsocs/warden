@@ -1,16 +1,16 @@
 from flask import (Blueprint, flash,  request, current_app,  jsonify, Response)
 from warden_modules import (warden_metadata,
-                            positions_dynamic, get_price_ondate,
+                            positions_dynamic,
                             generatenav, specter_df,
                             current_path, regenerate_nav,
                             home_path)
-from flask_login import login_required
+from connections import tor_request
+from pricing_engine.engine import price_ondate, historical_prices
+from flask_login import login_required, current_user
 from random import randrange
-from warden_pricing_engine import (test_tor, tor_request, price_data_rt,
-                                   fx_rate, price_data_fx, PROVIDER_LIST,
-                                   PriceData)
-from utils import heatmap_generator
-
+from pricing_engine.engine import fx_rate, realtime_price
+from utils import heatmap_generator, pickle_it
+from models import Trades, AccountInfo, TickerInfo
 from datetime import datetime, timedelta
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
@@ -27,8 +27,6 @@ import requests
 
 
 api = Blueprint('api', __name__)
-
-# Returns a JSON with Test Response on TOR
 
 
 @api.route("/gitreleases", methods=["GET"])
@@ -50,8 +48,8 @@ def gitreleases():
 @api.route("/txs_json", methods=['GET'])
 @login_required
 def txs_json():
-    df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
-    tx_df = pd.read_pickle(df_pkl)
+    df_pkl = 'warden/txs_pf.pkl'
+    tx_df = pickle_it(action='load', filename=df_pkl)
     return tx_df.to_json(orient='table')
 
 
@@ -72,17 +70,32 @@ def alert_activity():
     # Don't send any alerts as activity still being downloaded
     if current_app.downloading:
         return alerts
-    ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
+    ack_file = 'txs_diff.pkl'
     try:
-        with open(ack_file) as data_file:
-            data = json.loads(data_file.read())
-        if ('deleted' in data) or ('added' in data):
+        data = pickle_it(action='load', filename=ack_file)
+        if data == 'file not found':
+            raise FileNotFoundError
+        if data['changes_detected_on'] is not None:
             return (True)
+        else:
+            return (False)
     except Exception:
         return (False)
 
 
 # API End Point checks for wallet activity
+
+# Gets a local pickle file and dumps - does not work with pandas df
+# Do not include extension pkl on argument
+@api.route("/get_pickle", methods=['GET'])
+@login_required
+def get_pickle():
+    filename = request.args.get("filename")
+    if not filename:
+        return None
+    filename += ".pkl"
+    data_loader = pickle_it(action='load', filename=filename)
+    return (json.dumps(data_loader, default=lambda o: '<not serializable>'))
 
 
 @api.route("/check_activity", methods=['GET'])
@@ -125,6 +138,7 @@ def metadata_json():
 @api.route("/testtor", methods=["GET"])
 @login_required
 def testtor():
+    from connections import test_tor
     return json.dumps(test_tor())
 
 #  API End point
@@ -138,13 +152,15 @@ def positions_json():
     # This serves the main page
     try:
         dfdyn, piedata = positions_dynamic()
-        btc_price = price_data_rt("BTC") * fx_rate()['fx_rate']
+        btc_price = realtime_price("BTC")['price'] * fx_rate()['fx_rate']
         dfdyn = dfdyn.to_dict(orient='index')
     except Exception:
         dfdyn = piedata = None
         btc_price = 0
-
-    btc = price_data_rt("BTC")
+    try:
+        btc = realtime_price("BTC")['price']
+    except TypeError:
+        btc = 0
     if not btc:
         btc = 0
 
@@ -166,9 +182,10 @@ def realtime_btc():
     try:
         fx_details = fx_rate()
         fx_r = {'cross': fx_details['symbol'], 'fx_rate': fx_details['fx_rate']}
-        fx_r['btc_usd'] = price_data_rt("BTC")
+        fx_r['btc_usd'] = realtime_price("BTC")['price']
         fx_r['btc_fx'] = fx_r['btc_usd'] * fx_r['fx_rate']
-    except Exception:
+    except Exception as e:
+        logging.warn(f"There was an error while getting realtime prices. Error: {e}")
         fx_r = 0
     return json.dumps(fx_r)
 
@@ -178,7 +195,7 @@ def realtime_btc():
 @login_required
 def dismiss_notification():
     # Run the df and clean the files (True)
-    specter_df(True)
+    specter_df(delete_files=True)
     flash("Notification dismissed. New CheckPoint created.", "success")
     return json.dumps("Done")
 
@@ -217,16 +234,16 @@ def portstats():
     meta["start_date"] = (data.index.min()).date().strftime("%B %d, %Y")
     meta["end_date"] = data.index.max().date().strftime("%B %d, %Y")
     meta["start_nav"] = data["NAV_fx"][0]
-    meta["end_nav"] = data["NAV_fx"][-1].astype(float)
-    meta["max_nav"] = data["NAV_fx"].max().astype(float)
+    meta["end_nav"] = float(data["NAV_fx"][-1])
+    meta["max_nav"] = float(data["NAV_fx"].max())
     meta["max_nav_date"] = data[
         data["NAV_fx"] == data["NAV_fx"].max()].index.strftime("%B %d, %Y")[0]
-    meta["min_nav"] = data["NAV_fx"].min().astype(float)
+    meta["min_nav"] = float(data["NAV_fx"].min())
     meta["min_nav_date"] = data[
         data["NAV_fx"] == data["NAV_fx"].min()].index.strftime("%B %d, %Y")[0]
     meta["end_portvalue"] = data["PORT_fx_pos"][-1].astype(float)
     meta["end_portvalue_usd"] = meta["end_portvalue"] / fx_rate()['fx_rate']
-    meta["max_portvalue"] = data["PORT_fx_pos"].max().astype(float)
+    meta["max_portvalue"] = data["PORT_fx_pos"].astype(float).max()
     meta["max_port_date"] = data[data["PORT_fx_pos"] == data["PORT_fx_pos"].
                                  max()].index.strftime("%B %d, %Y")[0]
     meta["min_portvalue"] = round(data["PORT_fx_pos"].min(), 0)
@@ -324,7 +341,7 @@ def stackchartdatajson():
     # Generate data for Stack chart
     # Filter to Only BTC Positions
     try:
-        data['BTC_cum'] = data['BTC_quant'].cumsum()
+        data['BTC_cum'] = data['PORT_VALUE_BTC']
         stackchart = data[["BTC_cum"]]
         # dates need to be in Epoch time for Highcharts
         stackchart.index = (stackchart.index - datetime(1970, 1, 1)).total_seconds()
@@ -358,7 +375,7 @@ def getprice_ondate():
         get_date = datetime.strptime(date_input, "%Y-%m-%d")
         # Create price object
         try:
-            price = str(get_price_ondate(ticker, get_date).close)
+            price = str(price_ondate(ticker, get_date).close)
         except Exception as e:
             price = "Not Found. Error: " + str(e)
         return price
@@ -418,7 +435,8 @@ def heatmapbenchmark_json():
     start_date -= timedelta(days=1)  # start on t-1 of first trade
 
     # Generate price Table now for the ticker and trim to match portfolio
-    data = price_data_fx(ticker)
+    fx = current_app.settings['PORTFOLIO']['base_fx']
+    data = historical_prices(ticker, fx)
     mask = data.index >= start_date
     data = data.loc[mask]
 
@@ -627,7 +645,8 @@ def portfolio_compare_json():
             continue
 
         # Generate price Table now for the ticker and trim to match portfolio
-        data = price_data_fx(ticker)
+        fx = current_app.settings['PORTFOLIO']['base_fx']
+        data = historical_prices(ticker, fx=fx)
         # If notification is an error, skip this ticker
         if data is None:
             messages = data.errors
@@ -705,43 +724,6 @@ def portfolio_compare_json():
     return nav_only.to_json()
 
 
-@api.route("/test_price", methods=["GET"])
-@login_required
-def test_price():
-    try:
-        # Tests a price using a provider and returns price data
-        provider = PROVIDER_LIST[request.args.get("provider")]
-        rtprovider = request.args.get("rtprovider")
-        ticker = request.args.get("ticker")
-        price_data = PriceData(ticker, provider)
-        data = {}
-
-        data['provider'] = {
-            'name': provider.name,
-            'errors': provider.errors,
-            'base_url': provider.base_url,
-            'doc_link': provider.doc_link
-        }
-
-        data['price_data'] = {
-            'ticker': ticker,
-            'last_update': price_data.last_update.strftime('%m/%d/%Y'),
-            'first_update': price_data.first_update.strftime('%m/%d/%Y'),
-            'last_close': float(price_data.last_close),
-            'errors': price_data.errors
-        }
-
-        if rtprovider:
-            data['realtime'] = {
-                'price': float(price_data.realtime(PROVIDER_LIST[rtprovider]))
-            }
-
-    except Exception as e:
-        return json.dumps({"error": f"Check API keys or connection: {e}"})
-
-    return (data)
-
-
 @api.route('/log')
 @login_required
 def progress_log():
@@ -758,5 +740,50 @@ def broadcaster():
     category = request.args.get("category")
     if category == 'None':
         category = None
-    from flask import current_app
     return current_app.message_handler.to_json(category=category)
+
+
+@api.route("/assetlist", methods=["GET", "POST"])
+# List of available tickers. Also takes argument {term} so this can be used
+# in autocomplete forms
+def assetlist():
+    q = request.args.get("term")
+    jsonlist = []
+    if len(q) < 2:
+        return jsonify(jsonlist)
+    # Get list of available tickers from pricing APIs
+    from pricing_engine.alphavantage import asset_list
+    jsonlist.extend(asset_list(q))
+    # jsonlist.extend(asset_list_cc(q))
+    # jsonlist.extend(asset_list_fp(q))
+
+    return jsonify(jsonlist)
+
+
+@api.route("/aclst", methods=["GET", "POST"])
+@login_required
+# Returns JSON for autocomplete on account names.
+# Gathers account names from trades and account_info tables
+# Takes on input ?term - which is the string to be found
+def aclst():
+    list = []
+    if request.method == "GET":
+
+        tradeaccounts = Trades.query.filter_by(
+            user_id=current_user.username).group_by(Trades.trade_account)
+
+        accounts = AccountInfo.query.filter_by(
+            user_id=current_user.username).group_by(
+                AccountInfo.account_longname)
+
+        q = request.args.get("term")
+        for item in tradeaccounts:
+            if q.upper() in item.trade_account.upper():
+                list.append(item.trade_account)
+        for item in accounts:
+            if q.upper() in item.account_longname.upper():
+                list.append(item.account_longname)
+
+        list = json.dumps(list)
+
+        return list

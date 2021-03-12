@@ -53,6 +53,7 @@
   margin-left: 30px;
   width: auto;
   height: 100%;
+  top: 80px;
 }
 
 #wrapper.toggled #page-content-wrapper {
@@ -158,7 +159,7 @@
     padding-top: 0px;
     padding-bottom: 150px;
     position: fixed;
-    top: 70px;
+    top: 80px;
     right: 0px;
     left: 170px;
     -moz-transition: all 0.25s linear;

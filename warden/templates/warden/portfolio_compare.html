@@ -149,17 +149,18 @@
         </div>
 
         <div class='row'>
-            <div class="container-fluid">
-                <div class="content-section small">
-                    <sup>1</sup> All returns in this page are in {{current_user['name_plural']}}.
+            <div class="container-fluid small">
+                <i>
+                    <sup>1</sup> All returns in this page are in {{current_app.fx['name_plural'].title()}}.
                     <br>
-                    {%if current_user['name'] != 'US Dollar'%}
+                    {%if current_app.fx['code'] != 'USD'%}
                     This means that the returns include the asset returns plus the currency return in the period.
-                    <br>For example, if Bitcoin in USD is up 5% and the {{current_user['name']}} is up 1%,
-                    the
-                    return will be 6.05% in {{current_user['name_plural']}}.
+                    <br>For example, if Bitcoin in USD is up 5% and the {{current_app.fx['name']}} is
+                    up
+                    1%, the
+                    return will be 6.05% in {{FX}}.
                     {%endif%}
-                </div>
+                </i>
             </div>
         </div>
     </div>

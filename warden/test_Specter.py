@@ -5,7 +5,6 @@ from unittest.mock import patch
 import requests
 from config import Config
 import configparser
-from warden_pricing_engine import tor_request
 from specter_importer import Specter
 
 

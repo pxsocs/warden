@@ -7,7 +7,8 @@ from flask.globals import current_app
 from warden_modules import regenerate_nav
 from specter_importer import Specter
 from config import Config
-from warden_pricing_engine import fxsymbol
+from utils import fxsymbol, pickle_it
+from datetime import datetime
 from message_handler import Message
 
 
@@ -23,7 +24,7 @@ def background_specter_update():
     app.message_handler.add_message(message)
 
     # Test: CHECK TOR
-    from warden_pricing_engine import test_tor
+    from connections import test_tor
     app.tor = test_tor()
     if app.tor:
         message = Message(category='Background Job',
@@ -35,24 +36,6 @@ def background_specter_update():
                           message_txt="<span class='text-danger'>Tor is down - Check Connections</span>",
                           notes=""
                           )
-    app.message_handler.add_message(message)
-
-    # Ping URL
-    try:
-        result = requests.get(app.specter.base_url)
-        if result.ok:
-            app.specter.specter_reached = True
-            message = Message(category='Background Job',
-                              message_txt="<span class='text-success'>Specter Server Reached</span>")
-        else:
-            app.specter.specter_reached = False
-            message = Message(category='Background Job',
-                              message_txt="<span class='text-danger'>Could not reach Specter Server</span>")
-    except Exception as e:
-        app.specter.specter_reached = False
-        message = Message(category='Background Job',
-                          message_txt=f"<span class='text-danger'>Error pinging Specter: {e}</span>")
-    # Write message
     app.message_handler.add_message(message)
 
     # Authenticate
@@ -189,3 +172,35 @@ def specter_test(force=False):
         messages = str(e)
 
     return (return_dict, messages)
+
+
+def test_RealTimeBTC():
+    from pricing_engine.engine import realtime_price
+    ticker = 'BTC'
+    results = realtime_price(ticker)
+    run_time = datetime.now()
+
+    if results is None:
+        health = False
+        price = None
+        error_message = 'Realtime Price returned None'
+    try:
+        price = results['price']
+        health = True
+        error_message = None
+    except Exception as e:
+        health = False
+        price = None
+        error_message = f"Realtime Price returned an error: {e}"
+
+    data = {
+        'health': health,
+        'price': price,
+        'error_message': error_message,
+        'run_time': run_time
+    }
+
+    filename = 'status_realtime_btc.pkl'
+    pickle_it(action='save', filename=filename, data=data)
+
+    return (data)

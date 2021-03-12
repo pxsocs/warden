@@ -1,6 +1,5 @@
 # See specter_importer.MD for instructions
 # and sample json return variables
-
 import requests
 import json
 import re
@@ -8,13 +7,6 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup
 from utils import pickle_it, load_config
-
-# Store TOR Status here to avoid having to check on all http requests
-from warden_pricing_engine import test_tor
-from warden_decorators import timing
-
-tor_test = test_tor()
-TOR = tor_test
 
 
 class Specter():
@@ -76,10 +68,11 @@ class Specter():
     def init_session(self):
         with requests.session() as session:
             if "onion" in self.base_url:
-                global TOR
+                config = load_config()
+                port = config['TOR'].get('port')
                 session.proxies = {
-                    "http": "socks5h://0.0.0.0:" + TOR['port'],
-                    "https": "socks5h://0.0.0.0:" + TOR['port'],
+                    "http": "socks5h://0.0.0.0:" + port,
+                    "https": "socks5h://0.0.0.0:" + port,
                 }
             response = session.post(
                 self.login_url,

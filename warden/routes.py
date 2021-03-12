@@ -1,23 +1,21 @@
 from warden_decorators import MWT
 from flask import (Blueprint, redirect, render_template, abort,
-                   flash, session, request, current_app, url_for, get_flashed_messages)
-from flask_login import login_user, logout_user, current_user, login_required, UserMixin
+                   flash, session, request, current_app, url_for)
+from flask_login import login_user, logout_user, current_user, login_required
 from warden_modules import (warden_metadata, positions,
                             generatenav, specter_df,
                             regenerate_nav,
-                            home_path)
+                            home_path, clean_float, transactions_fx)
+from pricing_engine.engine import fx_rate, historical_prices, realtime_price
 
-from flask_wtf import FlaskForm
-from wtforms import (BooleanField, PasswordField, StringField,
-                     SubmitField)
-from wtforms.validators import DataRequired, Email, Length, EqualTo
+from forms import RegistrationForm, LoginForm, TradeForm
+
 from werkzeug.security import check_password_hash, generate_password_hash
-from warden_pricing_engine import (fx_rate, PROVIDER_LIST,
-                                   PriceData)
-from warden_decorators import timing
+from models import User, AccountInfo, Trades
 from utils import update_config, heatmap_generator, pickle_it
 from operator import itemgetter
 from packaging import version
+from connections import tor_request
 
 from datetime import datetime
 import jinja2
@@ -26,35 +24,12 @@ import json
 import os
 import urllib
 import requests
+import pandas as pd
 
 warden = Blueprint("warden",
                    __name__,
                    template_folder='templates',
                    static_folder='static')
-
-
-# START WARDEN ROUTES ----------------------------------------
-# Things to check before each request:
-# 1. Is Tor running? It's a requirement.
-# 2. Is Specter server running? Also a requirement.
-# 2.5 If running, is there a balance?
-# 3. Found MyNode? Not a requirement but enables added functions.
-# 4. Found Bitcoin Node? Not a requirement but enables added functions.
-
-
-@current_app.login_manager.user_loader
-def load_user(user_id):
-    return User
-
-
-class User(UserMixin):
-    def __init__(self):
-        if current_app.settings.has_option('SETUP', 'hash'):
-            self.password = current_app.settings['SETUP']['hash']
-        else:
-            self.password = None
-        self.username = 'specter_warden'
-        self.id = 1
 
 
 @warden.before_request
@@ -63,10 +38,21 @@ def before_request():
     # to run even in setup mode
     exclude_list = [
         "warden.setup", "warden.specter_auth", "warden.login", "warden.register",
-        "warden.logout"
+        "warden.logout", "warden.show_broadcast", "warden.show_log", "warden.config_ini",
+        "warden.newtrade"
     ]
     if request.endpoint in exclude_list:
         return
+
+    # if no users found, send to setup
+    users = User.query.all()
+    if users == []:
+        return redirect(url_for("user_routes.initial_setup"))
+
+    txs = transactions_fx()
+    if txs.empty:
+        flash("No Transactions Found. You can start by including a transaction below. You may also Connect to Specter or import a CSV file.", "info")
+        return redirect(url_for("warden.newtrade"))
 
     # Create empty status dictionary
     meta = {
@@ -77,101 +63,63 @@ def before_request():
     # Save this in Flask session
     session['status'] = json.dumps(meta)
 
-    if not current_app.specter.specter_auth:
-        flash("Authentication to Specter Failed. Check credentials.", "danger")
-
     # Check if still downloading data, if so load files
     if current_app.downloading:
         # No need to test if still downloading txs
-        flash("Downloading from Specter. Some transactions may be outdated or missing. Leave the app running to finish download.", "info")
-        # If local data is present, continue
-        data = pickle_it(action='load', filename='specter_txs.pkl')
-        if data != 'file not found':
-            return
-        else:
-            if request.endpoint != 'warden.specter_auth':
-                flash("Transactions file is empty. Check Specter Server settings and connection.", "warning")
-            return redirect(url_for('warden.specter_auth'))
+        flash("Downloading from Specter. In the mean time, some transactions may be outdated or missing. Leave the app running to finish download.", "info")
 
     # Check that Specter is > 1.1.0 version
     # (this is the version where tx API was implemented)
     try:
         specter_version = str(current_app.specter.home_parser()['version'])
+        if version.parse(specter_version) < version.parse("1.1.0"):
+            flash(f"Sorry, you need Specter version 1.1.0 or higher to connect to WARden. You are running version {specter_version}. Please upgrade.", "danger")
+            return redirect(url_for('warden.specter_auth'))
     # An error below means no file was ever created - probably needs setup
-    except KeyError:
-        # if no password set - send to register
-        if not current_app.settings.has_option('SETUP', 'hash'):
-            return redirect(url_for("warden.register"))
-        flash("Could not connect to Specter. Check credentials below.", "warning")
-        return redirect(url_for('warden.specter_auth'))
-
-    if version.parse(specter_version) < version.parse("1.1.0"):
-        flash(f"Sorry, you need Specter version 1.1.0 or higher to connect to WARden. You are running version {specter_version}. Please upgrade.", "danger")
-        return redirect(url_for('warden.specter_auth'))
-
-    # Update session status
-    session['status'] = json.dumps(meta)
+    except Exception:
+        pass
 
 
 @warden.route("/register", methods=["GET", "POST"])
 def register():
 
     # if a password is already set, go to login page
-    if current_app.settings.has_option('SETUP', 'hash'):
-        if current_user.is_authenticated:
-            return redirect(url_for("warden.warden_page"))
-        else:
-            return redirect(url_for("warden.login"))
-
-    class RegistrationForm(FlaskForm):
-        password = PasswordField("Password", validators=[DataRequired()],
-                                 render_kw={"placeholder": "Password"})
-        confirm_password = PasswordField(
-            "Confirm Password", validators=[DataRequired(),
-                                            EqualTo("password")],
-            render_kw={"placeholder": "Confirm Password"})
-        submit = SubmitField("Register")
+    if current_user.is_authenticated:
+        return redirect(url_for("warden.warden_page"))
 
     form = RegistrationForm()
     if form.validate_on_submit():
         hash = generate_password_hash(form.password.data)
-        current_app.settings.set('SETUP', 'hash', hash)
-        update_config()
-        flash("Password set successfully", "success")
-        user = User()
+        user = User(username=form.username.data,
+                    password=hash)
+        current_app.db.session.add(user)
+        current_app.db.session.commit()
+        flash(f"Account created for {form.username.data}.", "success")
         login_user(user, remember=True)
         return redirect(url_for("warden.warden_page"))
+
     return render_template("warden/register.html", title="Register", form=form)
 
 
 @warden.route("/login", methods=["GET", "POST"])
 def login():
 
-    # if no password set - send to register
-    if not current_app.settings.has_option('SETUP', 'hash'):
-        return redirect(url_for("warden.register"))
-
-    class LoginForm(FlaskForm):
-        password = PasswordField("Password", validators=[DataRequired()])
-        submit = SubmitField("Login")
-
     if current_user.is_authenticated:
         return redirect(url_for("warden.warden_page"))
+
     form = LoginForm()
     if form.validate_on_submit():
-        user = User()
-        if check_password_hash(user.password, form.password.data):
+        user = User.query.filter_by(username=form.username.data).first()
+        if user and check_password_hash(user.password, form.password.data):
             login_user(user, remember=True)
-            flash("Login Successful. Welcome.", "success")
-            # The get method below is actually very helpful
-            # it returns None if empty. Better than using [] for a dictionary.
+            flash(f"Login Successful. Welcome {user}.", "success")
             next_page = request.args.get("next")  # get the original page
             if next_page:
                 return redirect(next_page)
             else:
                 return redirect(url_for("warden.warden_page"))
         else:
-            flash("Login failed. Please check password", "danger")
+            flash("Login failed. Please check Username and Password", "danger")
 
     return render_template("warden/login.html", title="Login", form=form)
 
@@ -206,30 +154,13 @@ def warden_page():
     # data through javascript after loaded. This improves load time
     # and refresh speed.
     # Get positions and prepare df for delivery
-    try:
-        df = positions()
-    except Exception as e:
-        # Check if there is a tx file saved at all. If not,
-        # it means that it's downloading.
-        filename = 'specter_txs.pkl'
-        filename = 'warden/' + filename
-        filename = os.path.join(home_path(), filename)
-        if not os.path.isfile(filename):
-            templateData = {
-                "title": "No Transactions Found Yet",
-                "FX": current_app.settings['PORTFOLIO']['base_fx'],
-                "donated": donate_check(),
-                "current_app": current_app
-            }
-            return (render_template('warden/empty_txs.html', **templateData))
-        else:
-            msg = f"An error ocurred while getting transactions: {e}"
-            abort(500, msg)
+
+    df = positions()
 
     if df.empty:
-        msg = "Specter has no transaction history or is down. Open Specter Server and check."
-        flash(msg, "warning")
-        abort(500, msg)
+        flash("No Transactions Found. You can start by including a transaction below. You may also Connect to Specter or import a CSV file.", "info")
+        return redirect(url_for("warden.newtrade"))
+
     if df.index.name != 'trade_asset_ticker':
         df.set_index('trade_asset_ticker', inplace=True)
     df = df[df['is_currency'] == 0].sort_index(ascending=True)
@@ -279,8 +210,8 @@ def warden_page():
     meta = warden_metadata()
 
     # Sort the wallets by balance
+    sorted_wallet_list = []
     try:
-        sorted_wallet_list = []
         for wallet in current_app.specter.wallet_alias_list():
             wallet_df = meta['full_df'].loc[meta['full_df']['wallet_alias'] == wallet]
             if wallet_df.empty:
@@ -288,12 +219,12 @@ def warden_page():
             else:
                 balance = wallet_df['amount'].sum()
             sorted_wallet_list.append((wallet, balance))
-    except Exception:
-        flash("No wallets found. Check Specter Server connections.", "danger")
-        abort(500, "Specter returned empty data. Check connections. Your node may be down.")
 
-    sorted_wallet_list = sorted(sorted_wallet_list, reverse=True, key=itemgetter(1))
-    sorted_wallet_list = [i[0] for i in sorted_wallet_list]
+        sorted_wallet_list = sorted(sorted_wallet_list, reverse=True, key=itemgetter(1))
+        sorted_wallet_list = [i[0] for i in sorted_wallet_list]
+        wallets_exist = True
+    except Exception:
+        wallets_exist = False
 
     from api.routes import alert_activity
     if not current_app.downloading:
@@ -309,7 +240,8 @@ def warden_page():
         "donated": donated,
         "alerts": activity,
         "current_app": current_app,
-        "sorted_wallet_list": sorted_wallet_list
+        "sorted_wallet_list": sorted_wallet_list,
+        "wallets_exist": wallets_exist
     }
     return (render_template('warden/warden.html', **templateData))
 
@@ -319,7 +251,7 @@ def warden_page():
 def list_transactions():
     transactions = specter_df()
     return render_template("warden/transactions.html",
-                           title="Full Transaction History",
+                           title="Specter Transaction History",
                            transactions=transactions,
                            current_app=current_app)
 
@@ -339,7 +271,7 @@ def update_fx():
     fx = request.args.get("code")
     current_app.settings['PORTFOLIO']['base_fx'] = fx
     update_config()
-    from warden_pricing_engine import fxsymbol as fxs
+    from utils import fxsymbol as fxs
     current_app.fx = fxs(fx, 'all')
     regenerate_nav()
     redir = request.args.get("redirect")
@@ -350,10 +282,12 @@ def update_fx():
 @login_required
 def specter_auth():
     if request.method == 'GET':
+
         templateData = {
             "title": "Login to Specter",
             "donated": donate_check(),
             "current_app": current_app,
+            "current_user": current_user
         }
         return (render_template('warden/specter_auth.html', **templateData))
 
@@ -361,19 +295,45 @@ def specter_auth():
         from message_handler import Message
         current_app.message_handler.clean_category('Specter Connection')
         url = request.form.get('url')
-        if url[-1] != '/':
-            url += '/'
-        if (not url.startswith('http://')) or (not url.startswith('http://')):
-            url = 'http://' + url
+        # Parse it
+        from urllib.parse import urlparse
+        parse_object = urlparse(url)
+        url = parse_object.scheme + '://' + parse_object.netloc + '/'
+
         # Try to ping this url
-        if int(requests.head(url).status_code) < 400:
-            message = Message(category='Specter Connection',
-                              message_txt='Pinging URL',
-                              notes=f"{url}<br> ping <span class='text-success'>✅ Success</span>"
-                              )
-            current_app.message_handler.add_message(message)
+        if 'onion' not in url:
+            status_code = requests.head(url).status_code
         else:
-            flash('Please check Specter URL (unreacheable)', 'danger')
+            status_code = tor_request(url).status_code
+
+        try:
+            if int(status_code) < 400:
+                message = Message(category='Specter Connection',
+                                  message_txt='Pinging URL',
+                                  notes=f"{url}<br> ping <span class='text-success'>✅ Success</span>"
+                                  )
+                current_app.message_handler.add_message(message)
+            else:
+                flash('Please check Specter URL (unreacheable)', 'danger')
+                return redirect(url_for('warden.specter_auth'))
+        except Exception as e:
+            flash(f'Error Connecting. Error: {e}', 'danger')
+            return redirect(url_for('warden.specter_auth'))
+
+        # Try to authenticate
+        try:
+            current_app.specter.base_url = url
+            current_app.specter.login_url = url + 'auth/login'
+            current_app.specter.tx_url = url + 'wallets/wallets_overview/txlist'
+            current_app.specter.core_url = url + 'settings/bitcoin_core?'
+            current_app.specter.login_payload = {
+                'username': request.form.get('username'),
+                'password': request.form.get('password')
+            }
+            session = current_app.specter.init_session()
+            session.close()
+        except Exception as e:
+            flash(f'Error logging in to Specter: {e}', 'danger')
             return redirect(url_for('warden.specter_auth'))
 
         current_app.settings['SPECTER']['specter_url'] = url
@@ -381,39 +341,8 @@ def specter_auth():
         current_app.settings['SPECTER']['specter_password'] = request.form.get('password')
         update_config()
 
-        # Recreate the specter class
-        from specter_importer import Specter
-        current_app.specter = Specter()
-
-        from backgroundjobs import specter_test
-        specter_dict, specter_messages = specter_test(force=True)
-        if specter_messages is not None:
-            if 'Connection refused' in specter_messages:
-                flash('Having some difficulty reaching Specter Server. ' +
-                      f'Please make sure it is running at {current_app.specter.base_url}', 'warning')
-                return redirect(url_for('warden.specter_auth'))
-            if 'Unauthorized Login' in specter_messages:
-                flash('Invalid Credentials or URL. Try again. ', 'danger')
-                return redirect(url_for('warden.specter_auth'))
-
-        # Update Config
-        # Limit the Number of txs to avoid delays in checking
-        # when user has many txs
-        current_app.specter.tx_payload['limit'] = 50
-        txs = current_app.specter.refresh_txs(load=False)
-        try:
-            message = Message(category='Specter Connection',
-                              message_txt='Downloading Txs',
-                              notes=f"<span class='text-success'>✅ Was able to download {len(txs['txlist'])}/50 test transactions</span>"
-                              )
-            current_app.message_handler.add_message(message)
-        except Exception:
-            flash('Something went wrong. Check your console for a message. Or try again.', 'danger')
-            return redirect(url_for('warden.specter_auth'))
-
-        flash("Success. Connected to Specter Server.", "success")
+        flash("Success. Connected to Specter Server. Downloading Transactions...", "success")
         # Now allow download of all txs in background on next run
-        current_app.specter.tx_payload['limit'] = 0
         current_app.downloading = True
         return redirect(url_for('warden.warden_page'))
 
@@ -504,67 +433,66 @@ def portfolio_compare():
                            current_user=fx_rate())
 
 
-@ warden.route("/price_feed", methods=["GET"])
+@warden.route("/price_and_position", methods=["GET"])
 @login_required
-def price_feed():
-    return_dict = {}
+def price_and_position():
+    # Gets price and position data for a specific ticker
     ticker = request.args.get("ticker")
-    ticker = "BTC" if not ticker else ticker
-    ticker = ticker.upper()
-    for pr in PROVIDER_LIST:
-        provider = PROVIDER_LIST[pr]
-        price_data = PriceData(ticker, provider)
-        data = {}
-        data['provider_info'] = {
-            'name': provider.name,
-            'errors': provider.errors,
-            'base_url': provider.base_url,
-            'doc_link': provider.doc_link,
-            'field_dict': provider.field_dict,
-            'globalURL': None
-        }
-        if provider.base_url is not None:
-            globalURL = (provider.base_url + "?" + provider.ticker_field + "=" +
-                         ticker + provider.url_args)
-            # Some APIs use the ticker without a ticker field i.e. xx.xx./AAPL&...
-            # in these cases, we pass the ticker field as empty
-            if provider.ticker_field == '':
-                if provider.url_args[0] == '&':
-                    provider.url_args = provider.url_args.replace('&', '?', 1)
-                globalURL = (provider.base_url + "/" + ticker + provider.url_args)
-            # Some URLs are in the form http://www.www.www/ticker_field/extra_fields?
-            if provider.replace_ticker is not None:
-                globalURL = provider.base_url.replace('ticker_field', ticker)
-            data['provider_info']['globalURL'] = globalURL
+    fx = request.args.get("fx")
+    if fx is None:
+        fx = fx_rate()['base']
 
-        try:
+    # Gets Price and market data first
+    realtime_data = realtime_price(ticker=ticker, fx=fx)
+    historical_data = historical_prices(ticker=ticker, fx=fx)
+    historical_data.index = historical_data.index.astype('datetime64[ns]')
 
-            data['price_data'] = {
-                'ticker': ticker,
-                'last_update': price_data.last_update.strftime('%m/%d/%Y'),
-                'first_update': price_data.first_update.strftime('%m/%d/%Y'),
-                'last_close': float(price_data.last_close),
-                'errors': price_data.errors
-            }
-        except Exception as e:
-            data['price_data'] = {
-                'price_data_errors': price_data.errors,
-                'error': str(e)
-            }
+    filemeta = (ticker + "_" + fx + ".meta")
+    historical_meta = pickle_it(action='load', filename=filemeta)
 
-        # Try to get realtime prices
-        data['realtime'] = {
-            'price': (price_data.realtime(PROVIDER_LIST[pr])),
-            'error': price_data.errors
-        }
+    price_chart = historical_data[["close"]].copy()
+    # dates need to be in Epoch time for Highcharts
+    price_chart.index = price_chart.index.astype('datetime64[ns]')
+    price_chart.index = (price_chart.index - datetime(1970, 1, 1)).total_seconds()
+    price_chart.index = price_chart.index * 1000
+    price_chart.index = price_chart.index.astype(np.int64)
+    price_chart = price_chart.to_dict()
+    price_chart = price_chart["close"]
 
-        return_dict[provider.name] = data
+    # Now gets position data
+    df = positions()
+    if isinstance(df, pd.DataFrame):
+        if not df.empty:
+            df = df[df['trade_asset_ticker'] == ticker]
 
-    return render_template("warden/price_feed.html",
-                           title="Price Feed Check",
+    df_trades = transactions_fx()
+    position_chart = None
+    if isinstance(df_trades, pd.DataFrame):
+        df_trades = df_trades[df_trades['trade_asset_ticker'] == ticker]
+        if not df_trades.empty:
+            df_trades = df_trades.sort_index(ascending=True)
+            df_trades['trade_quantity_cum'] = df_trades['trade_quantity'].cumsum()
+            position_chart = df_trades[["trade_quantity_cum"]].copy()
+            # dates need to be in Epoch time for Highcharts
+            position_chart.index = position_chart.index.astype('datetime64[ns]')
+            position_chart.index = (position_chart.index - datetime(1970, 1, 1)).total_seconds()
+            position_chart.index = position_chart.index * 1000
+            position_chart.index = position_chart.index.astype(np.int64)
+            position_chart = position_chart.to_dict()
+            position_chart = position_chart["trade_quantity_cum"]
+
+    return render_template("warden/price_and_position.html",
+                           title="Ticker Price and Positions",
                            current_app=current_app,
                            current_user=fx_rate(),
-                           return_dict=return_dict)
+                           realtime_data=realtime_data,
+                           historical_data=historical_data,
+                           historical_meta=historical_meta,
+                           positions=df,
+                           ticker=ticker,
+                           fx=fx,
+                           price_chart=price_chart,
+                           position_chart=position_chart)
 
 
 # Show debug info
@@ -620,6 +548,275 @@ def config_ini():
                            config_contents=config_contents
                            )
 
+
+#   TRADES -----------------------------------------------
+
+@warden.route("/newtrade", methods=["GET", "POST"])
+@login_required
+def newtrade():
+    form = TradeForm()
+    acclist = AccountInfo.query.filter_by(user_id=current_user.username)
+    accounts = []
+    for item in acclist:
+        accounts.append((item.account_longname, item.account_longname))
+    form.trade_account.choices = accounts
+
+    if request.method == "POST":
+
+        if form.validate_on_submit():
+            # Need to include two sides of trade:
+            if form.trade_operation.data in ("B"):
+                qop = 1
+            elif form.trade_operation.data in ("S"):
+                qop = -1
+            else:
+                qop = 0
+                flash("Trade Operation Error. Should be B for buy or S for sell.",
+                      "warning")
+
+            # Calculate Trade's cash value
+            cvfail = False
+
+            try:
+                p = float(clean_float(form.trade_price.data))
+                q = float(clean_float(form.trade_quantity.data))
+                f = float(clean_float(form.trade_fees.data))
+                cv = qop * (q * p) + f
+
+            except ValueError:
+                flash(
+                    "Error on calculating fiat amount \
+                for transaction - TRADE NOT included",
+                    "danger",
+                )
+                cvfail = True
+                cv = 0
+
+            # Check what type of trade this is
+            # Cash and/or Asset
+
+            try:
+                tquantity = float(form.trade_quantity.data) * qop
+            except ValueError:
+                tquantity = 0
+
+            try:
+                tprice = float(form.trade_price.data)
+            except ValueError:
+                tprice = 0
+
+            trade = Trades(
+                user_id=current_user.username,
+                trade_date=form.trade_date.data,
+                trade_account=form.trade_account.data,
+                trade_currency=form.trade_currency.data,
+                trade_asset_ticker=form.trade_asset_ticker.data,
+                trade_quantity=tquantity,
+                trade_operation=form.trade_operation.data,
+                trade_price=tprice,
+                trade_fees=form.trade_fees.data,
+                trade_notes=form.trade_notes.data,
+                cash_value=cv,
+            )
+            if not cvfail:
+                current_app.db.session.add(trade)
+                current_app.db.session.commit()
+                regenerate_nav()
+                flash("Trade included", "success")
+
+            return redirect(url_for("warden.warden_page"))
+        else:
+            flash("Trade Input failed. Something went wrong. Try Again.",
+                  "danger")
+
+    form.trade_currency.data = current_app.fx['code']
+    form.trade_date.data = datetime.utcnow()
+    return render_template("warden/newtrade.html",
+                           form=form,
+                           title="New Trade",
+                           current_app=current_app,
+                           current_user=fx_rate())
+
+
+@warden.route("/trade_transactions")
+@login_required
+# List of all transactions
+def trade_transactions():
+    transactions = Trades.query.filter_by(user_id=current_user.username)
+
+    if transactions.count() == 0:
+        form = TradeForm()
+        form.trade_currency.data = current_app.fx['code']
+        form.trade_date.data = datetime.utcnow()
+        return render_template("warden/empty_txs.html",
+                               title="Empty Transaction List",
+                               current_app=current_app,
+                               current_user=fx_rate(),
+                               form=form)
+
+    return render_template("warden/trade_transactions.html",
+                           title="Transaction History",
+                           transactions=transactions,
+                           current_app=current_app,
+                           current_user=fx_rate())
+
+
+@warden.route("/edittransaction", methods=["GET", "POST"])
+@login_required
+# Edit transaction takes arguments {id} or {reference_id}
+def edittransaction():
+    form = TradeForm()
+    reference_id = request.args.get("reference_id")
+    id = request.args.get("id")
+    if reference_id:
+        trade = Trades.query.filter_by(
+            user_id=current_user.username).filter_by(
+                trade_reference_id=reference_id).first()
+        if trade.count() == 0:
+            abort(404, "Transaction not found")
+        id = trade.id
+
+    trade = Trades.query.filter_by(user_id=current_user.username).filter_by(
+        id=id).first()
+
+    if trade is None:
+        abort(404)
+
+    if trade.user_id != current_user.username:
+        abort(403)
+
+    acclist = AccountInfo.query.filter_by(user_id=current_user.username)
+    accounts = []
+    for item in acclist:
+        accounts.append((item.account_longname, item.account_longname))
+    form.trade_account.choices = accounts
+    form.submit.label.text = 'Edit Trade'
+
+    if request.method == "POST":
+
+        if form.validate_on_submit():
+            # Write changes to database
+            if form.trade_operation.data in ("B", "D"):
+                qop = 1
+            elif form.trade_operation.data in ("S", "W"):
+                qop = -1
+            else:
+                qop = 0
+
+            # Calculate Trade's cash value
+            cvfail = False
+
+            try:
+                p = float(clean_float(form.trade_price.data))
+                q = float(clean_float(form.trade_quantity.data))
+                f = float(clean_float(form.trade_fees.data))
+                cv = qop * (q * p) + f
+
+            except ValueError:
+                flash(
+                    "Error on calculating cash amount \
+                for transaction - TRADE NOT edited. Try Again.",
+                    "danger",
+                )
+                cvfail = True
+                cv = 0
+
+            trade.trade_date = form.trade_date.data
+            trade.trade_asset_ticker = form.trade_asset_ticker.data
+            trade.trade_currency = form.trade_currency.data
+            trade.trade_operation = form.trade_operation.data
+            trade.trade_quantity = float(form.trade_quantity.data) * qop
+            trade.trade_price = float(clean_float(form.trade_price.data))
+            trade.trade_fees = float(clean_float(form.trade_fees.data))
+            trade.trade_account = form.trade_account.data
+            trade.trade_notes = form.trade_notes.data
+            trade.cash_value = cv
+
+            if not cvfail:
+                current_app.db.session.commit()
+                regenerate_nav()
+                flash("Trade edit successful", "success")
+
+            return redirect(url_for("warden.warden_page"))
+
+        flash("Trade edit failed. Something went wrong. Try Again.", "danger")
+
+    # Pre-populate the form
+    form.trade_date.data = trade.trade_date
+    form.trade_currency.data = trade.trade_currency
+    form.trade_asset_ticker.data = trade.trade_asset_ticker
+    form.trade_operation.data = trade.trade_operation
+    form.trade_quantity.data = abs(float(trade.trade_quantity))
+    form.trade_price.data = trade.trade_price
+    form.trade_fees.data = trade.trade_fees
+    form.trade_account.data = trade.trade_account
+    form.trade_notes.data = trade.trade_notes
+
+    return render_template(
+        "warden/edittransaction.html",
+        title="Edit Transaction",
+        form=form,
+        trade=trade,
+        id=id,
+        current_app=current_app,
+        current_user=fx_rate()
+
+    )
+
+
+@warden.route("/deltrade", methods=["GET"])
+@login_required
+# Deletes a trade - takes one argument: {id}
+def deltrade():
+    if request.method == "GET":
+        id = request.args.get("id")
+        trade = Trades.query.filter_by(id=id).first()
+
+        if trade is None:
+            flash(f"Trade id: {id} not found. Nothing done.", "warning")
+            return redirect(url_for("warden.warden_page"))
+
+        if trade.user_id != current_user.username:
+            abort(403)
+
+        Trades.query.filter_by(id=trade.id).delete()
+        current_app.db.session.commit()
+        regenerate_nav()
+        flash("Trade deleted", "danger")
+        return redirect(url_for("warden.warden_page"))
+
+    else:
+        return redirect(url_for("warden.warden_page"))
+
+
+@warden.route("/delalltrades", methods=["GET"])
+@login_required
+# This deletes all trades from database - use with caution. Should not
+# be called directly as it will delete all trades without confirmation!
+def delalltrades():
+
+    transactions = Trades.query.filter_by(
+        user_id=current_user.username).order_by(Trades.trade_date)
+
+    if transactions.count() == 0:
+        form = TradeForm()
+        form.trade_currency.data = current_app.fx['code']
+        form.trade_date.data = datetime.utcnow()
+        return render_template("warden/empty_txs.html",
+                               title="Empty Transaction List",
+                               current_app=current_app,
+                               current_user=fx_rate(),
+                               form=form)
+
+    if request.method == "GET":
+        Trades.query.filter_by(user_id=current_user.username).delete()
+        current_app.db.session.commit()
+        regenerate_nav()
+        flash("ALL TRANSACTIONS WERE DELETED", "danger")
+        return redirect(url_for("warden.warden_page"))
+
+    else:
+        return redirect(url_for("warden.warden_page"))
 
 # -------------------------------------------------
 #  START JINJA 2 Filters

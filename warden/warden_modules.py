@@ -8,14 +8,17 @@ import glob
 import logging
 
 from datetime import datetime, timedelta
-from flask import flash, current_app, abort
+from flask import flash, current_app
+from flask_login import current_user
 from pathlib import Path
 from specter_importer import Specter
-from warden_pricing_engine import (get_price_ondate, fx_price_ondate,
-                                   multiple_price_grab, price_data_rt,
-                                   price_data_fx, price_data_rt_full,
-                                   price_data, fx_rate)
+from pricing_engine.engine import (fx_rate,
+                                   price_ondate, fx_price_ondate, realtime_price,
+                                   historical_prices)
+from pricing_engine.cryptocompare import multiple_price_grab
 from warden_decorators import MWT, timing
+from utils import load_config, pickle_it
+from dateutil import parser
 
 
 # Returns the current application path
@@ -76,42 +79,23 @@ def warden_metadata():
     meta['wallet_list'] = current_app.specter.wallet_alias_list()
 
     # Load pickle with previous checkpoint df
-    df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
-    try:
-        meta['df_old'] = pd.read_pickle(df_pkl)
-    except IOError:
-        meta['df_old'] = None
+    df_pkl = 'txs_pf.pkl'
+    data = pickle_it(action='load', filename=df_pkl)
+    if not isinstance(data, pd.DataFrame):
+        if data == 'file not found':
+            meta['df_old'] = None
+    else:
+        meta['df_old'] = data
 
     # load difference / changes in addresses from file
-    ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
-    meta['old_new_df_old'] = None
-    meta['old_new_df_new'] = None
-    try:
-        with open(ack_file) as data_file:
-            meta['ack_file'] = json.loads(data_file.read())
-            # Make a list of missing transactions by id and added transactions by id
-            if ('deleted' in meta['ack_file']) or (
-                    'added' in meta['ack_file']):
-                df_old = meta['df_old']
-                df_old['old_new'] = 'old'
-                df_new = meta['full_df']
-                df_new['old_new'] = 'new'
-                # merge two df
-                df_merge = pd.concat([df_old, df_new])
-                df_merge = df_merge.reset_index(drop=True)
-                # Group by TxID
-                df_gpby = df_merge.groupby(['txid', 'amount'])
-                # Get index of all unique records
-                idx = [x[0] for x in df_gpby.groups.values() if len(x) == 1]
-                # Reindex / Filter
-                df_merge = df_merge.reindex(idx)
-                meta['old_new_df_old'] = df_merge.loc[df_merge['old_new'] ==
-                                                      'old']
-                meta['old_new_df_new'] = df_merge.loc[df_merge['old_new'] ==
-                                                      'new']
-
-    except IOError:
+    ack_file = 'txs_diff.pkl'
+    data = pickle_it(action='load', filename=ack_file)
+    if data == 'file not found':
         meta['ack_file'] = None
+    else:
+        meta['ack_file'] = data
+        meta['old_new_df_old'] = data['deleted']
+        meta['old_new_df_new'] = data['added']
 
     return (meta)
 
@@ -139,7 +123,7 @@ class Trades():
         return (vars(self))
 
 
-def specter_df(save_files=False, sort_by='trade_date'):
+def specter_df(delete_files=False, sort_by='trade_date'):
     df = pd.DataFrame()
     try:
         t = current_app.specter.refresh_txs(load=True)['txlist']
@@ -191,8 +175,8 @@ def specter_df(save_files=False, sort_by='trade_date'):
         get_date = datetime.strptime(date_input, "%Y-%m-%d")
         # Create price object
         try:
-            fx = fx_price_ondate("USD", current_app.fx['code'], get_date)
-            price = (get_price_ondate("BTC", get_date).close) * fx
+            fx = fx_price_ondate('USD', current_app.fx['code'], get_date)
+            price = price_ondate("BTC", get_date)['close'] * fx
         except Exception as e:
             logging.error("Not Found. Error: " + str(e))
             price = 0
@@ -222,31 +206,27 @@ def specter_df(save_files=False, sort_by='trade_date'):
     except Exception:
         df['cash_value'] = 0
 
-    # Hash the Pandas df for quick comparison for changes
-    from pandas.util import hash_pandas_object
-    df['checksum'] = df['trade_blockchain_id']
-    df['checksum'] = hash_pandas_object(df['checksum'], index=False)
-    # Every time this function runs, it will save a checksum and full df
-    # This is used to make a quick check if there were changes
-    # If there are changes, a notification method is started to alert user
+    df['loaded'] = False
 
     # TEST LINE ------------- Make this a new transaction forced into df
-    # tester = {
-    #     'trade_date': datetime.now(),
-    #     'trade_currency': 'USD',
-    #     'trade_fees': 0,
-    #     'trade_quantity': 2,
-    #     'trade_multiplier': 1,
-    #     'trade_price': 10000,
-    #     'trade_asset_ticker': 'BTC',
-    #     'trade_operation': 'B',
-    #     'checksum': (5 * (10**19)),
-    #     'txid': 'test',
-    #     'address': 'test_address',
-    #     'amount': 2,
-    #     'status': 'Test_line',
-    #     'trade_account': 'trezor'
-    # }
+    tester = {
+        'trade_date': datetime.now(),
+        'trade_currency': 'USD',
+        'trade_fees': 0,
+        'trade_quantity': 1,
+        'trade_multiplier': 1,
+        'trade_price': 10000,
+        'trade_asset_ticker': 'BTC',
+        'trade_operation': 'B',
+        'checksum': (5 * (10**19)),
+        'txid': 'test',
+        'address': 'test_address',
+        'amount': 2,
+        'status': 'Test_line',
+        'trade_account': 'trezor',
+        'loaded': False,
+        'trade_blockchain_id': 'xxsxmssxkxsjsxkxsx'
+    }
     # Comment / Uncomment code below for testing of including new transactions
     # Remove last 2 transactions here
     # df.drop(df.tail(2).index, inplace=True)
@@ -256,71 +236,67 @@ def specter_df(save_files=False, sort_by='trade_date'):
     # END TEST LINE ----------------------------------------------------
 
     # Files ----------------------------------
-    checksum_file = os.path.join(home_path(),
-                                 'warden/txs_checksum.json')
-    ack_file = os.path.join(home_path(), 'warden/txs_ack.json')
-    df_pkl = os.path.join(home_path(), 'warden/txs_pf.pkl')
+    df_pkl = 'txs_pf.pkl'
+    old_df_file = 'old_df.pkl'
+    ack_file = 'txs_diff.pkl'
     # -----------------------------------------
 
-    # Create checksum
-    rows_hash = df['checksum'].tolist()
-    all_hash = sum(rows_hash)
+    # Activity checkpoint will be created. Delete all old files.
+    if delete_files:
+        pickle_it(action='delete', filename=df_pkl)
+        pickle_it(action='delete', filename=old_df_file)
+        pickle_it(action='delete', filename=ack_file)
+
+    # save this latest df to a file
+    pickle_it(action='save', filename=df_pkl, data=df)
 
     try:
-        # Loads the all_hash file - first check
-        with open(checksum_file) as data_file:
-            json_all = json.loads(data_file.read())
-            json_all_hash = sum(json_all)
-            data_file.close()
+        # Loads the old df to check for activity
+        df_loaded = pickle_it(action='load', filename=old_df_file)
+        if not isinstance(df_loaded, pd.DataFrame):
+            if df_loaded == "file not found":
+                raise FileNotFoundError
 
-        if json_all_hash != all_hash:
+        df_loaded['loaded'] = True
+
+        # Find differences in old vs. new
+        df_check = pd.concat([df, df_loaded]).drop_duplicates(
+            subset='trade_blockchain_id', keep=False)
+
+        if not df_check.empty:
             # Let's find which checksums are different and compile a list - save this list
             # so it can be used on main page to highlight changes
-            with open(checksum_file) as data_file:
-                old_list = json.loads(data_file.read())
-                data_file.close()
-            new_list = rows_hash
+            df_old = df_check[df_check['loaded']]
+            df_new = df_check[~df_check['loaded']]
 
-            # find differences
-            # force int on both
-            old_list = [int(n) for n in old_list]
-            new_list = [int(n) for n in new_list]
-            deleted_addresses = list(set(old_list).difference(new_list))
-            added_addresses = list(set(new_list).difference(old_list))
+            json_save = {
+                'changes_detected_on': datetime.now().strftime("%I:%M %p on %B %d, %Y"),
+                'deleted': df_old,
+                'added': df_new
+            }
+            # If activity is detected, don't delete the old df by saving new df over
+            save_files = False
 
-            if deleted_addresses != None or added_addresses != None:
-                # Save these to a file
-                json_save = {
-                    'changes_detected_on':
-                    datetime.now().strftime("%I:%M %p on %B %d, %Y"),
-                    'deleted':
-                    deleted_addresses,
-                    'added':
-                    added_addresses
-                }
+        else:
+            json_save = {
+                'changes_detected_on': None,
+                'deleted': None,
+                'added': None
+            }
+            save_files = True
 
-                with open(ack_file, 'w') as fp:
-                    json.dump(json_save, fp)
+        # Save the dict above to be accessed later
+        pickle_it(action='save', filename=ack_file, data=json_save)
 
-    except Exception:
+    except FileNotFoundError:
         # Files not found - let's save a new checkpoint
         save_files = True
 
     # Sort
     df = df.sort_values(by=[sort_by], ascending=False)
 
-    # If Balance change is acknowledge, reset by saving the files
-
-    # Acknowledge list is reduced in a separate function that acknowledges address changes
     if save_files:
-        # saves to json and pickle files
-        with open(checksum_file, 'w') as fp:
-            json.dump(rows_hash, fp)
-
-        with open(ack_file, 'w') as fp:
-            json.dump('', fp)
-
-        df.to_pickle(df_pkl)
+        pickle_it(action='save', filename=old_df_file, data=df)
 
     return (df)
 
@@ -333,24 +309,43 @@ def find_fx(row, fx=None):
     return price
 
 
+@ MWT(timeout=20)
 def transactions_fx():
     # Gets the transaction table and fills with fx information
     # Note that it uses the currency exchange for the date of transaction
     # Get all transactions from Specter and format
 
+    # SPECTER ============================================
     df = specter_df()
+    if not df.empty:
+        df['trade_date'] = pd.to_datetime(df['trade_date'])
+        df = df.set_index('trade_date')
+        # Ignore times in df to merge - keep only dates
+        df.index = df.index.floor('d')
+        df.index.rename('date', inplace=True)
+
+    # SQL DATABASE ========================================
+    # Get all transactions from db and format
+    df_sql = pd.read_sql_table('trades', current_app.db.engine)
+    if not df_sql.empty:
+        df_sql = df_sql[(df_sql.user_id == current_user.username)]
+        # df = df[(df.trade_operation == "B") | (df.trade_operation == "S")]
+        df_sql['trade_date'] = pd.to_datetime(df_sql['trade_date'])
+        df_sql = df_sql.set_index('trade_date')
+        # Ignore times in df to merge - keep only dates
+        df_sql.index = df_sql.index.floor('d')
+        df_sql.index.rename('date', inplace=True)
+
+    # Merge both
+    df = df.append(df_sql, sort=False)
 
     if df.empty:
         logging.warning("Transactions_FX - No txs found")
         return df
 
-    df['trade_date'] = pd.to_datetime(df['trade_date'])
-    df = df.set_index('trade_date')
-    # Ignore times in df to merge - keep only dates
-    df.index = df.index.floor('d')
-    df.index.rename('date', inplace=True)
     # The current fx needs no conversion, set to 1
     df[fx_rate()['fx_rate']] = 1
+
     # Need to get currencies into the df in order to normalize
     # let's load a list of currencies needed and merge
     list_of_fx = df.trade_currency.unique().tolist()
@@ -375,6 +370,8 @@ def transactions_fx():
 
 
 def clean_float(text):  # Function to clean CSV fields - leave only digits and .
+    if isinstance(text, int):
+        return (float(text))
     if isinstance(text, float):
         return (text)
     if text is None:
@@ -385,7 +382,7 @@ def clean_float(text):  # Function to clean CSV fields - leave only digits and .
         if char in acceptable:
             str = str + char
     if str == '':
-        return None
+        return 0
     str = float(str)
     return (str)
 
@@ -410,7 +407,6 @@ def cleandate(text):  # Function to clean Date fields
 
 
 # PORTFOLIO UTILITIES
-
 
 def positions():
     # Method to create a user's position table
@@ -453,7 +449,7 @@ def positions():
 
 
 def single_price(ticker):
-    return (price_data_rt(ticker), datetime.now())
+    return (realtime_price(ticker)['price'], datetime.now())
 
 
 @ MWT(timeout=200)
@@ -461,123 +457,120 @@ def list_tickers():
     df = transactions_fx()
     # Now let's create our main dataframe with information for each ticker
     list_of_tickers = df['trade_asset_ticker'].unique().tolist()
+    list_of_tickers = [ticker.upper() for ticker in list_of_tickers]
     return (list_of_tickers)
 
 
-@ MWT(timeout=2)
 def positions_dynamic():
+    fx = load_config()['PORTFOLIO']['base_fx']
     # This method is the realtime updater for the front page. It gets the
     # position information from positions above and returns a dataframe
     # with all the realtime pricing and positions data - this method
     # should be called from an AJAX request at the front page in order
     # to reduce loading time.
     df = positions()
-    if df.empty:
-        return(df)
     # Drop all currencies from table
     df = df[df['is_currency'] == False]
     # check if trade_asset_ticker is set as index. If so, move to column
-    # This happens on some memoized functions - need to understand why
-    # The below is a temporary fix
     df = df.reset_index()
     if df is None:
         return None, None
     tickers_string = ",".join(list_tickers())
+    # Make sure the Bitcoin price is retrieved even if not in portfolio
+    if ('BTC' not in tickers_string) and (tickers_string is not None):
+        tickers_string += ',BTC'
     # Let's try to get as many prices as possible into the df with a
     # single request - first get all the prices in current currency and USD
-    multi_price = multiple_price_grab(tickers_string,
-                                      'USD,' + fx_rate()['base'])
-
-    # PARSER Function to find the ticker price inside the matrix. First part
+    multi_price = multiple_price_grab(tickers_string, 'USD,' + fx)
+    # PARSER Function to fing the ticker price inside the matrix. First part
     # looks into the cryptocompare matrix. In the exception, if price is not
     # found, it sends a request to other providers
+    btc_price = None
 
     def find_data(ticker):
         notes = None
+        last_up_source = None
+        source = None
         try:
             # Parse the cryptocompare data
-            FX = current_app.settings['PORTFOLIO']['base_fx']
-            price = multi_price["RAW"][ticker][FX]["PRICE"]
+            price = multi_price["RAW"][ticker][fx]["PRICE"]
             # GBTC should not be requested from multi_price as there is a
             # coin with same ticker
-            if ticker == 'GBTC':
-                raise
+            if ticker in ['GBTC', 'MSTR', 'TSLA', 'SQ']:
+                raise KeyError
             price = float(price)
-            high = float(multi_price["RAW"][ticker][FX]["HIGHDAY"])
-            low = float(multi_price["RAW"][ticker][FX]["LOWDAY"])
-            chg = multi_price["RAW"][ticker][FX]["CHANGEPCT24HOUR"]
-            mktcap = multi_price["DISPLAY"][ticker][FX]["MKTCAP"]
-            volume = multi_price["DISPLAY"][ticker][FX]["VOLUME24HOURTO"]
-            last_up_source = multi_price["RAW"][ticker][FX]["LASTUPDATE"]
-            source = multi_price["DISPLAY"][ticker][FX]["LASTMARKET"]
+            high = float(multi_price["RAW"][ticker][
+                fx]["HIGHDAY"])
+            low = float(multi_price["RAW"][ticker][
+                fx]["LOWDAY"])
+            chg = multi_price["RAW"][ticker][fx]["CHANGEPCT24HOUR"]
+            mktcap = multi_price["DISPLAY"][ticker][fx]["MKTCAP"]
+            volume = multi_price["DISPLAY"][ticker][fx]["VOLUME24HOURTO"]
+            last_up_source = multi_price["RAW"][ticker][fx]["LASTUPDATE"]
+            source = multi_price["DISPLAY"][ticker][fx]["LASTMARKET"]
             last_update = datetime.now()
-
-            # PUMP NGU Checker
-            up_alert = 5
-            down_alert = -5
-            try:
-                if ticker.lower() == 'btc' and chg < down_alert:
-                    from message_handler import Message
-                    current_app.message_handler.clean_category('NGU Tech')
-                    message = Message(category='NGU Tech',
-                                      message_txt='BTC Price ↓',
-                                      notes=f"<span class='text-danger'>BTC is dropping {'{:.2f}'.format(chg)}%. Time to stack some sats.</span>"
-                                      )
-                    current_app.message_handler.add_message(message)
-                if ticker.lower() == 'btc' and chg > up_alert:
-                    from message_handler import Message
-                    current_app.message_handler.clean_category('NGU Tech')
-                    message = Message(category='NGU Tech',
-                                      message_txt='BTC Price ↑ 🚀',
-                                      notes=f"<span class='text-success'>BTC is up {'{:.2f}'.format(chg)}%. Pump it.</span>"
-                                      )
-                    current_app.message_handler.add_message(message)
-            except Exception:
-                pass
-
         except (KeyError, TypeError):
             # Couldn't find price with CryptoCompare. Let's try a different source
             # and populate data in the same format [aa = alphavantage]
             try:
-                single_price = price_data_rt_full(ticker, 'aa')
+                single_price = realtime_price(ticker)
                 if single_price is None:
                     raise KeyError
-                price = single_price[0]
-                high = single_price[2]
-                low = single_price[3]
-                (_, last_update, _, _, chg, mktcap, last_up_source, volume,
-                 source, notes) = single_price
-            except Exception:
-                # Let's try a final time using Financial Modeling Prep API
+                price = clean_float(single_price['price'])
+                last_up_source = last_update = single_price['time']
+
                 try:
-                    single_price = price_data_rt_full(ticker, 'fp')
-                    if single_price is None:
-                        raise KeyError
-                    price = single_price[0]
-                    high = single_price[2]
-                    low = single_price[3]
-                    (_, last_update, _, _, chg, mktcap, last_up_source, volume,
-                     source, notes) = single_price
+                    chg = single_price['chg']
                 except Exception:
-                    try:
-                        # Finally, if realtime price is unavailable, find the latest
-                        # saved value in historical prices
-                        # Create a price class
-                        price_class = price_data(ticker)
-                        if price_class is None:
-                            raise KeyError
-                        price = float(
-                            price_class.df['close'].iloc[0]) * FX_RATE
-                        high = float(price_class.df['high'].iloc[0]) * FX_RATE
-                        low = float(price_class.df['low'].iloc[0]) * FX_RATE
-                        volume = FX + "  " + "{0:,.0f}".format(
-                            float(price_class.df['volume'].iloc[0]) * FX_RATE)
-                        mktcap = chg = 0
-                        source = last_up_source = 'Historical Data'
-                        last_update = price_class.df.index[0]
-                    except Exception:
-                        price = high = low = chg = mktcap = last_up_source = last_update = volume = 0
-                        source = '-'
+                    chg = 0
+
+                try:
+                    source = last_up_source = single_price['source']
+                except Exception:
+                    source = last_up_source = '-'
+
+                try:
+                    high = single_price['high']
+                    low = single_price['low']
+                    mktcap = volume = '-'
+                except Exception:
+                    mktcap = high = low = volume = '-'
+
+            except Exception:
+                try:
+                    # Finally, if realtime price is unavailable, find the latest
+                    # saved value in historical prices
+                    # Create a price class
+                    price_class = historical_prices(ticker, fx)
+                    if price_class is None:
+                        raise KeyError
+                    price = clean_float(price_class.df['close_converted'].iloc[0])
+                    high = '-'
+                    low = '-'
+                    volume = '-'
+                    mktcap = chg = 0
+                    source = last_up_source = 'Historical Data'
+                    last_update = price_class.df.index[0]
+                except Exception as e:
+                    price = high = low = chg = mktcap = last_up_source = last_update = volume = 0
+                    source = '-'
+                    logging.error(f"There was an error getting the price for {ticker}." +
+                                  f"Error: {e}")
+
+        if ticker.upper() == 'BTC':
+            nonlocal btc_price
+            btc_price = price
+
+        # check if 24hr change is indeed 24h or data is old, if so 24hr change = 0
+        try:
+            checker = last_update
+            if not isinstance(checker, datetime):
+                checker = parser.parse(last_update)
+            if checker < (datetime.now() - timedelta(days=1)):
+                chg = 0
+        except Exception:
+            pass
+
         return price, last_update, high, low, chg, mktcap, last_up_source, volume, source, notes
 
     df = apply_and_concat(df, 'trade_asset_ticker', find_data, [
@@ -586,8 +579,16 @@ def positions_dynamic():
     ])
     # Now create additional columns with calculations
     df['position_fx'] = df['price'] * df['trade_quantity']
+    df['position_btc'] = df['price'] * df['trade_quantity'] / btc_price
+
+    # Force some fields to float and clean
+    float_fields = ['price', '24h_high', '24h_low', '24h_change', 'mktcap', 'volume']
+    for field in float_fields:
+        df[field] = df[field].apply(clean_float)
+
     df['allocation'] = df['position_fx'] / df['position_fx'].sum()
-    df['change_fx'] = df['position_fx'] * df['24h_change'] / 100
+    df['change_fx'] = df['position_fx'] * df['24h_change'].astype(float) / 100
+
     # Pnl and Cost calculations
     df['breakeven'] = df['cash_value_fx'] / df['trade_quantity']
     df['pnl_gross'] = df['position_fx'] - df['cash_value_fx']
@@ -605,9 +606,8 @@ def positions_dynamic():
         (df['FIFO_unreal'] / df['trade_quantity'])
     # Allocations below 0.01% are marked as small
     # this is used to hide small and closed positions at html
-    df.loc[df.allocation <= 0.0001, 'small_pos'] = 'True'
-    df.loc[df.allocation >= 0.0001, 'small_pos'] = 'False'
-
+    df.loc[df.allocation <= 0, 'small_pos'] = 'True'
+    df.loc[df.allocation >= 0, 'small_pos'] = 'False'
     # Prepare for delivery. Change index, add total
     df.set_index('trade_asset_ticker', inplace=True)
     df.loc['Total'] = 0
@@ -627,12 +627,11 @@ def positions_dynamic():
         ('trade_fees_fx', 'W'): 'trade_fees_fx_W'
     },
         inplace=True)
-
     # Need to add only some fields - strings can't be added for example
     columns_sum = [
         'cash_value_fx', 'trade_fees_fx', 'position_fx', 'allocation',
         'change_fx', 'pnl_gross', 'pnl_net', 'LIFO_unreal', 'FIFO_unreal',
-        'LIFO_real', 'FIFO_real'
+        'LIFO_real', 'FIFO_real', 'position_btc'
     ]
     for field in columns_sum:
         df.loc['Total', field] = df[field].sum()
@@ -648,11 +647,14 @@ def positions_dynamic():
             tmp_dict['y'] = round(df.loc[ticker, 'allocation'] * 100, 2)
             tmp_dict['name'] = ticker
             pie_data.append(tmp_dict)
+
     return (df, pie_data)
 
 
 @ MWT(timeout=10)
-def generatenav(user='warden', force=False, filter=None):
+def generatenav(user=None, force=False, filter=None):
+    if not user:
+        user = current_user.username
     PORTFOLIO_MIN_SIZE_NAV = 1
     RENEW_NAV = 10
     FX = current_app.settings['PORTFOLIO']['base_fx']
@@ -707,12 +709,17 @@ def generatenav(user='warden', force=False, filter=None):
 
     # Create a list of all tickers that were traded in this portfolio
     tickers = list_tickers()
+    if 'BTC' not in tickers:
+        tickers.append('BTC')
+
+    fx = current_app.settings['PORTFOLIO']['base_fx']
 
     # Create an empty DF, fill with dates and fill with operation and prices then NAV
     dailynav = pd.DataFrame(columns=['date'])
     # Fill the dates from first trade until today
     dailynav['date'] = pd.date_range(start=start_date, end=end_date)
     dailynav = dailynav.set_index('date')
+    dailynav.index = dailynav.index.astype('datetime64[ns]')
     # Create empty fields
     dailynav['PORT_usd_pos'] = 0
     dailynav['PORT_fx_pos'] = 0
@@ -725,7 +732,8 @@ def generatenav(user='warden', force=False, filter=None):
             continue
         try:
             # Create a new PriceData class for this ticker
-            prices = price_data_fx(id)
+            prices = historical_prices(id, fx=fx)
+            prices.index = prices.index.astype('datetime64[ns]')
             if prices is None:
                 save_nav = False
                 raise ValueError
@@ -739,11 +747,9 @@ def generatenav(user='warden', force=False, filter=None):
                 prices = prices.to_frame()
 
             dailynav = pd.merge(dailynav, prices, on='date', how='left')
-
             # Replace NaN with prev value, if no prev value then zero
+            dailynav[id + '_price'].fillna(method='backfill', inplace=True)
             dailynav[id + '_price'].fillna(method='ffill', inplace=True)
-            dailynav[id + '_price'].fillna(0, inplace=True)
-
             # Now let's find trades for this ticker and include in dailynav
             tradedf = df[[
                 'trade_asset_ticker', 'trade_quantity', 'cash_value_fx'
@@ -766,6 +772,7 @@ def generatenav(user='warden', force=False, filter=None):
             },
                 inplace=True)
             # merge
+            tradedf.index = tradedf.index.astype('datetime64[ns]')
             dailynav = pd.merge(dailynav, tradedf, on='date', how='left')
             # for empty days just trade quantity = 0, same for CV
             dailynav[id + '_quant'].fillna(0, inplace=True)
@@ -815,6 +822,8 @@ def generatenav(user='warden', force=False, filter=None):
         except KeyError:
             continue
 
+    # Drop duplicates
+    dailynav = dailynav[~dailynav.index.duplicated(keep='first')]
     # Create a new column with the portfolio change only due to market move
     # discounting all cash flows for that day
     dailynav['adj_portfolio_fx'] = dailynav['PORT_fx_pos'] -\
@@ -844,6 +853,8 @@ def generatenav(user='warden', force=False, filter=None):
     dailynav['NAV_fx'] = dailynav['port_perc_factor_fx'].cumprod()
     dailynav['NAV_fx'] = dailynav['NAV_fx'] * 100
     dailynav['PORT_ac_CFs_fx'] = dailynav['PORT_cash_value_fx'].cumsum()
+
+    dailynav['PORT_VALUE_BTC'] = dailynav['PORT_fx_pos'] / dailynav['BTC_price']
 
     # Save NAV Locally as Pickle
     if save_nav:
@@ -887,7 +898,10 @@ def regenerate_nav():
         clear_memory()
         MWT()._caches = {}
         MWT()._timeouts = {}
-        generatenav('specter_user', force=True)
+    except Exception:
+        pass
+    try:
+        generatenav(current_user.username, force=True)
     except Exception:
         return
 
