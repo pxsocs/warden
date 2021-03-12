@@ -34,7 +34,7 @@ setup(
     description="Private Portfolio Tool - Specter Server Edition",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/pxsocs/specter_warden",
+    url="https://github.com/pxsocs/warden",
     include_package_data=True,
     package_dir={"": "src"},
     install_requires=reqs,
