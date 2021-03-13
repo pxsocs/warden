@@ -44,6 +44,9 @@ def before_request():
     if request.endpoint in exclude_list:
         return
 
+    if not current_user.is_authenticated:
+        return redirect(url_for("warden.login"))
+
     # if no users found, send to setup
     users = User.query.all()
     if users == []:

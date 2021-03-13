@@ -1,12 +1,14 @@
 
 from flask import current_app
 from flask_wtf import FlaskForm
+from flask_login import current_user
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Optional, Length
 from warden_modules import fx_list
 from wtforms import StringField, SubmitField, SelectField, PasswordField
 from wtforms.fields.html5 import DateField
 from models import User
 from flask_wtf.file import FileField, FileAllowed
+from werkzeug.security import check_password_hash
 
 
 # Form used to register new users and save password
@@ -93,3 +95,20 @@ class ImportCSV(FlaskForm):
     def validate_csvfile(sef, csvfile):
         if csvfile.data is None:
             raise ValidationError("Please select a file")
+
+
+class UpdateAccountForm(FlaskForm):
+    old_password = PasswordField("Current Password", validators=[DataRequired()],
+                                 render_kw={"placeholder": "Current Password"})
+    password = PasswordField("New Password", validators=[DataRequired()],
+                             render_kw={"placeholder": "New Password"})
+    confirm_password = PasswordField(
+        "Confirm Password", validators=[DataRequired(),
+                                        EqualTo("password")],
+        render_kw={"placeholder": "Confirm Password"})
+    submit = SubmitField("Change Password")
+
+    def validate_old_password(self, old_password):
+        user = User.query.filter_by(username=current_user.username).first()
+        if not check_password_hash(user.password, self.old_password.data):
+            raise ValidationError("Incorrect Current Password. Try Again.")

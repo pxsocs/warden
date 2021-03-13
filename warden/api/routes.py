@@ -668,6 +668,8 @@ def portfolio_compare_json():
     # Plus create a table with individual analysis for each ticker and NAV
     nav_only["NAV_norm"] = (nav_only["NAV_fx"] / nav_only["NAV_fx"][0]) * 100
     nav_only["NAV_ret"] = nav_only["NAV_norm"].pct_change()
+    nav_only.reset_index(drop=True, inplace=True)
+
     table = {}
     table["meta"] = {}
     table["meta"]["start_date"] = (nav_only.index[0]).strftime("%m-%d-%Y")

@@ -50,6 +50,72 @@
             <div class="rightfloater">
 
 
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm statusbox text-white">
+                        System Report
+                    </button>
+                    <button id="status" type="button"
+                        class="btn btn-sm statusbox text-white dropdown-toggle dropdown-toggle-split"
+                        data-toggle="dropdown">
+                    </button>
+                    <div class="dropdown-menu scrollable-menu dropdown-menu-right text-muted">
+                        <span>
+
+                            <!-- CHECK TOR -->
+                            {%if current_app.tor%}
+                            <a class="dropdown-item">
+                                <i class="fas fa-check-square text-success"></i>&nbsp;
+                                Tor Running</a>
+                            {%else%}
+                            <a class="dropdown-item">
+                                <i class="fas fa-exclamation-triangle text-warning"></i>&nbsp;
+                                Tor Unavailable</a>
+                            {%endif%}
+
+                            <!-- Specter Server -->
+
+                            <a class="dropdown-item">
+                                {%if current_app.specter.specter_auth %}
+                                <i class="fas fa-ghost text-success"></i>&nbsp;
+                                Specter Server Connected</a>
+                            {%else%}
+                            <i class="fas fa-ghost text-danger"></i>&nbsp;
+                            Specter Server Not Connected</a>
+                            {%endif%}
+
+
+                            <!-- Current Version and Upgrade? -->
+                            {%if current_app.warden_status['needs_upgrade'] == True%}
+                            <i class="fas fa-exclamation-triangle text-warning"></i>&nbsp;
+                            <a class="dropdown-item">WARden Upgrade Available:
+                                {{current_app.warden_status['github_version']}}</a>
+                            {%else%}
+                            <a class="dropdown-item">
+                                <i class="fas fa-check-square text-success"></i>&nbsp;
+                                You are running the latest WARden version
+                                ({{current_app.warden_status['running_version']}})</a>
+                            {%endif%}
+
+
+                            <!-- User logged in -->
+                            <a class="dropdown-item">
+                                <i class="fas fa-info-circle text-info"></i>&nbsp;
+                                Logged in as {{current_user.username}}
+                            </a>
+                            <!-- Running inside Docker -->
+                            {%if current_app.runningInDocker%}
+                            <a class="dropdown-item">
+                                <i class="fab fa-docker text-info"></i>&nbsp;
+                                Running inside a Docker Container
+                            </a>
+                            {%endif%}
+
+
+                        </span>
+                    </div>
+                </div>
+
+
 
                 {%if current_app.tor%}
                 <span class="btn btn-sm statusbox text-white">
@@ -189,7 +255,8 @@
         <div class="collapse show" id="collapse_settings"">
                     <div class=" list-group bg-transparent text-white">
 
-
+            <a class="sidebar-subitem" href="{{ url_for('user_routes.account') }}"><i
+                    class="fas fa-users-cog fa-lg"></i>&nbsp;&nbsp;Manage User Account</a>
 
             <a class="sidebar-subitem" href="/show_broadcast"><i class="fas fa-bullhorn fa-lg"></i>&nbsp;&nbsp;Message
                 Monitor</a>
@@ -200,10 +267,19 @@
             <a class="sidebar-subitem" href="/satoshi_quotes"><i
                     class="fas fa-quote-left fa-lg"></i>&nbsp;&nbsp;Quotable Satoshi</a>
 
+
+
             <a class="sidebar-subitem" href="https://github.com/pxsocs/warden_terminal" target='_blank'><i
                     class="fas fa-terminal fa-lg"></i>&nbsp;&nbsp;Warden Terminal&nbsp;
                 <i class="fas fa-external-link-alt text-muted"></i>
             </a>
+
+
+            <a class="sidebar-subitem" href="https://github.com/pxsocs/warden" target='new_page' class="text-muted">
+                <i class="fas fa-question fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;Report Issue
+                <i class="fas fa-external-link-alt text-muted"></i>
+            </a>
+
 
             <a class="sidebar-subitem" href="/logout"><i class="fas fa-sign-out-alt fa-lg"></i>&nbsp;&nbsp;
                 Logout</a>

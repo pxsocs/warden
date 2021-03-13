@@ -742,6 +742,10 @@ def generatenav(user=None, force=False, filter=None):
                 save_nav = False
                 raise ValueError
 
+            start_date_ticker = prices.index.min()
+            if start_date_ticker > start_date:
+                flash(f"NAV table starts on {start_date.strftime('%b-%d-%y')} but the ticker {id} only has pricing data from {start_date_ticker.strftime('%b-%d-%y')}. This may lead to wrong calculations on past performance.", "warning")
+
             prices = prices.rename(columns={'close_converted': id + '_price'})
             prices = prices[id + '_price']
             # Fill dailyNAV with prices for each ticker
