@@ -1,0 +1,118 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+<body class="bg-main">
+
+    <div class="content-section">
+
+        <div class="media">
+            <div class="media-body">
+                <h2 class="account-heading">{{ current_user.username }}</h2>
+            </div>
+        </div>
+
+
+        <form method="POST" action="/account" id="account_form" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+
+                <div class='content-section'>
+                    <legend class="border-bottom mb-4">Change Password</legend>
+
+                    <div class="form-group">
+                        {% if form.old_password.errors %}
+                        {{ form.old_password(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.old_password.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        {{ form.old_password(class="form-control form-control-lg") }}
+                        {% endif %}
+                    </div>
+                    <br>
+                    <div class="form-group">
+                        {% if form.password.errors %}
+                        {{ form.password(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.password.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        {{ form.password(class="form-control form-control-lg") }}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        {% if form.confirm_password.errors %}
+                        {{ form.confirm_password(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.confirm_password.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        {{ form.confirm_password(class="form-control form-control-lg") }}
+                        {% endif %}
+                        <br>
+
+                        <div class="form-group">
+                            {{ form.submit(class="btn btn-block btn-lg btn-outline-secondary")}}
+                        </div>
+
+                    </div>
+
+            </fieldset>
+        </form>
+
+        {% for field in form.errors %}
+        {% for error in form.errors[field] %}
+        <div class="error text-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            Form Error: {{ error }} on field: {{field}}
+        </div>
+        {% endfor %}
+        {% endfor %}
+    </div>
+
+
+
+    <div class="content-section">
+        <span class="text-danger">Delete all transactions from Database (no UNDO)</span></br>
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" placeholder="type DELETE to confirm" id="DELETE">
+        </div>
+
+        <a href="\delalltrades">
+            <button type="button" id="DELETEBUTTON" class="btn btn-outline-danger" disabled="true">
+                DELETE ALL TRADES</button>
+        </a>
+    </div>
+
+    <!-- app's own JavaScript -->
+    <script>
+        $(document).ready(function () {
+            $(function () {
+                $("#account_form").submit(function () {
+                    $("#submit").attr("disabled", true);
+                });
+            });
+        });
+
+
+        $(function () {
+            $('#DELETE').change(function () {
+                if ($('#DELETE').val() == "DELETE") {
+                    $('#DELETEBUTTON').prop('disabled', false);
+                }
+            });
+        });
+    </script>
+
+
+
+</body>
+
+{% endblock content %}

@@ -172,13 +172,15 @@ def init_app(app):
         app.warden_status['initial_setup'] = True
 
     print(f"  [i] Running WARden version: {current_version}")
-
+    app.warden_status['running_version'] = current_version
     # CHECK FOR UPGRADE
     repo_url = 'https://api.github.com/repos/pxsocs/warden/releases'
     try:
         github_version = tor_request(repo_url).json()[0]['tag_name']
     except Exception:
         github_version = None
+
+    app.warden_status['github_version'] = github_version
 
     if github_version:
         print(f"  [i] Newest WARden version available: {github_version}")

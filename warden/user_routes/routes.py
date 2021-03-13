@@ -4,7 +4,7 @@ from flask import (Blueprint, flash, redirect, render_template, request,
 from flask_login import current_user, login_required, login_user
 from werkzeug.security import generate_password_hash
 
-from forms import RegistrationForm, LoginForm, TradeForm
+from forms import RegistrationForm, UpdateAccountForm
 from models import User, AccountInfo, Trades
 from utils import update_config
 
@@ -74,3 +74,24 @@ def initial_setup():
             pass
 
         return redirect(url_for("warden.warden_page"))
+
+
+@user_routes.route("/account", methods=["GET", "POST"])
+@login_required
+def account():
+    form = UpdateAccountForm()
+    if request.method == "POST":
+        if form.validate_on_submit():
+            hash = generate_password_hash(form.password.data)
+            user = User.query.filter_by(username=current_user.username).first()
+            user.password = hash
+            current_app.db.session.commit()
+            flash(f"Account password updated for user {current_user.username}", "success")
+            return redirect(url_for("warden.warden_page"))
+
+        flash("Password Change Failed. Something went wrong. Try Again.", "danger")
+
+    return render_template("warden/account.html",
+                           title="Account",
+                           form=form,
+                           current_app=current_app)
