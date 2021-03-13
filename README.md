@@ -33,27 +33,6 @@ _If you don't want to have docker installed follow the regular instructions_
 
 > Docker needs to installed and running
 
-[Docker Install Instructions for most OS systems can be found here](https://docs.docker.com/get-docker/)
-
-Docker Installation Instructions for Debian (Most Raspberry Pi systems)
-
-```bash
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-```
-
-Then get your user name by typing:
-
-```bash
-w
-```
-
-Then add this user to the docker group:
-
-```bash
-sudo usermod -aG docker <your-user>
-```
-
 Downloadn and build the container:
 
 ```bash
@@ -116,6 +95,29 @@ sudo apt-get -y install python3-pip
 
 ```bash
 sudo apt-get install git
+```
+
+> If Docker is not installed
+
+[Docker Install Instructions for most OS systems can be found here](https://docs.docker.com/get-docker/)
+
+Docker Installation Instructions for Debian (Most Raspberry Pi systems)
+
+```bash
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+```
+
+Then get your user name by typing:
+
+```bash
+w
+```
+
+Then add this user to the docker group:
+
+```bash
+sudo usermod -aG docker <your-user>
 ```
 
 **Please note that this is ALPHA software. There is no guarantee that the

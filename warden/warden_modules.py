@@ -363,6 +363,10 @@ def transactions_fx():
         float)
     df['trade_price_fx'] = df['trade_price'].astype(float) / df['fx'].astype(
         float)
+
+    if 'trade_date' not in df.columns:
+        df['trade_date'] = pd.to_datetime(df.index)
+
     return (df)
 
 
