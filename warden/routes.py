@@ -457,14 +457,15 @@ def price_and_position():
     filemeta = (ticker + "_" + fx + ".meta")
     historical_meta = pickle_it(action='load', filename=filemeta)
 
-    price_chart = historical_data[["close"]].copy()
+    price_chart = historical_data[["close_converted", "close"]].copy()
     # dates need to be in Epoch time for Highcharts
     price_chart.index = price_chart.index.astype('datetime64[ns]')
     price_chart.index = (price_chart.index - datetime(1970, 1, 1)).total_seconds()
     price_chart.index = price_chart.index * 1000
     price_chart.index = price_chart.index.astype(np.int64)
     price_chart = price_chart.to_dict()
-    price_chart = price_chart["close"]
+    price_chart_usd = price_chart["close"]
+    price_chart = price_chart["close_converted"]
 
     # Now gets position data
     df = positions()
@@ -499,6 +500,7 @@ def price_and_position():
                            ticker=ticker,
                            fx=fx,
                            price_chart=price_chart,
+                           price_chart_usd=price_chart_usd,
                            position_chart=position_chart)
 
 # Allocation History

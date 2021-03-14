@@ -109,16 +109,17 @@
 
 $(document).ready(function () {
 var price_data = {{price_chart | tojson | safe}};
+var price_data_usd = {{price_chart_usd | tojson | safe}};
 var ticker = {{ticker | tojson | safe}};
 var fx = {{fx | tojson | safe}};
 var position_chart = {{position_chart | tojson | safe}};
 
-priceChart(price_data, ticker, fx);
+priceChart(price_data, price_data_usd, ticker, fx);
 positionChart(position_chart, ticker, fx);
 
 });
 
-function priceChart(data, ticker, fx) {
+function priceChart(data, data_usd, ticker, fx) {
     var myChart = Highcharts.stockChart('pricechart', {
         credits: {
             text: ""
@@ -148,13 +149,19 @@ function priceChart(data, ticker, fx) {
         xAxis: {
             type: 'datetime'
         },
-        yAxis: {
+        yAxis: [{
             title: {
-                text: 'Closing Price '+ticker
+                text: 'Price in ' + fx
             },
             startOnTick: false,
             endOnTick: false
-        },
+        },{
+            title: {
+                text: 'Price in US Dollars'
+            },
+            startOnTick: false,
+            endOnTick: false
+        }],
         legend: {
             enabled: false
         },
@@ -187,16 +194,31 @@ function priceChart(data, ticker, fx) {
 
         series: [{
             type: 'line',
-            name: 'Price',
+            name: 'Price in ' + fx,
             // The line below maps the dictionary coming from Python into
             // the data needed for highcharts. It's weird but the *1 is
             // needed, otherwise the date does not show on chart.
             data: Object.keys(data).map((key) => [((key * 1)), parseFloat(data[key])]),
             turboThreshold: 0,
+            yAxis: 0,
             tooltip: {
                 pointFormat: fx + " {point.y:,.0f}"
             }
-        }]
+        },
+        {
+            type: 'line',
+            name: 'Price in USD',
+            // The line below maps the dictionary coming from Python into
+            // the data needed for highcharts. It's weird but the *1 is
+            // needed, otherwise the date does not show on chart.
+            data: Object.keys(data_usd).map((key) => [((key * 1)), parseFloat(data_usd[key])]),
+            turboThreshold: 0,
+            yAxis: 1,
+            tooltip: {
+                pointFormat: "$ {point.y:,.0f}"
+            }
+        }
+        ]
     });
 
 };
