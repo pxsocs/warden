@@ -672,7 +672,7 @@ def portfolio_compare_json():
 
     table = {}
     table["meta"] = {}
-    table["meta"]["start_date"] = (nav_only.index[0]).strftime("%m-%d-%Y")
+    table["meta"]["start_date"] = nav_only.index[0].strftime("%m-%d-%Y")
     table["meta"]["end_date"] = nav_only.index[-1].strftime("%m-%d-%Y")
     table["meta"]["number_of_days"] = ((nav_only.index[-1] -
                                         nav_only.index[0])).days
@@ -789,3 +789,34 @@ def aclst():
         list = json.dumps(list)
 
         return list
+
+
+@api.route("/portfolio_tickers_json", methods=["GET", "POST"])
+@login_required
+# Returns a list of all tickers ever traded in this portfolio
+def portfolio_tickers_json():
+    if request.method == "GET":
+        df = pd.read_sql_table("trades", current_app.db.engine)
+        df = df[(df.user_id == current_user.username)]
+        list_of_tickers = df.trade_asset_ticker.unique().tolist()
+        if ('BTC' not in list_of_tickers):
+            list_of_tickers.append('BTC')
+        return jsonify(list_of_tickers)
+
+
+@api.route("/generatenav_json", methods=["GET", "POST"])
+@login_required
+# Creates a table with dates and NAV values
+# Takes 2 arguments:
+# force=False (default) : Forces the NAV generation without reading saved file
+# filter=None (default): Filter to be applied to Pandas df (df.query(filter))
+def generatenav_json():
+    if request.method == "GET":
+        filter = request.args.get("filter")
+        force = request.args.get("force")
+        if not filter:
+            filter = ""
+        if not force:
+            force = False
+        nav = generatenav(current_user.username, force, filter)
+        return nav.to_json()

@@ -1,0 +1,56 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+<!--  High Charts -->
+<script src="https://code.highcharts.com/stock/highstock.js"></script>
+<!-- <script src="https://code.highcharts.com/highcharts.js"></script> -->
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="{{url_for('warden.static', filename='js/highcharts.js')}}"></script>
+
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div id="aloc_chart" style="height: 500px; min-width: 90%; max-width: 100%; margin: 0 auto">
+                <span class="loadanim">&nbsp;GENERATING CHART AND TABLES. PLEASE HOLD...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div id="atrib_chart" style="height: 250px; min-width: 90%; max-width: 100%; margin: 0 auto">
+                <span class="loadanim">&nbsp;GENERATING CHART AND TABLES. PLEASE HOLD...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class='row'>
+            <div class="container-fluid small">
+                <i>
+                    <sup>1</sup> All returns in this page are in {{current_app.fx['name_plural'].title()}}.
+                    <br>
+                    {%if current_app.fx['code'] != 'USD'%}
+                    This means that the returns include the asset returns plus the currency return in the period.
+                    <br>For example, if Bitcoin in USD is up 5% and the {{current_app.fx['name']}} is
+                    up
+                    1%, the
+                    return will be 6.05% in {{FX}}.
+                    {%endif%}
+                </i>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+</br></br></br>
+
+<script src="{{url_for('warden.static', filename='js/allocation_history.js')}}"></script>
+
+{% endblock content %}
