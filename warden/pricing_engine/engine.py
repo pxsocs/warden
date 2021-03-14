@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from dateutil import parser
 from warden_decorators import MWT
+from parseNumbers import parseNumber
 
 
 @ MWT(timeout=10)
@@ -124,6 +125,7 @@ def historical_prices(ticker, fx='USD', source=None):
                 df_fx['fx_close'] = 1 / df_fx['fx_close']
 
                 # Merge the two dfs:
+                results.index = pd.to_datetime(results.index)
                 results = results.loc[~results.index.duplicated(keep='first')]
                 merge_df = pd.merge(results, df_fx, on='date', how='inner')
                 merge_df['close'] = merge_df['close'].astype(float)
@@ -158,7 +160,7 @@ def historical_prices(ticker, fx='USD', source=None):
 
 
 @ MWT(timeout=5)
-def realtime_price(ticker, fx='USD', source=None, parsed=True):
+def realtime_price(ticker, fx=None, source=None, parsed=True):
     '''
     Gets realtime price from first provider available and returns
     result = {
@@ -171,6 +173,17 @@ def realtime_price(ticker, fx='USD', source=None, parsed=True):
             'source':
         }
     '''
+    if fx is None:
+        config = load_config()
+        fx = config['PORTFOLIO']['base_fx']
+
+    if fx == 'USD':
+        fxrate = 1
+    else:
+        from pricing_engine.alphavantage import realtime as aa_realtime
+        fxrate = aa_realtime(fx)
+        fxrate = parseNumber(fxrate['price'])
+
     ticker = ticker.replace(' ', '')
     if source and type(source) != list:
         raise TypeError("source has to be a list of strings - can be one string inside a list")
@@ -195,11 +208,11 @@ def realtime_price(ticker, fx='USD', source=None, parsed=True):
     # Gets from each source
     for src in source_list:
         if src == 'alphavantage_currency':
-            results = aa_realtime(ticker, fx, 'CURRENCY_EXCHANGE_RATE', parsed=parsed)
+            results = aa_realtime(ticker, 'USD', 'CURRENCY_EXCHANGE_RATE', parsed=parsed)
         if src == 'alphavantage_global':
-            results = aa_realtime(ticker, fx, 'GLOBAL_QUOTE', parsed=parsed)
+            results = aa_realtime(ticker, 'USD', 'GLOBAL_QUOTE', parsed=parsed)
         if src == 'cryptocompare':
-            results = cc_realtime(ticker, fx, parsed=parsed)
+            results = cc_realtime(ticker, 'USD', parsed=parsed)
         if src == 'fmp':
             results = fmp_realtime(ticker, parsed=parsed)
         if src == 'twelvedata':
@@ -208,12 +221,12 @@ def realtime_price(ticker, fx='USD', source=None, parsed=True):
         if results is not None:
             if parsed and 'price' in results:
                 if results['price'] is not None:
-                    from warden_modules import clean_float
                     if isinstance(results['time'], str):
                         results['time'] = parser.parse(results['time'])
-                    results['price'] = clean_float(results['price'])
+                    results['price'] = parseNumber(results['price'])
+                    results['price'] = (
+                        results['price'] / fxrate)
                     return (results)
-
     return (results)
 
 
@@ -240,11 +253,17 @@ def fx_rate():
         rate['name'] = fxsymbol(fx, 'name')
         rate['name_plural'] = fxsymbol(fx, 'name_plural')
         rate['cross'] = "USD" + " / " + fx
-        try:
-            fxrate = realtime_price(fx, fx='USD', source='alphavantage_currency')['price']
-            rate['fx_rate'] = 1 / (float(fxrate['price']))
-        except Exception:
+        if fx.upper() == 'USD':
             rate['fx_rate'] = 1
+        else:
+            try:
+                from pricing_engine.alphavantage import realtime as aa_realtime
+                fxrate = aa_realtime(fx)
+                fxrate = parseNumber(fxrate['price'])
+                rate['fx_rate'] = 1 / fxrate
+            except Exception as e:
+                rate['error'] = ("Error: " + str(e))
+                rate['fx_rate'] = 1
     except Exception as e:
         rate = {}
         rate['error'] = ("Error: " + str(e))

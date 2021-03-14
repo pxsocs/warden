@@ -84,6 +84,7 @@ def realtime(ticker, fx='USD', function='CURRENCY_EXCHANGE_RATE', parsed=True):
     if parsed:
         try:
             if function == 'CURRENCY_EXCHANGE_RATE':
+                data = data['Realtime Currency Exchange Rate']
                 result = {
                     'symbol': ticker,
                     'name': data['2. From_Currency Name'],

@@ -182,7 +182,7 @@ def realtime_btc():
     try:
         fx_details = fx_rate()
         fx_r = {'cross': fx_details['symbol'], 'fx_rate': fx_details['fx_rate']}
-        fx_r['btc_usd'] = realtime_price("BTC")['price']
+        fx_r['btc_usd'] = realtime_price("BTC", fx='USD')['price']
         fx_r['btc_fx'] = fx_r['btc_usd'] * fx_r['fx_rate']
     except Exception as e:
         logging.warn(f"There was an error while getting realtime prices. Error: {e}")
