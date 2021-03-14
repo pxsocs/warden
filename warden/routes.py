@@ -34,6 +34,14 @@ warden = Blueprint("warden",
 
 @warden.before_request
 def before_request():
+    # if no users found, send to setup
+    try:
+        users = User.query.all()
+    except Exception:
+        users = []
+    if users == []:
+        return redirect(url_for("user_routes.initial_setup"))
+
     # Ignore check for some pages - these are mostly methods that need
     # to run even in setup mode
     exclude_list = [
@@ -46,11 +54,6 @@ def before_request():
 
     if not current_user.is_authenticated:
         return redirect(url_for("warden.login"))
-
-    # if no users found, send to setup
-    users = User.query.all()
-    if users == []:
-        return redirect(url_for("user_routes.initial_setup"))
 
     txs = transactions_fx()
     if txs.empty:
@@ -158,11 +161,7 @@ def warden_page():
     # and refresh speed.
     # Get positions and prepare df for delivery
 
-    try:
-        df = positions()
-    except Exception:
-        flash("No Transactions Found. You can start by including a transaction below. You may also Connect to Specter or import a CSV file.", "info")
-        return redirect(url_for("warden.newtrade"))
+    df = positions()
 
     if df.empty:
         flash("No Transactions Found. You can start by including a transaction below. You may also Connect to Specter or import a CSV file.", "info")
@@ -305,7 +304,8 @@ def specter_auth():
         # Parse it
         from urllib.parse import urlparse
         parse_object = urlparse(url)
-        url = parse_object.scheme + '://' + parse_object.netloc + '/'
+        scheme = 'http' if parse_object.scheme == '' else parse_object.scheme
+        url = scheme + '://' + parse_object.netloc + '/'
 
         # Try to ping this url
         if 'onion' not in url:
