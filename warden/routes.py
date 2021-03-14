@@ -305,7 +305,8 @@ def specter_auth():
         from urllib.parse import urlparse
         parse_object = urlparse(url)
         scheme = 'http' if parse_object.scheme == '' else parse_object.scheme
-        url = scheme + '://' + parse_object.netloc + '/'
+        if parse_object.netloc != '':
+            url = scheme + '://' + parse_object.netloc + '/'
 
         # Try to ping this url
         if 'onion' not in url:
