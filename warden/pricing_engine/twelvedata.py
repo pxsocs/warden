@@ -103,7 +103,7 @@ def historical(ticker, parsed=True):
     '''
 
     globalURL = 'https://api.twelvedata.com/time_series?symbol=' + ticker
-    globalURL += '&interval=1day&apikey=' + api
+    globalURL += '&interval=1day&outputsize=5000&apikey=' + api
 
     response = requests.get(globalURL)
 

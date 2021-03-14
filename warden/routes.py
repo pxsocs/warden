@@ -501,6 +501,17 @@ def price_and_position():
                            price_chart=price_chart,
                            position_chart=position_chart)
 
+# Allocation History
+
+
+@warden.route("/allocation_history", methods=["GET"])
+@login_required
+def allocation_history():
+    return render_template("warden/allocation_history.html",
+                           title="Portfolio Historical Allocation",
+                           current_app=current_app,
+                           current_user=fx_rate())
+
 
 # Show debug info
 @ warden.route('/show_log')
