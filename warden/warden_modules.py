@@ -19,6 +19,7 @@ from pricing_engine.cryptocompare import multiple_price_grab
 from warden_decorators import MWT, timing
 from utils import load_config, pickle_it
 from dateutil import parser
+from parseNumbers import parseNumber
 
 
 # Returns the current application path
@@ -149,6 +150,7 @@ def specter_df(delete_files=False, sort_by='trade_date'):
     portfolio_divisor = current_app.settings['PORTFOLIO'].getfloat('divisor')
     if portfolio_divisor is None:
         portfolio_divisor = 1
+    df['amount'] = df['amount'].apply(parseNumber)
     try:
         df['amount'] = df['amount'] / portfolio_divisor
     except TypeError:
@@ -372,7 +374,7 @@ def transactions_fx():
 
 # UTILS -----------------------------------
 
-
+# Better to use parseNumber most of the times...
 def clean_float(text):  # Function to clean CSV fields - leave only digits and .
     if isinstance(text, int):
         return (float(text))
@@ -704,6 +706,9 @@ def generatenav(user=None, force=False, filter=None):
 
     # Pandas dataframe with transactions
     df = transactions_fx()
+    # Make sure it is a dataframe
+    if isinstance(df, pd.Series):
+        df = df.to_frame()
     # if a filter argument was passed, execute it
     if filter:
         df = df.query(filter)

@@ -46,19 +46,17 @@
             {{transaction[1].category}}
           </td>
           <td class="align-middle text-right" scope="row">
-            {{"{:,.6f}".format(transaction[1].trade_quantity)}}
+            {{transaction[1].trade_quantity | jformat(6)}}
           </td>
           <td class="align-middle text-right" scope="row">
-            {{transaction[1].trade_currency | fxsymbol}}
-            {{"{:,.2f}".format(transaction[1].trade_price)}}
+            {{transaction[1].trade_price | jformat(2)}}
           </td>
           <td class="align-middle text-right small" scope="row">
             {{transaction[1].trade_currency}}
           </td>
 
           <td class="align-middle text-right small" scope="row">
-            {{transaction[1].trade_currency | fxsymbol}}
-            {{"{:,.2f}".format(transaction[1].trade_fees)}}
+            {{transaction[1].trade_fees | jformat(2)}}
           </td>
           <td class="align-middle text-right" scope="row">
             {{transaction[1].trade_account}}
