@@ -395,7 +395,6 @@ def main(debug=False, reloader=False):
         \__|_| |_|\___|    \_/\_/_/   \_\_| \_\__,_|\___|_| |_|"""))
 
     print(f"""
-                                    {yellow("Specter Server Edition")} {emoji.emojize(':key: :ghost:')}
                                     {yellow("Powered by NgU technology")} {emoji.emojize(':rocket:')}
 
 
