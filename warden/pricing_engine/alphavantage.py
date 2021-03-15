@@ -6,6 +6,7 @@ from pricing_engine.engine import apikey
 from connections import tor_request
 import pandas as pd
 from warden_modules import current_path
+from flask import flash
 # docs
 # https://www.alphavantage.co/documentation/
 
@@ -81,6 +82,10 @@ def realtime(ticker, fx='USD', function='CURRENCY_EXCHANGE_RATE', parsed=True):
     #   'time':
     #   'timezone':
     # }
+
+    if "Information" in data:
+        flash(f"Alphavantage API returned an error: {data['Information']}", "warning")
+
     if parsed:
         try:
             if function == 'CURRENCY_EXCHANGE_RATE':
@@ -199,6 +204,9 @@ def historical(ticker, function='TIME_SERIES_DAILY_ADJUSTED', fx='USD', parsed=T
         response = requests.get(globalURL)
 
     data = response.json()
+
+    if "Information" in data:
+        flash(f"Alphavantage API returned an error: {data['Information']}", "warning")
 
     if parsed:
         if function == 'DIGITAL_CURRENCY_DAILY':

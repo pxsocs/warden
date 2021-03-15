@@ -722,6 +722,8 @@ def generatenav(user=None, force=False, filter=None):
         tickers.append('BTC')
 
     fx = current_app.settings['PORTFOLIO']['base_fx']
+    if fx is None:
+        fx = 'USD'
 
     # Create an empty DF, fill with dates and fill with operation and prices then NAV
     dailynav = pd.DataFrame(columns=['date'])
@@ -744,11 +746,12 @@ def generatenav(user=None, force=False, filter=None):
             # Create a new PriceData class for this ticker
             prices = historical_prices(id, fx=fx)
             prices.index = prices.index.astype('datetime64[ns]')
+
             if prices.empty:
                 dailynav[id + '_price'] = 0
                 flash(f"Prices for ticker {id} could not be downloaded", "warning")
                 save_nav = False
-                raise ValueError
+                raise ValueError(f"Ticker {id} had download issues")
 
             start_date_ticker = prices.index.min()
             if start_date_ticker > start_date:
