@@ -498,6 +498,14 @@ def price_and_position():
             position_chart = position_chart.to_dict()
             position_chart = position_chart["trade_quantity_cum"]
 
+    if ticker == 'GBTC':
+        from pricing_engine.engine import GBTC_premium
+        from parseNumbers import parseNumber
+        GBTC_price = parseNumber(realtime_data['price'])
+        GBTC_fairvalue, GBTC_premium = GBTC_premium(GBTC_price)
+    else:
+        GBTC_premium = GBTC_fairvalue = None
+
     return render_template("warden/price_and_position.html",
                            title="Ticker Price and Positions",
                            current_app=current_app,
@@ -510,7 +518,9 @@ def price_and_position():
                            fx=fx,
                            price_chart=price_chart,
                            price_chart_usd=price_chart_usd,
-                           position_chart=position_chart)
+                           position_chart=position_chart,
+                           GBTC_premium=GBTC_premium,
+                           GBTC_fairvalue=GBTC_fairvalue)
 
 # Allocation History
 

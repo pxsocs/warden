@@ -103,7 +103,7 @@ function check_activity() {
             if (data == true) {
                 alerts_html = $('#alertsection').html();
                 if (alerts_html.includes('activity detected in one') == false) {
-                    $('#alertsection').html(alerts_html + "<div class='alert alert-warning'>Probable activity detected in one or more wallets. Refresh home page.</div>")
+                    $('#alertsection').html(alerts_html + "<div class='alert alert-warning'>Possible activity detected in one or more wallets. Refresh home page to verify.</div>")
                 }
             }
         },

@@ -37,7 +37,9 @@ def start_hidden_service(app):
             await_publication=True,
         )
         app.tor_service_id = service.service_id
+        print("")
         print(success("✅ Resumed %s.onion" % app.tor_service_id))
+        print("")
 
     # save address to file
     if app.save_tor_address_to is not None:
@@ -45,23 +47,6 @@ def start_hidden_service(app):
             f.write("%s.onion" % app.tor_service_id)
     app.tor_service_id = app.tor_service_id
     app.tor_enabled = True
-
-    print(error(""))
-    print(error(" * ############################# Warning! #############################"))
-    print(error(
-        " * Your are running WARden over Tor with no authentication settings configured."
-    ))
-    print(error(
-        " * This means your WARden instance is accessible to anyone with the .onion URL."
-    ))
-    print(error(
-        " * This .onion URL is publicly exposed and indexed on the Tor network - it is not secret!"
-    ))
-    print(error(
-        " * It is stronly adviced that you configure a password to login to WARden."
-    ))
-    print(error(" * ####################################################################"))
-    print(error(""))
 
 
 def stop_hidden_services(app):

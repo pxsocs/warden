@@ -1,3 +1,4 @@
+import requests
 from utils import load_config, pickle_it, fxsymbol
 import pandas as pd
 import os
@@ -234,7 +235,7 @@ def realtime_price(ticker, fx=None, source=None, parsed=True):
 def GBTC_premium(price):
     # Calculates the current GBTC premium in percentage points
     # to BTC (see https://grayscale.co/bitcoin-trust/)
-    SHARES = 0.00095812  # as of 8/1/2020
+    SHARES = 0.00094643  # as of 3/15/2021
     fairvalue = realtime_price("BTC")['price'] * SHARES
     premium = (price / fairvalue) - 1
     return fairvalue, premium

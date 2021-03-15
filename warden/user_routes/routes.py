@@ -1,4 +1,5 @@
 import requests
+import os
 from flask import (Blueprint, flash, redirect, render_template, request,
                    url_for, current_app)
 from flask_login import current_user, login_required, login_user
@@ -94,4 +95,47 @@ def account():
     return render_template("warden/account.html",
                            title="Account",
                            form=form,
+                           current_app=current_app)
+
+
+@user_routes.route("/tor_services", methods=["GET", "POST"])
+@login_required
+def tor_services():
+    action = request.args.get("action")
+    if action == 'start':
+        current_app.settings['SERVER']['onion_server'] = 'True'
+        update_config()
+        from stem.control import Controller
+        from urllib.parse import urlparse
+        current_app.tor_port = current_app.settings['SERVER'].getint('onion_port')
+        current_app.port = current_app.settings['SERVER'].getint('port')
+        from warden_modules import home_path
+        toraddr_file = os.path.join(home_path(), "onion.txt")
+        current_app.save_tor_address_to = toraddr_file
+        proxy_url = "socks5h://localhost:9050"
+        tor_control_port = ""
+        try:
+            tor_control_address = urlparse(proxy_url).netloc.split(":")[0]
+            if tor_control_address == "localhost":
+                tor_control_address = "127.0.0.1"
+            current_app.controller = Controller.from_port(
+                address=tor_control_address,
+                port=int(tor_control_port)
+                if tor_control_port
+                else "default",
+            )
+        except Exception:
+            current_app.controller = None
+        from tor import start_hidden_service
+        start_hidden_service(current_app)
+
+        flash(f"Started Tor Hidden Services at {current_app.tor_service_id}.onion", "success")
+    if action == 'stop':
+        current_app.settings['SERVER']['onion_server'] = 'False'
+        update_config()
+        from tor import stop_hidden_services
+        stop_hidden_services(current_app)
+        flash("Stopped Tor Hidden Services", "warning")
+    return render_template("warden/tor.html",
+                           title="Tor Services",
                            current_app=current_app)

@@ -27,6 +27,9 @@ txs*.pkl
 config.ini
 debug*.*
 config.json
+dist_inst.txt
+.dockerignore
+.gitignore
 
 # Packages #
 ############
