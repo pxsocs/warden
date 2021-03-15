@@ -24,6 +24,6 @@ RUN apt-get install -y tor
 EXPOSE 9050
 EXPOSE 9150
 
-ENTRYPOINT ["/app/docker_launcher.sh"]
+ENTRYPOINT ["sh","/app/docker_launcher.sh"]
 CMD [""]
 
