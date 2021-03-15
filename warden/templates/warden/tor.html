@@ -1,0 +1,192 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+<body class="bg-main">
+
+    <div id="status" class="content-section">
+
+        <div class="row">
+            <div class="col-12">
+                <table class="table table-borderless table-sm">
+                    <legend class="border-bottom mb-4">Tor Settings Check</legend>
+
+                    <tbody>
+                        <tr>
+                            <th scope="row" style='background-color: lightgray;'>
+                                Status
+                            </th>
+                            <td class="text-right" style='background-color: lightgray;'>
+                                {%if current_app.tor%}
+                                <span style="color: rgb(0, 109, 0);">
+                                    <i class="fas fa-bolt"></i>
+                                    &nbsp;&nbsp;Tor running
+                                </span>
+                                {%else%}
+                                <span style="color: rgb(156, 133, 0);">
+                                    <i class="fas fa-bolt"></i></span>
+                                <span>&nbsp;&nbsp;Tor not enabled
+                                </span>
+                                {%endif%}
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Your IP Address without Tor
+                            </th>
+
+                            <td class="text-right">
+                                {%if current_app.tor%}
+                                <span class="text-disabled">
+                                    {{current_app.tor.pre_proxy.origin.split(',')[0]}}
+                                </span>
+                                {%else%}
+                                <span class="text-disabled">
+                                    {{current_app.tor.pre_proxy}}
+                                </span>
+                                {%endif%}
+                            </td>
+                        </tr>
+
+                        <tr class="small">
+                            <td scope="row">
+                                Ping time without Tor
+                            </td>
+
+                            <td class="text-right">
+                                <span class="text-disabled">
+                                    {{current_app.tor.pre_proxy_ping}}
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">
+                                IP Address with Tor
+                            </th>
+
+                            <td class="text-right">
+                                {%if current_app.tor.status%}
+                                <span class="text-disabled">
+                                    {{current_app.tor.post_proxy.origin.split(',')[0]}}
+                                </span>
+                                {%else%}
+                                <span class="text-disabled">
+                                    {{current_app.tor.post_proxy}}
+                                </span>
+                                {%endif%}
+                            </td>
+                        </tr>
+
+                        <tr class="small">
+                            <td scope="row">
+                                Ping time with Tor
+                            </td>
+
+                            <td class="text-right">
+                                <p><span class="text-disabled">
+                                        {{current_app.tor.post_proxy_ping}}</p>
+                                <p><span class="text-warning">
+                                        {{current_app.tor.difference}}x slower
+                                    </span></p>
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row" style='background-color: lightgray;'>
+                                WARden Tor Hidden Server
+                            </th>
+                            <td class="text-right" style='background-color: lightgray;'>
+                                {%if current_app.tor_service_id%}
+                                <span style="color: rgb(0, 109, 0);">
+
+                                    &nbsp;&nbsp;Tor Server Enabled
+                                </span>
+                                {%else%}
+                                <span style="color: rgb(231, 231, 231);">
+                                </span>
+                                <span>&nbsp;&nbsp;Tor Server not Enabled
+                                </span>
+                                {%endif%}
+                            </td>
+
+                        </tr>
+
+                        {%if current_app.tor_service_id%}
+                        <tr>
+                            <td>WARden Onion Address</td>
+                            <td class="text-right text-success">{{current_app.tor_service_id}}.onion</td>
+                        </tr>
+
+                        <tr>
+                            <td></td>
+                            <td>
+                                <a href="\tor_services?action=stop">
+                                    <button type="button" class="btn btn-outline-secondary btn-block">
+                                        Stop Onion Server</button>
+                                </a>
+
+                            </td>
+
+                        </tr>
+                        {%else%}
+                        <tr>
+                            <td></td>
+                            <td>
+                                <a href="\tor_services?action=start">
+                                    <button type="button" class="btn btn-outline-secondary btn-block">
+                                        Start Onion Server</button>
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {%endif%}
+
+
+
+                    </tbody>
+                </table>
+            </div>
+
+
+
+        </div>
+
+
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        About Tor
+                    </h5>
+                </div>
+
+                <div class="card-body">
+                    <p>
+                        When using Tor, traffic is routed through multiple servers and encypted in each step.</p>
+                    <p>If enabled, the application will prioritize Tor to send price requests using onion routing.</p>
+
+                    <p>
+                        Consider <a target="_blank" href="https://www.torproject.org/download/">installing the Tor
+                            browser</a> on your host machine. </p>
+                    </p>
+
+                </div>
+
+            </div>
+
+
+        </div>
+    </div>
+
+
+</body>
+
+{% endblock content %}

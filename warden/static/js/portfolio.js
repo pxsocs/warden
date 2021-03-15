@@ -694,7 +694,10 @@ function navChart(data) {
         },
 
         series: [{
-            type: 'line',
+            type: 'spline',
+            dataGrouping: {
+                enabled: false
+            },
             name: 'NAV',
             // The line below maps the dictionary coming from Python into
             // the data needed for highcharts. It's weird but the *1 is
@@ -730,7 +733,7 @@ function stackChart(data) {
             backgroundColor: "#FAFAFA",
         },
         title: {
-            text: '₿ Stacking over time',
+            text: 'Portfolio value in ₿',
             style: {
                 fontSize: '12px'
             }
@@ -780,6 +783,9 @@ function stackChart(data) {
 
         series: [{
             type: 'area',
+            dataGrouping: {
+                enabled: false
+            },
             name: 'Stack',
             // The line below maps the dictionary coming from Python into
             // the data needed for highcharts. It's weird but the *1 is
