@@ -23,6 +23,12 @@ def initial_setup():
 
     # initial setup will cycle through different pages
     if page is None or page == 'welcome' or page == '1':
+        # Generate a random API key for Alphavantage
+        import secrets
+        key = secrets.token_hex(15)
+        current_app.settings['API']['alphavantage'] = key
+        update_config()
+
         return render_template("warden/welcome.html",
                                title="Welcome to the WARden")
 
