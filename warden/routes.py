@@ -16,6 +16,7 @@ from utils import update_config, heatmap_generator, pickle_it
 from operator import itemgetter
 from packaging import version
 from connections import tor_request
+from specter_importer import Specter
 
 from datetime import datetime
 import jinja2
@@ -307,6 +308,10 @@ def specter_auth():
         scheme = 'http' if parse_object.scheme == '' else parse_object.scheme
         if parse_object.netloc != '':
             url = scheme + '://' + parse_object.netloc + '/'
+        if not url.startswith('http'):
+            url = 'http://' + url
+        if url[-1] != '/':
+            url += '/'
 
         # Try to ping this url
         if 'onion' not in url:
@@ -344,14 +349,17 @@ def specter_auth():
             flash(f'Error logging in to Specter: {e}', 'danger')
             return redirect(url_for('warden.specter_auth'))
 
+        current_app.downloading = True
         current_app.settings['SPECTER']['specter_url'] = url
         current_app.settings['SPECTER']['specter_login'] = request.form.get('username')
         current_app.settings['SPECTER']['specter_password'] = request.form.get('password')
         update_config()
 
-        flash("Success. Connected to Specter Server. Downloading Transactions...", "success")
+        current_app.specter = Specter()
+        current_app.specter.refresh_txs(load=False)
+
+        flash("Success. Connected to Specter Server.", "success")
         # Now allow download of all txs in background on next run
-        current_app.downloading = True
         return redirect(url_for('warden.warden_page'))
 
 
