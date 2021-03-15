@@ -162,7 +162,11 @@ def warden_page():
     # and refresh speed.
     # Get positions and prepare df for delivery
 
-    df = positions()
+    try:
+        df = positions()
+    except Exception:
+        flash("Seems like transactions may be downloading... Check Specter Transactions for status.", "warning")
+        return redirect(url_for("warden.newtrade"))
 
     if df.empty:
         flash("No Transactions Found. You can start by including a transaction below. You may also Connect to Specter or import a CSV file.", "info")

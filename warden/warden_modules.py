@@ -738,12 +738,15 @@ def generatenav(user=None, force=False, filter=None):
     # Create a dataframe for each position's prices
     for id in tickers:
         if is_currency(id):
-            continue
+            if id != 'BTC':
+                continue
         try:
             # Create a new PriceData class for this ticker
             prices = historical_prices(id, fx=fx)
             prices.index = prices.index.astype('datetime64[ns]')
-            if prices is None:
+            if prices.empty:
+                dailynav[id + '_price'] = 0
+                flash(f"Prices for ticker {id} could not be downloaded", "warning")
                 save_nav = False
                 raise ValueError
 

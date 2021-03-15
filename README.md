@@ -33,7 +33,7 @@ _If you don't want to have docker installed follow the regular instructions_
 
 > Docker needs to installed and running
 
-Downloadn and build the container:
+Download and build the container:
 
 ```bash
 git clone https://github.com/pxsocs/warden
