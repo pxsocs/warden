@@ -87,6 +87,12 @@ def before_request():
     except Exception:
         pass
 
+    # Remove duplicate messages from Flask Flash
+    messages = get_flashed_messages(with_categories=True)
+    messages = list(set(messages))
+    for category, message in messages:
+        flash(message, category)
+
 
 @warden.route("/register", methods=["GET", "POST"])
 def register():
@@ -243,13 +249,6 @@ def warden_page():
         activity = alert_activity()
     else:
         activity = False
-
-    # Remove duplicate messages from Flask Flash
-    messages = get_flashed_messages(with_categories=True)
-    print(messages)
-    if messages:
-        for message in messages:
-            print(message)
 
     templateData = {
         "title": "Portfolio Dashboard",

@@ -92,15 +92,11 @@ def create_tor():
 # ------------------------------------
 # Application Factory
 def init_app(app):
-    from ansi_management import (warning, success, error, info, clear_screen, bold,
-                                 muted, yellow, blue)
+    from ansi_management import (warning, success, error)
     from utils import (create_config, runningInDocker)
     from config import Config
     from connections import tor_request
     warnings.filterwarnings('ignore')
-    # Create the empty Mail instance
-    # mail = Mail()
-    # mail.init_app(app)
 
     # Load config.ini into app
     # --------------------------------------------
@@ -134,6 +130,11 @@ def init_app(app):
     app.db.init_app(app)
     # Import models so tables are created
     from models import Trades, User, AccountInfo, TickerInfo, SpecterInfo
+    from sqlalchemy import create_engine
+    from sqlalchemy_utils import database_exists, create_database
+    url = Config.SQLALCHEMY_DATABASE_URI
+    engine = create_engine(url, echo=False)
+    engine.connect()
     app.db.create_all()
 
     #  There was an initial error on getting users
@@ -166,7 +167,6 @@ def init_app(app):
         app.version = current_version
 
     # Check if there are any users on database, if not, needs initial setup
-    from models import User
     users = User.query.all()
     if users == []:
         app.warden_status['initial_setup'] = True

@@ -20,19 +20,6 @@ class User(db.Model, UserMixin):
                               backref="account_owner",
                               lazy=True)
 
-    def get_reset_token(self, expires_sec=300):
-        s = Serializer(current_app.config["SECRET_KEY"], expires_sec)
-        return s.dumps({"user_id": self.id}).decode("utf-8")
-
-    @staticmethod
-    def verify_reset_token(token):
-        s = Serializer(current_app.config["SECRET_KEY"])
-        try:
-            user_id = s.loads(token)["user_id"]
-        except (KeyError, TypeError):
-            return None
-        return User.query.get(user_id)
-
     def __repr__(self):
         return (self.username)
 
@@ -88,6 +75,6 @@ class TickerInfo(db.Model):
 class SpecterInfo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    url = db.Column(db.String())
-    login = db.Column(db.String())
-    passowrd = db.Column(db.String())
+    url = db.Column(db.String(), nullable=False)
+    login = db.Column(db.String(), nullable=True)
+    password = db.Column(db.String(), nullable=True)
