@@ -95,9 +95,10 @@ def before_request():
 
 
 @warden.after_request
-def after_request():
+def after_request_func(response):
     # Clear messages in flash
     session.pop('_flashes', None)
+    return (response)
 
 
 @warden.route("/register", methods=["GET", "POST"])
