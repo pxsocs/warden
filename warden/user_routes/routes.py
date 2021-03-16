@@ -143,5 +143,5 @@ def tor_services():
         stop_hidden_services(current_app)
         flash("Stopped Tor Hidden Services", "warning")
     return render_template("warden/tor.html",
-                           title="Tor Services",
+                           title="Tor Hidden Services",
                            current_app=current_app)

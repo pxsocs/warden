@@ -1,3 +1,4 @@
+from flask.helpers import get_flashed_messages
 from warden_decorators import MWT
 from flask import (Blueprint, redirect, render_template, abort,
                    flash, session, request, current_app, url_for)
@@ -242,6 +243,13 @@ def warden_page():
         activity = alert_activity()
     else:
         activity = False
+
+    # Remove duplicate messages from Flask Flash
+    messages = get_flashed_messages(with_categories=True)
+    print(messages)
+    if messages:
+        for message in messages:
+            print(message)
 
     templateData = {
         "title": "Portfolio Dashboard",

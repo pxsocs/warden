@@ -619,7 +619,7 @@ def portfolio_compare_json():
         except (ValueError, TypeError) as e:
             logging.info(f"[portfolio_compare_json] Error: {e}, " +
                          "setting start_date to zero")
-            start_date = 0
+            start_date = datetime.strptime('2011-01-01', "%Y-%m-%d")
 
         end_date = request.args.get("end")
 
@@ -639,14 +639,16 @@ def portfolio_compare_json():
     # Now go over tickers and merge into nav_only df
     messages = {}
     meta_data = {}
+    fx = current_app.settings['PORTFOLIO']['base_fx']
+    if fx is None:
+        fx = 'USD'
     for ticker in tickers:
         if ticker == "NAV":
             # Ticker was NAV, skipped
             continue
-
         # Generate price Table now for the ticker and trim to match portfolio
-        fx = current_app.settings['PORTFOLIO']['base_fx']
         data = historical_prices(ticker, fx=fx)
+        data.index = data.index.astype('datetime64[ns]')
         # If notification is an error, skip this ticker
         if data is None:
             messages = data.errors
@@ -659,7 +661,6 @@ def portfolio_compare_json():
         logging.info(f"[portfolio_compare_json] {ticker}: Success - Merged OK")
 
     nav_only.fillna(method="ffill", inplace=True)
-
     # Trim this list only to start_date to end_date:
     mask = (nav_only.index >= start_date) & (nav_only.index <= end_date)
     nav_only = nav_only.loc[mask]
@@ -668,7 +669,6 @@ def portfolio_compare_json():
     # Plus create a table with individual analysis for each ticker and NAV
     nav_only["NAV_norm"] = (nav_only["NAV_fx"] / nav_only["NAV_fx"][0]) * 100
     nav_only["NAV_ret"] = nav_only["NAV_norm"].pct_change()
-    nav_only.reset_index(drop=True, inplace=True)
 
     table = {}
     table["meta"] = {}
