@@ -1,8 +1,11 @@
 FROM python:3.9.1
 
 
-RUN apt-get update && \
-    apt-get -y install python3-pandas
+RUN apt-get update
+
+RUN apt-get -y install python3-numpy
+
+RUN apt-get -y install python3-pandas
 
 RUN python -m pip install --upgrade pip
 
