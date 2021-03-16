@@ -130,11 +130,6 @@ def init_app(app):
     app.db.init_app(app)
     # Import models so tables are created
     from models import Trades, User, AccountInfo, TickerInfo, SpecterInfo
-    from sqlalchemy import create_engine
-    from sqlalchemy_utils import database_exists, create_database
-    url = Config.SQLALCHEMY_DATABASE_URI
-    engine = create_engine(url, echo=False)
-    engine.connect()
     app.db.create_all()
 
     #  There was an initial error on getting users

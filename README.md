@@ -19,36 +19,6 @@ When connected to Specter Server 👻 [optional]:
 
 # INSTALLATION
 
-There are two methods to install the WARden. The recommended one is to install inside a docker container. This is typically more stable in most systems.
-
-1. [Install using Docker](#docker_install)
-
-2. [Regular Installation](#regular_install)
-
-## <a name="docker_install"></a> 🐳 Docker Container instructions (recommended):
-
-_If you don't want to have docker installed follow the regular instructions_
-
-### Requirements:
-
-> Docker needs to installed and running
-
-Download and build the container:
-
-```bash
-git clone https://github.com/pxsocs/warden
-cd warden
-sudo ./warden.sh --dockerbuild
-```
-
-Run:
-
-```bash
-sudo ./warden.sh --dockerrun
-```
-
-## <a name="regular_install"></a> Regular Instructions (without docker installation)
-
 ```bash
 git clone https://github.com/pxsocs/warden
 cd warden
