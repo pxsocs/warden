@@ -41,7 +41,7 @@ def price_ondate(ticker, date_input):
 # The below is a priority list for some usually accessed tickers
 mapping = {
     'BTC': ['cryptocompare', 'alphavantage_currency'],
-    'GBTC': ['alphavantage_global', 'twelvedata', 'fmp'],
+    'GBTC': ['twelvedata', 'fmp', 'alphavantage_global'],
     'ETH': ['cryptocompare', 'alphavantage_currency'],
     'MSTR': ['alphavantage_global', 'twelvedata', 'fmp'],
 }

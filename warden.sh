@@ -101,7 +101,7 @@ fi
 
 if [ "$DOCKER" = true ] ; then
     # If inside Docker container
-    cd /app
+    cd /build
     service tor start
 fi
 
