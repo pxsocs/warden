@@ -39,11 +39,20 @@ def background_specter_update():
     app.message_handler.add_message(message)
 
     # Authenticate
+    app.specter.specter_auth = False
     try:
-        app.specter.init_session()
-        app.specter.specter_auth = True
-        message = Message(category='Background Job',
-                          message_txt="<span class='text-success'>Authentication credentials ok to Specter Server</span>")
+        home_data = app.specter.home_parser(load=False)
+        if home_data is None:
+            raise Exception("Could not retrieve Specter Homepage details. Check URL and connections.")
+        if 'error' in home_data:
+            raise Exception(f"Error: {home_data['error']}")
+        if 'version' in home_data:
+            app.specter.specter_auth = True
+            message = Message(category='Background Job',
+                              message_txt="<span class='text-success'>Authentication credentials ok to Specter Server</span>")
+        else:
+            app.specter.specter_auth = False
+            raise Exception("Could not check Specter version. Check URL and connections.")
     except Exception as e:
         app.specter.specter_auth = False
         message = Message(category='Background Job',

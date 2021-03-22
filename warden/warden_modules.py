@@ -526,7 +526,7 @@ def positions_dynamic():
                 last_up_source = last_update = single_price['time']
 
                 try:
-                    chg = single_price['chg']
+                    chg = parseNumber(single_price['chg'])
                 except Exception:
                     chg = 0
 

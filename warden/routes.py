@@ -333,9 +333,15 @@ def specter_auth():
 
         # Try to ping this url
         if 'onion' not in url:
-            status_code = requests.head(url).status_code
+            try:
+                status_code = requests.head(url).status_code
+            except Exception as e:
+                flash(f'Please check Specter URL. Error: {e}', 'danger')
         else:
-            status_code = tor_request(url).status_code
+            try:
+                status_code = tor_request(url).status_code
+            except Exception as e:
+                flash(f'Please check Specter URL. Error: {e}', 'danger')
 
         try:
             if int(status_code) < 400:

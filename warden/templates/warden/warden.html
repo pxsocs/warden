@@ -388,7 +388,7 @@
                         Wallet <span style='color: darkslategray; font-weight: bold;'>{{wallet}}</span> is scanning for
                         transactions
                         <span class='float-right' style="color: darkgreen"><strong>
-                                {{(warden_metadata['scan'][wallet_alias] * 100) | jformat(2)}}%
+                                {{(current_app.specter.rescan_progress(wallet)['progress'] * 100) | jformat(2)}}%
                                 complete
                             </strong>
                         </span>

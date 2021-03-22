@@ -110,12 +110,12 @@ if [ "$DOCKERBUILD" = true ] ; then
     docker rm -v $(docker ps --filter status=exited -q 2>/dev/null) 2>/dev/null
     docker rmi $(docker images --filter dangling=true -q 2>/dev/null) 2>/dev/null
     # build
-    docker build -t warden_specter:latest .
+    docker build -t warden:latest .
     exit 1
 fi
 
 if [ "$DOCKERRUN" = true ] ; then
-    docker run -it -p 5000:5000 warden_specter
+    docker run -it -p 5000:5000 warden
     exit 1
 fi
 
