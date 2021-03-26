@@ -531,11 +531,11 @@ function realtime_table() {
                     $('#' + key + '_24h_change').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
                     var price_range = formatNumber(value['24h_low'], 2, fx, '') + ' - ' + formatNumber(value['24h_high'], 2, fx, '')
                     $('#' + key + '_24h_range').html(price_range);
-                    $('#' + key + '_volume').html(value.volume);
+                    $('#' + key + '_volume').html(formatNumber(value.volume, 0, fx, ''));
                     if (value.notes != null) {
                         $('#' + key + '_volume').html(value.notes);
                     }
-                    $('#' + key + '_mktcap').html(value.mktcap);
+                    $('#' + key + '_mktcap').html(formatNumber(value.mktcap, 0, fx, ' bi'));
                     $('#' + key + '_source').html(value.source);
                     update = new Date(value.last_update)
                     if (update.getHours() == 0 && update.getMinutes() == 0 && update.getSeconds() == 0) {

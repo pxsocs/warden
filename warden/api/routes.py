@@ -76,6 +76,8 @@ def alert_activity():
         if data == 'file not found':
             raise FileNotFoundError
         if data['changes_detected_on'] is not None:
+            print("changes detected to wallets?")
+            print(data)
             return (True)
         else:
             return (False)
