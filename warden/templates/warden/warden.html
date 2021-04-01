@@ -848,6 +848,52 @@
         <!-- END Market Data Section -->
 
 
+        <!-- START Custody List -->
+
+        <div class="content-section table-responsive">
+            <div class="lead">Custody List <span class='float-right' style='font-size:small;'>Quantity of coins or
+                    Shares</span>
+            </div>
+            <table id="marketdatatable" class="table table-sm small-text">
+                <thead class="thead-light">
+                    <tr>
+                        <th scope="col">
+
+                        </th>
+                        {%for custodian in custody_df.index.unique(level='trade_account').to_list()%}
+                        <th class="text-center">
+                            {{custodian}}
+                        </th>
+                        {%endfor%}
+                    </tr>
+                </thead>
+                <tbody>
+                    {%for ticker in custody_df.index.unique(level='trade_asset_ticker').to_list()%}
+                    <tr>
+                        <th class='text-left'>
+                            {{ticker}}
+                        </th>
+                        {%for custodian in custody_df.index.unique(level='trade_account').to_list()%}
+
+                        {%if (custodian, ticker) in custody_df.index%}
+                        <td class='text-center'>
+                            {{custody_df.loc[(custodian, ticker)][0] | jformat(4)}}
+                            {%else%}
+                        <td class='stripedBackground'>
+                            {%endif%}
+                        </td>
+                        {%endfor%}
+                    </tr>
+                    {%endfor%}
+                </tbody>
+
+
+
+            </table>
+        </div>
+
+        <!-- END Custody List -->
+
         <!-- START Bitcoin Address Summary -->
         {%if wallets_exist%}
         <div>

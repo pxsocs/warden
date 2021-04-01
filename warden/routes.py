@@ -191,6 +191,11 @@ def warden_page():
     df = df[df['is_currency'] == 0].sort_index(ascending=True)
     df = df.to_dict(orient='index')
 
+    # Create a custody DF
+    transactions = transactions_fx()
+    custody_df = transactions.groupby(["trade_account", "trade_asset_ticker"
+                                       ])[["trade_quantity"]].sum()
+
     # Open Counter, increment, send data
     counter_file = os.path.join(home_path(),
                                 'warden/counter.json')
@@ -266,7 +271,8 @@ def warden_page():
         "alerts": activity,
         "current_app": current_app,
         "sorted_wallet_list": sorted_wallet_list,
-        "wallets_exist": wallets_exist
+        "wallets_exist": wallets_exist,
+        "custody_df": custody_df
     }
     return (render_template('warden/warden.html', **templateData))
 
