@@ -68,7 +68,7 @@ def create_tor():
             spinner.text = warning("    Tor NOT connected [ERROR]")
             print(
                 error(
-                    "    Could not connect to Tor. WARden requires Tor to run. Quitting..."
+                    "    Could not connect to Tor."
                 ))
 
             print(
@@ -84,9 +84,7 @@ def create_tor():
                 info(
                     "    or download Tor at: https://www.torproject.org/download/"
                 ))
-
             print("")
-            exit()
 
 
 # ------------------------------------
@@ -239,11 +237,13 @@ def init_app(app):
     from api.routes import api
     from csv_routes.routes import csv_routes
     from user_routes.routes import user_routes
+    from simulator.routes import simulator
     app.register_blueprint(warden)
     app.register_blueprint(errors)
     app.register_blueprint(api)
     app.register_blueprint(csv_routes)
     app.register_blueprint(user_routes)
+    app.register_blueprint(simulator)
 
     # For the first load, just get a saved file if available
     # The background jobs will update later

@@ -103,12 +103,14 @@ def historical(ticker, fx='USD', parsed=True):
 
     if parsed:
         try:
-
             df = pd.DataFrame.from_dict(data['Data'])
             df = df.rename(columns={'time': 'date'})
             df['date'] = pd.to_datetime(df['date'], unit='s')
             df.set_index('date', inplace=True)
             df_save = df[['close', 'open', 'high', 'low']]
+            # If the dataframe only has zeros as close, return an empty df
+            if df['close'].sum() == 0:
+                raise Exception
         except Exception:
             df_save = pd.DataFrame()
         return (df_save)

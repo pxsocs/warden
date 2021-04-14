@@ -70,9 +70,9 @@ def historical_prices(ticker, fx='USD', source=None):
     except KeyError:
         source_list = [
             'cryptocompare',
+            'twelvedata',
             'alphavantage_currency',
             'alphavantage_global',
-            'twelvedata',
             'fmp'
         ]
 
