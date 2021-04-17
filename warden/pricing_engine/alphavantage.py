@@ -6,6 +6,7 @@ from pricing_engine.engine import apikey
 from connections import tor_request
 import pandas as pd
 from warden_modules import current_path
+from warden_decorators import MWT
 from flask import flash
 # docs
 # https://www.alphavantage.co/documentation/
@@ -13,6 +14,7 @@ from flask import flash
 api = apikey('alphavantage', True)
 
 
+@MWT(timeout=10)
 def realtime(ticker, fx='USD', function='CURRENCY_EXCHANGE_RATE', parsed=True):
     if function == 'CURRENCY_EXCHANGE_RATE':
         # Request data

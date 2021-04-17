@@ -3,6 +3,7 @@ import requests
 from pricing_engine.engine import apikey
 from connections import tor_request
 import pandas as pd
+from warden_decorators import MWT
 
 # Docs
 # https://financialmodelingprep.com/developer/docs/#Stock-Price
@@ -10,6 +11,7 @@ import pandas as pd
 api = apikey('fmp', True)
 
 
+@MWT(timeout=10)
 def realtime(ticker, parsed=True):
     '''
     Gets realtime prices using FMP

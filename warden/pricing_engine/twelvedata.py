@@ -3,13 +3,18 @@ import requests
 from pricing_engine.engine import apikey
 from connections import tor_request
 import pandas as pd
+from warden_decorators import MWT
 
 # Docs
 # https://twelvedata.com/docs
 
 api = apikey('twelvedata', True)
 
+# TWELVEDATA API is super limited so all requests here are cached for 60 seconds
+# to avoid blowing up the API
 
+
+@MWT(timeout=60)
 def realtime(ticker, parsed=True):
     '''
     Gets realtime prices using TwelveData
@@ -62,6 +67,7 @@ def realtime(ticker, parsed=True):
                 'price': data['close'],
                 'fx': data['currency'],
                 'time': data['datetime'],
+                'chg': data['percent_change'],
                 'timezone': None,
                 'source': 'TwelveData'
             }
@@ -72,6 +78,7 @@ def realtime(ticker, parsed=True):
     return data
 
 
+@MWT(timeout=60)
 def historical(ticker, parsed=True):
     '''
     Gets historical prices using 12D
@@ -125,6 +132,7 @@ def historical(ticker, parsed=True):
     return data
 
 
+@MWT(timeout=60)
 def asset_list(term=None):
     master_list = []
     try:

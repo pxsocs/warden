@@ -3,6 +3,7 @@ import requests
 from pricing_engine.engine import apikey
 from connections import tor_request
 import pandas as pd
+from warden_decorators import MWT
 
 # Docs
 # https://min-api.cryptocompare.com/documentation
@@ -10,6 +11,7 @@ import pandas as pd
 api = apikey('cryptocompare', False)
 
 
+@MWT(timeout=10)
 def realtime(ticker, fxs='USD', parsed=True):
     '''
     Gets realtime prices using CryptoCompare
@@ -101,12 +103,14 @@ def historical(ticker, fx='USD', parsed=True):
 
     if parsed:
         try:
-
             df = pd.DataFrame.from_dict(data['Data'])
             df = df.rename(columns={'time': 'date'})
             df['date'] = pd.to_datetime(df['date'], unit='s')
             df.set_index('date', inplace=True)
             df_save = df[['close', 'open', 'high', 'low']]
+            # If the dataframe only has zeros as close, return an empty df
+            if df['close'].sum() == 0:
+                raise Exception
         except Exception:
             df_save = pd.DataFrame()
         return (df_save)

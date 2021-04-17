@@ -587,9 +587,19 @@ def mempool_json():
         mp_config = current_app.settings['MEMPOOL']
         url = mp_config.get('url')
 
+        from urllib.parse import urlparse
+        parse_object = urlparse(url)
+        scheme = 'http' if parse_object.scheme == '' else parse_object.scheme
+        if parse_object.netloc != '':
+            url = scheme + '://' + parse_object.netloc + '/'
+        if not url.startswith('http'):
+            url = 'http://' + url
+        if url[-1] != '/':
+            url += '/'
+
         # Get recommended fees
-        mp_fee = tor_request(url + '/api/v1/fees/recommended').json()
-        mp_blocks = tor_request(url + '/api/blocks').json()
+        mp_fee = tor_request(url + 'api/v1/fees/recommended').json()
+        mp_blocks = tor_request(url + 'api/blocks').json()
 
         return json.dumps({'mp_fee': mp_fee, 'mp_blocks': mp_blocks, 'mp_url': url})
     except Exception:

@@ -1,4 +1,4 @@
 #!/bin/sh
-cd /app
+cd /build
 service tor start
 python3 warden
