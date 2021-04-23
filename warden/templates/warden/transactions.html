@@ -63,7 +63,14 @@
           </td>
           <td class="text-right">
 
-            {{transaction[1]['address'][0:3]}}...{{transaction[1]['address'][-4:-1]}}
+            <!-- Handling for multiple outputs -->
+            {% if transaction[1]['address'][0]|length > 1 %}
+                {% for address in transaction[1]['address'] %}
+                    {{address[0:3]}}...{{address[-4:-1]}}<br>
+                {% endfor %}
+            {% else %}
+                {{transaction[1]['address'][0:3]}}...{{transaction[1]['address'][-4:-1]}}
+            {% endif %}
 
           </td>
           <td class="text-right">

@@ -596,7 +596,7 @@ def positions_dynamic():
     df['change_fx'] = df['position_fx'] * df['24h_change'].astype(float) / 100
 
     # Pnl and Cost calculations
-    df['breakeven'] = df['cash_value_fx'] / df['trade_quantity']
+    df['breakeven'] = (df['cash_value_fx'] + df['trade_fees_fx']) / df['trade_quantity']
     df['pnl_gross'] = df['position_fx'] - df['cash_value_fx']
     df['pnl_net'] = df['pnl_gross'] - df['trade_fees_fx']
     # FIFO and LIFO PnL calculations
