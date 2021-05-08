@@ -277,14 +277,14 @@ $(document).ready(function () {
                                     Fees
                                     </td>
                                     <td class="text-right">
-                                    ` + formatNumber(data.positions[ticker].trade_fees_fx * -1, 0, fx) + `
+                                    ` + formatNumber(data.positions[ticker].trade_fees_fx, 0, fx) + `
                                     <span class="numberCircle">&nbsp6&nbsp</span>
                                     </td>
                                 </tr>
 
                                 <tr>
                                     <td>
-                                    Net PnL = <span class="numberCircle">&nbsp5&nbsp</span> + <span class="numberCircle">&nbsp6&nbsp</span>
+                                    Net PnL = <span class="numberCircle">&nbsp5&nbsp</span> - <span class="numberCircle">&nbsp6&nbsp</span>
                                     </td>
                                     <td class="text-right">
                                     ` + formatNumber(data.positions[ticker].pnl_net, 0, fx) + `
@@ -294,7 +294,7 @@ $(document).ready(function () {
 
                                 <tr>
                                     <td>
-                                    Break Even price = <span class="numberCircle">&nbsp2&nbsp</span> &#xF7 <span class="numberCircle">&nbsp1&nbsp</span>
+                                    Break Even price = ( <span class="numberCircle">&nbsp2&nbsp</span> + <span class="numberCircle">&nbsp6&nbsp</span> ) &#xF7 <span class="numberCircle">&nbsp1&nbsp</span>
                                     </td>
                                     <td class="text-right">
                                     ` + formatNumber(data.positions[ticker].breakeven, 2, fx) + `

@@ -8,6 +8,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from utils import pickle_it, load_config
 
+import numpy as np
 
 class Specter():
     def __init__(self):
@@ -101,6 +102,29 @@ class Specter():
             # Include last update_time
             specter_data['last_update'] = datetime.now().strftime('%m/%d/%Y, %H:%M:%S')
             specter_data['txlist'] = json.loads(specter_data['txlist'])
+
+            '''
+              Handling for multiple outputs, CoinJoin transactions
+            '''
+            for tx in specter_data["txlist"]:
+                # sum outputs when more than one exists
+                if isinstance(tx["address"], list):
+                    tx["amount"] = np.sum(np.array(tx["amount"], dtype=float))
+
+                # fees are only relevant for spends
+                if tx["category"] == "send":
+                    # save a copy, as the original is still needed if it gets updated
+                    fee = tx["fee"]
+
+                    # accounting for CoinJoins is unique because there's no realized fee for re-mixes
+                    if tx["amount"] == fee:
+                        tx["fee"] = 0
+
+                    tx["amount"] -= fee
+
+                    # ensure positivity for WARden (this needs to happen last)
+                    tx["fee"] = abs(tx["fee"])
+
             # Save to pickle file
             pickle_it(action='save', filename='specter_txs.pkl', data=specter_data)
             return(specter_data)
