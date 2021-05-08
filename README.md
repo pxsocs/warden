@@ -1,7 +1,3 @@
-# This fork is a hotfix for #95.
-
-
-
 # Welcome to the WARden
 
 [![GitHub release](https://img.shields.io/github/release/pxsocs/warden.svg)](https://GitHub.com/pxsocs/warden/releases/)
