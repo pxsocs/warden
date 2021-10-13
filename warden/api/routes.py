@@ -9,7 +9,7 @@ from pricing_engine.engine import price_ondate, historical_prices
 from flask_login import login_required, current_user
 from random import randrange
 from pricing_engine.engine import fx_rate, realtime_price
-from utils import heatmap_generator, pickle_it
+from utils import heatmap_generator, pickle_it, safe_serialize
 from models import Trades, AccountInfo, TickerInfo
 from datetime import datetime, timedelta
 from dateutil import parser
@@ -205,8 +205,19 @@ def dismiss_notification():
 @api.route("/specter", methods=["GET"])
 @login_required
 def specter_json():
-    data = current_app.specter.home_parser(),
+    data = current_app.specter.home_parser()
     return simplejson.dumps(data, ignore_nan=True)
+
+
+# API end point to return Current App Specter data
+# args: ?load=True (True = loads saved json, False = refresh data)
+@api.route("/currentappspecter", methods=["GET"])
+@login_required
+def currentspecter_json():
+
+    data = current_app.specter.wallet_info
+    return simplejson.dumps(data, ignore_nan=True)
+
 
 
 # Latest Traceback message

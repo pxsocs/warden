@@ -206,56 +206,56 @@ class Specter():
         # Get Wallet Names
         wallet_dict = {}
         wallet_alias = []
-        try:
-            div_id = "wallets_list"
-            data = soup.find("div", {"id": div_id})
-            data = data.find_all('a', href=True)
-            for element in data:
-                link = element['href']
-                alias = list(filter(None, link.split('/')))[-1]
-                wallet_alias.append(alias)
-                wallet_dict[alias] = {}
-                wallet_dict[alias]['url'] = self.base_url[:-1] + link
-                find_class = 'grow'
-                wallet_info = element.findAll("div", {"class": find_class})[0]
-                wallet_info = wallet_info.get_text().split('\n')
-                wallet_info = list(filter(None, wallet_info))
-                wallet_dict[alias]['name'] = wallet_info[0].lstrip()
-                wallet_dict[alias]['keys'] = wallet_info[1]
-            metadata['alias_list'] = wallet_alias
-            metadata['wallet_dict'] = wallet_dict
-        except Exception as e:
-            metadata['alias_list'] = None
-            metadata['wallet_dict'] = {
-                'error': str(e)
-            }
+        # try:
+        div_id = "wallets_list"
+        data = soup.find("div", {"id": div_id})
+        data = data.find_all('a', href=True)
+        for element in data:
+            link = element['href']
+            alias = list(filter(None, link.split('/')))[-1]
+            wallet_alias.append(alias)
+            wallet_dict[alias] = {}
+            wallet_dict[alias]['url'] = self.base_url[:-1] + link
+            find_class = 'grow'
+            wallet_info = element.findAll("div", {"class": find_class})[0]
+            wallet_info = wallet_info.get_text().split('\n')
+            wallet_info = list(filter(None, wallet_info))
+            wallet_dict[alias]['name'] = wallet_info[0].lstrip()
+            wallet_dict[alias]['keys'] = wallet_info[1]
+        metadata['alias_list'] = wallet_alias
+        metadata['wallet_dict'] = wallet_dict
+        # except Exception as e:
+        #     metadata['alias_list'] = None
+        #     metadata['wallet_dict'] = {
+        #         'error': str(e)
+        #     }
         # Get Device Names
         device_dict = {}
         device_list = []
-        try:
-            div_id = "devices_list"
-            data = soup.find("div", {"id": div_id})
-            data = data.find_all('a', href=True)
-            for element in data:
-                link = element['href']
-                alias = list(filter(None, link.split('/')))[-1]
-                device_list.append(alias)
-                device_dict[alias] = {}
-                device_dict[alias]['url'] = self.base_url[:-1] + link
-                device_dict[alias]['image'] = self.base_url[:-1] + element.find('img').get('src')
-                device_info = element.get_text().split('\n')
-                device_dict[alias]['name'] = list(filter(None, device_info))[0].lstrip()
-                device_dict[alias]['keys'] = list(filter(None, device_info))[1]
+        # try:
+        div_id = "devices_list"
+        data = soup.find("div", {"id": div_id})
+        data = data.find_all('a', href=True)
+        for element in data:
+            link = element['href']
+            alias = list(filter(None, link.split('/')))[-1]
+            device_list.append(alias)
+            device_dict[alias] = {}
+            device_dict[alias]['url'] = self.base_url[:-1] + link
+            device_dict[alias]['image'] = self.base_url[:-1] + element.find('img').get('src')
+            device_info = element.get_text().split('\n')
+            device_dict[alias]['name'] = list(filter(None, device_info))[0].lstrip()
+            device_dict[alias]['keys'] = list(filter(None, device_info))[1]
 
-            metadata['device_list'] = device_list
-            metadata['device_dict'] = device_dict
+        metadata['device_list'] = device_list
+        metadata['device_dict'] = device_dict
 
-            metadata['last_update'] = datetime.now().strftime('%m/%d/%Y, %H:%M:%S')
-        except Exception as e:
-            metadata['device_list'] = None
-            metadata['device_dict'] = {
-                'error': str(e)
-            }
+        metadata['last_update'] = datetime.now().strftime('%m/%d/%Y, %H:%M:%S')
+        # except Exception as e:
+        #     metadata['device_list'] = None
+        #     metadata['device_dict'] = {
+        #         'error': str(e)
+        #     }
 
         # Save to pickle file
         pickle_it(action='save',
