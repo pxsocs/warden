@@ -470,12 +470,14 @@
                                         {%for tx in wallet_df.iterrows()%}
                                         {%set color=''%}
                                         {%set message=''%}
+                                        {%if warden_metadata['old_new_df_old'] is not none%}
                                         {%if tx[1]['txid'] in warden_metadata['old_new_df_old']['TXID']%}
                                         {%set color='lightred'%}
                                         {%set message='Balance Changed'%}
                                         {%elif tx[1]['txid'] in warden_metadata['old_new_df_new']['TXID']%}
                                         {%set color='lightgreen'%}
                                         {%set message='New Address'%}
+                                        {%endif%}
                                         {%endif%}
                                         <tr style='background-color: {{color}};'>
                                             <td>
@@ -527,6 +529,7 @@
                                                 <i class=" far fa-edit"></i>
                                             </td>
                                         </tr>
+                                        
                                         {%endfor%}
                                     </tbody>
                                 </table>
@@ -546,9 +549,13 @@
                             {{current_app.specter.home_parser()['wallet_dict'][wallet]['name']}}
                         </td>
                         <td>
+                            {%if current_app.specter.wallet_info(wallet) is not none%}
+                            {%if current_app.specter.wallet_info(wallet)['error'] is not true%}
                             {%for device in current_app.specter.wallet_info(wallet)['devices'].keys()%}
                             {{current_app.specter.home_parser()['device_dict'][device]['name']}}
                             {%endfor%}
+                            {%endif%}
+                            {%endif%}
 
                         </td>
                         <td class='text-right'>

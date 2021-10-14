@@ -309,6 +309,38 @@ def get_local_ip():
     return (local_ip_address)
 
 
+def goodbye():
+    for n in range(0, 100):
+        print("")
+    print(
+        fg.brightgreen(f"""
+   \ \ / (_)_ _ ___ ___
+    \ V /| | '_/ -_|_-<
+     \_/ |_|_| \___/__/
+           (_)_ _
+    _  _   | | '  |         _
+   | \| |_ |_|_||_| ___ _ _(_)___
+   | .` | || | '  \/ -_) '_| (_-<
+   |_|\_|\_,_|_|_|_\___|_| |_/__/
+"""))
+
+    print(fg.boldyellow("    If you enjoyed the app..."))
+    print("")
+    print(
+        fg.brightgreen(
+            "    tipping.me (Lightning): https://tippin.me/@alphaazeta"))
+    print("")
+    print(
+        fg.brightgreen(
+            "    onchain: bc1q4fmyksw40vktte9n6822e0aua04uhmlez34vw5gv72zlcmrkz46qlu7aem"
+        ))
+    print("")
+    print(fg.brightgreen("    payNym: +luckyhaze615"))
+    print(fg.brightgreen("    https://paynym.is/+luckyhaze615"))
+    print("")
+
+
+
 def main(debug=False, reloader=False):
     from utils import (create_config, runningInDocker)
     from ansi_management import (warning, success, error, info, clear_screen, bold,
@@ -348,11 +380,9 @@ def main(debug=False, reloader=False):
         app.message_handler.clean_all()
         # Breaks background jobs
         app.scheduler.shutdown(wait=False)
-        print("""
-                           Goodbye &
-                         Keep Stacking
-            """)
-        print("")
+        goodbye()
+        os._exit(1)
+
 
     # Register the def above to run at close
     atexit.register(close_running_threads, app)
