@@ -10,10 +10,10 @@ from utils import pickle_it, load_config
 
 import numpy as np
 
+
 class Specter():
     def __init__(self):
         config = load_config()
-
         # URL Lists
         self.base_url = config['SPECTER']['specter_url']
         if self.base_url[-1] != '/':
@@ -240,7 +240,7 @@ class Specter():
             div_id = "wallets_list"
             data = soup.find("div", {"id": div_id})
             data = data.find_all('a', href=True)
-            
+
             for element in data:
                 try:
                     link = element['href']
@@ -260,7 +260,7 @@ class Specter():
                         wallet_dict[alias]['url'] = '#'
                         wallet_dict[alias]['name'] = f'Error loading: {e}'
                         wallet_dict[alias]['keys'] = 'error'
-            
+
             metadata['alias_list'] = wallet_alias
             metadata['wallet_dict'] = wallet_dict
         except Exception as e:
@@ -309,3 +309,22 @@ class Specter():
                   filename='specter_home.pkl',
                   data=metadata)
         return (metadata)
+
+    # Tests & Status Methods
+    # Can the URL be reached?
+    def is_reachable(self):
+        # Test if this url can be reached
+        result = requests.get(self.base_url)
+        return result.ok
+
+    # Is authentication ok with current credentials?
+    def is_auth(self):
+        try:
+            self.init_session()
+            return True
+        except Exception:
+            return False
+
+    # Seeks for Specter Server and returns where it is currently running
+    def seek_specter(self):
+        services = pickle_it('load', 'services_found.pkl')

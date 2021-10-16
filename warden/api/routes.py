@@ -91,11 +91,17 @@ def alert_activity():
 @login_required
 def get_pickle():
     filename = request.args.get("filename")
+    serialize = request.args.get("serialize")
+    if not serialize:
+        serialize = True
     if not filename:
         return None
     filename += ".pkl"
     data_loader = pickle_it(action='load', filename=filename)
-    return (json.dumps(data_loader, default=lambda o: '<not serializable>'))
+    if serialize is True:
+        return (json.dumps(data_loader, default=lambda o: '<not serializable>'))
+    else:
+        return (json.dumps(data_loader, default=str))
 
 
 @api.route("/check_activity", methods=['GET'])
@@ -217,7 +223,6 @@ def currentspecter_json():
 
     data = current_app.specter.wallet_info
     return simplejson.dumps(data, ignore_nan=True)
-
 
 
 # Latest Traceback message

@@ -12,6 +12,7 @@ def start_hidden_service(app):
     key_path = os.path.abspath(
         os.path.join(home_path(), ".tor_service_key")
     )
+
     app.tor_service_id = None
 
     if not os.path.exists(key_path):
@@ -62,5 +63,6 @@ def stop_hidden_services(app):
         else:
             print(" * Hidden services were shut down successfully")
             app.tor_service_id = None
+            app.tor_enabled = True
     except Exception:
         pass  # we tried...

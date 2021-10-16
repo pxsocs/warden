@@ -257,7 +257,7 @@ def warden_page():
         wallets_exist = True
     except Exception as e:
 
-        logging.error (e)
+        logging.error(e)
         wallets_exist = False
 
     from api.routes import alert_activity
@@ -890,6 +890,20 @@ def delalltrades():
 
     else:
         return redirect(url_for("warden.warden_page"))
+
+# Shows Current Running Services
+
+
+@warden.route("/running_services", methods=["GET"])
+def running_services():
+    return render_template(
+        "warden/running_services.html",
+        title="Running Services and Status",
+        current_app=current_app,
+        current_user=fx_rate()
+
+    )
+
 
 # -------------------------------------------------
 #  START JINJA 2 Filters

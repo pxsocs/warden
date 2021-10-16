@@ -129,7 +129,8 @@ def specter_df(delete_files=False, sort_by='trade_date'):
     try:
         t = current_app.specter.refresh_txs(load=True)['txlist']
         df = df.append(t)
-    except Exception:
+    except Exception as e:
+        print(e)
         # Check if txs exists
         return df
 

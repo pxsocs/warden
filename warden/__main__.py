@@ -1,3 +1,4 @@
+from flask.globals import current_app
 from yaspin import yaspin
 import logging
 import subprocess
@@ -272,19 +273,12 @@ def init_app(app):
     # Start Schedulers
     from backgroundjobs import (background_settings_update,
                                 background_specter_update)
-
-    def bk_su():
-        with app.app_context():
-            background_specter_update()
-
-    def bk_stu():
-        with app.app_context():
-            background_settings_update()
+    from connections import scan_network
 
     app.scheduler = BackgroundScheduler()
-    app.scheduler.add_job(bk_su, 'interval', seconds=1)
-    app.scheduler.add_job(bk_stu, 'interval', seconds=1)
-
+    app.scheduler.add_job(background_specter_update, 'interval', seconds=1)
+    app.scheduler.add_job(background_settings_update, 'interval', seconds=1)
+    app.scheduler.add_job(scan_network, 'interval', seconds=10)
     app.scheduler.start()
     print(success("✅ Background jobs running"))
     print("")
@@ -340,7 +334,6 @@ def goodbye():
     print("")
 
 
-
 def main(debug=False, reloader=False):
     from utils import (create_config, runningInDocker)
     from ansi_management import (warning, success, error, info, clear_screen, bold,
@@ -382,7 +375,6 @@ def main(debug=False, reloader=False):
         app.scheduler.shutdown(wait=False)
         goodbye()
         os._exit(1)
-
 
     # Register the def above to run at close
     atexit.register(close_running_threads, app)
