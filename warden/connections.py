@@ -165,7 +165,12 @@ def scan_network():
     # (8081, 'Nextcloud'),
     # (8083, "Home Assistant")
 
-    services_found = []
+    # try to Load history of services reached
+    services_found = pickle_it('load', 'services_found.pkl')
+
+    if services_found == 'file not found' or not isinstance(services_found, list):
+        services_found = []
+
     for host in just_found:
         for port in port_list:
             try:
@@ -184,6 +189,12 @@ def scan_network():
                 utc_time = datetime.utcnow()
                 epoch_time = (utc_time - datetime(1970, 1, 1)).total_seconds()
 
+                # remove old instance and replace with new one
+                for item in services_found:
+                    tmp_url = 'http://' + item[0][0] + ':' + str(int(item[1][0])) + '/'
+                    if tmp_url == url:
+                        services_found.remove(item)
+
                 services_found.append([host, port, epoch_time])
                 logging.info(f"Found Service at {host}:{port}")
             except Exception as e:
@@ -192,7 +203,7 @@ def scan_network():
     pickle_it('save', 'services_found.pkl', services_found)
     # Sample File format saved to services_found
     # [(('umbrel.local', '192.168.1.124', utc_now()), ...]
-    logging.info('Running Services saved under pickles...')
+    logging.info('Running Services saved under pickle...')
 
     return (services_found)
 
