@@ -47,6 +47,8 @@ def start_hidden_service(app):
         with open(app.save_tor_address_to, "w") as f:
             f.write("%s.onion" % app.tor_service_id)
     app.tor_service_id = app.tor_service_id
+    from utils import pickle_it
+    pickle_it('save', 'onion_address.pkl', app.tor_service_id + '.onion')
     app.tor_enabled = True
 
 
