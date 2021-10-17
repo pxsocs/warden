@@ -1,3 +1,4 @@
+import logging
 from flask.helpers import get_flashed_messages
 from warden_decorators import MWT
 from flask import (Blueprint, redirect, render_template, abort,
@@ -242,6 +243,7 @@ def warden_page():
     # Sort the wallets by balance
     sorted_wallet_list = []
     try:
+        logging.info(current_app.specter.wallet_alias_list())
         for wallet in current_app.specter.wallet_alias_list():
             wallet_df = meta['full_df'].loc[meta['full_df']['wallet_alias'] == wallet]
             if wallet_df.empty:
@@ -253,7 +255,9 @@ def warden_page():
         sorted_wallet_list = sorted(sorted_wallet_list, reverse=True, key=itemgetter(1))
         sorted_wallet_list = [i[0] for i in sorted_wallet_list]
         wallets_exist = True
-    except Exception:
+    except Exception as e:
+
+        logging.error(e)
         wallets_exist = False
 
     from api.routes import alert_activity
@@ -886,6 +890,20 @@ def delalltrades():
 
     else:
         return redirect(url_for("warden.warden_page"))
+
+# Shows Current Running Services
+
+
+@warden.route("/running_services", methods=["GET"])
+def running_services():
+    return render_template(
+        "warden/running_services.html",
+        title="Running Services and Status",
+        current_app=current_app,
+        current_user=fx_rate()
+
+    )
+
 
 # -------------------------------------------------
 #  START JINJA 2 Filters

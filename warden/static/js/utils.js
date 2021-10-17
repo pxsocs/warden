@@ -487,6 +487,10 @@ function timeDifference(current, previous) {
 
     var elapsed = current - previous;
 
+    if (isNaN(parseFloat(elapsed))) {
+        return ("Never")
+    }
+
     if (elapsed < msPerMinute) {
         return Math.round(elapsed / 1000) + ' seconds ago';
     }

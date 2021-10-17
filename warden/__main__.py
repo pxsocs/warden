@@ -1,3 +1,4 @@
+from flask.globals import current_app
 from yaspin import yaspin
 import logging
 import subprocess
@@ -271,7 +272,8 @@ def init_app(app):
 
     # Start Schedulers
     from backgroundjobs import (background_settings_update,
-                                background_specter_update)
+                                background_specter_update,
+                                background_scan_network)
 
     def bk_su():
         with app.app_context():
@@ -281,10 +283,14 @@ def init_app(app):
         with app.app_context():
             background_settings_update()
 
+    def bk_scan():
+        with app.app_context():
+            background_scan_network()
+
     app.scheduler = BackgroundScheduler()
     app.scheduler.add_job(bk_su, 'interval', seconds=1)
     app.scheduler.add_job(bk_stu, 'interval', seconds=1)
-
+    app.scheduler.add_job(bk_scan, 'interval', seconds=1)
     app.scheduler.start()
     print(success("✅ Background jobs running"))
     print("")
@@ -307,6 +313,37 @@ def get_local_ip():
     s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
     local_ip_address = s.getsockname()[0]
     return (local_ip_address)
+
+
+def goodbye():
+    for n in range(0, 100):
+        print("")
+    print(
+        fg.brightgreen(f"""
+   \ \ / (_)_ _ ___ ___
+    \ V /| | '_/ -_|_-<
+     \_/ |_|_| \___/__/
+           (_)_ _
+    _  _   | | '  |         _
+   | \| |_ |_|_||_| ___ _ _(_)___
+   | .` | || | '  \/ -_) '_| (_-<
+   |_|\_|\_,_|_|_|_\___|_| |_/__/
+"""))
+
+    print(fg.boldyellow("    If you enjoyed the app..."))
+    print("")
+    print(
+        fg.brightgreen(
+            "    tipping.me (Lightning): https://tippin.me/@alphaazeta"))
+    print("")
+    print(
+        fg.brightgreen(
+            "    onchain: bc1q4fmyksw40vktte9n6822e0aua04uhmlez34vw5gv72zlcmrkz46qlu7aem"
+        ))
+    print("")
+    print(fg.brightgreen("    payNym: +luckyhaze615"))
+    print(fg.brightgreen("    https://paynym.is/+luckyhaze615"))
+    print("")
 
 
 def main(debug=False, reloader=False):
@@ -348,11 +385,8 @@ def main(debug=False, reloader=False):
         app.message_handler.clean_all()
         # Breaks background jobs
         app.scheduler.shutdown(wait=False)
-        print("""
-                           Goodbye &
-                         Keep Stacking
-            """)
-        print("")
+        goodbye()
+        os._exit(1)
 
     # Register the def above to run at close
     atexit.register(close_running_threads, app)
