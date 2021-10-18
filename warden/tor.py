@@ -8,6 +8,8 @@ from ansi_management import (warning, success, error, info, clear_screen, bold,
 
 
 def start_hidden_service(app):
+    if app.controller is None:
+        return
     app.controller.reconnect()
     key_path = os.path.abspath(
         os.path.join(home_path(), ".tor_service_key")
