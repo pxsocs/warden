@@ -471,10 +471,10 @@
                                         {%set color=''%}
                                         {%set message=''%}
                                         {%if warden_metadata['old_new_df_old'] is not none%}
-                                        {%if tx[1]['txid'] in warden_metadata['old_new_df_old']['TXID']%}
+                                        {%if tx[1]['txid'] in warden_metadata['old_new_df_old']['txid']%}
                                         {%set color='lightred'%}
                                         {%set message='Balance Changed'%}
-                                        {%elif tx[1]['txid'] in warden_metadata['old_new_df_new']['TXID']%}
+                                        {%elif tx[1]['txid'] in warden_metadata['old_new_df_new']['txid']%}
                                         {%set color='lightgreen'%}
                                         {%set message='New Address'%}
                                         {%endif%}
