@@ -591,13 +591,13 @@ function getNodeInfo() {
         dataType: 'json',
         success: function (data) {
             console.log(data)
-            $('#latest_btc_block').html(data[0]['bitcoin_core_data']['Blocks count']);
-            $('#current_block').html(data[0]['bitcoin_core_data']['Blocks count']);
-            $('#size_on_disk').html(data[0]['bitcoin_core_data']['Size on disk']);
-            $('#difficulty').html(data[0]['bitcoin_core_data']['Difficulty']);
-            $('#specter_refresh').html(data[0]['last_update']);
+            $('#latest_btc_block').html(data['bitcoin_core_data']['Blocks count']);
+            $('#current_block').html(data['bitcoin_core_data']['Blocks count']);
+            $('#size_on_disk').html(data['bitcoin_core_data']['Size on disk']);
+            $('#difficulty').html(data['bitcoin_core_data']['Difficulty']);
+            $('#specter_refresh').html(data['last_update']);
             const currentTimeStamp = new Date().getTime();
-            last_up_specter = new Date(data[0]['last_update'])
+            last_up_specter = new Date(data['last_update'])
             specter_difference = timeDifference(currentTimeStamp, last_up_specter)
 
             if (specter_difference.indexOf('seconds') != -1) {
@@ -611,10 +611,10 @@ function getNodeInfo() {
 
             $('#specter_refresh_ago').html(ago_string);
 
-            $('#core_version').html(data[0]['bitcoin_core_data']['Bitcoin Core Version']);
-            $('#connection_count').html(data[0]['bitcoin_core_data']['Connections count']);
-            $('#mempool_size').html(data[0]['bitcoin_core_data']['Mempool Size']);
-            $('#uptime').html(data[0]['bitcoin_core_data']['Node uptime']);
+            $('#core_version').html(data['bitcoin_core_data']['Bitcoin Core Version']);
+            $('#connection_count').html(data['bitcoin_core_data']['Connections count']);
+            $('#mempool_size').html(data['bitcoin_core_data']['Mempool Size']);
+            $('#uptime').html(data['bitcoin_core_data']['Node uptime']);
 
         },
         error: function (xhr, status, error) {

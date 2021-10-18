@@ -11,7 +11,7 @@ class TestSimulator(unittest.TestCase):
         # Test if this url can be reached
         assets = ['BTC', 'AAPL']
         weights = [0.9, 0.1]
-        rebalance = 'daily≠'
+        rebalance = 'daily'
         fx = 'USD'
         short_term_tax_rate = 0.15
         # Run the simulator
