@@ -403,7 +403,7 @@
                             <i class="far fa-plus-square"></i>
                         </td>
                         <td class='text-left'>
-                            {{current_app.specter.home_parser()['wallet_dict'][wallet]['name']}}
+                            {{current_app.specter.home_parser(load=true)['wallet_dict'][wallet]['name']}}
                         </td>
                         <td>
 
@@ -549,14 +549,12 @@
                             {{current_app.specter.home_parser()['wallet_dict'][wallet]['name']}}
                         </td>
                         <td>
-                            {%if current_app.specter.wallet_info(wallet) is not none%}
                             {%if current_app.specter.wallet_info(wallet)['error'] is not true%}
                             {%for device in current_app.specter.wallet_info(wallet)['devices'].keys()%}
                             {{current_app.specter.home_parser()['device_dict'][device]['name']}}
                             {%endfor%}
                             {%endif%}
-                            {%endif%}
-
+                            
                         </td>
                         <td class='text-right'>
                             --

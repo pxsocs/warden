@@ -272,13 +272,25 @@ def init_app(app):
 
     # Start Schedulers
     from backgroundjobs import (background_settings_update,
-                                background_specter_update)
-    from connections import scan_network
+                                background_specter_update,
+                                background_scan_network)
+
+    def bk_su():
+        with app.app_context():
+            background_specter_update()
+
+    def bk_stu():
+        with app.app_context():
+            background_settings_update()
+
+    def bk_scan():
+        with app.app_context():
+            background_scan_network()
 
     app.scheduler = BackgroundScheduler()
-    app.scheduler.add_job(background_specter_update, 'interval', seconds=1)
-    app.scheduler.add_job(background_settings_update, 'interval', seconds=1)
-    app.scheduler.add_job(scan_network, 'interval', seconds=10)
+    app.scheduler.add_job(bk_su, 'interval', seconds=1)
+    app.scheduler.add_job(bk_stu, 'interval', seconds=1)
+    app.scheduler.add_job(bk_scan, 'interval', seconds=1)
     app.scheduler.start()
     print(success("✅ Background jobs running"))
     print("")
@@ -297,9 +309,11 @@ def create_and_init():
 
 
 def get_local_ip():
+    from utils import pickle_it
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
     local_ip_address = s.getsockname()[0]
+    pickle_it('save', 'local_ip_address.pkl', local_ip_address)
     return (local_ip_address)
 
 
@@ -384,24 +398,32 @@ def main(debug=False, reloader=False):
     print("")
 
     def onion_string():
+        from utils import pickle_it
         if app.settings['SERVER'].getboolean('onion_server'):
-            return (f"""
-      {emoji.emojize(':onion:')} Tor Onion server running at:
-      {yellow(app.tor_service_id + '.onion')}
-                """)
+            try:
+                pickle_it('save', 'onion_address.pkl', app.tor_service_id + '.onion')
+                return (f"""
+        {emoji.emojize(':onion:')} Tor Onion server running at:
+        {yellow(app.tor_service_id + '.onion')}
+                    """)
+            except Exception:
+                return (yellow("[!] Tor Onion Server Not Running"))
         else:
             return ('')
 
     def local_network_string():
         host = app.settings['SERVER'].get('host')
+        port = str(app.settings['SERVER'].getint('port'))
         if app.runningInDocker:
             return ('')
         else:
             if host == '0.0.0.0':
                 return (f"""
       Or through your network at address:
-      {yellow('http://')}{yellow(get_local_ip())}{yellow(':5000/')}
+      {yellow('http://')}{yellow(get_local_ip())}{yellow(f':{port}/')}
                 """)
+
+    port = str(app.settings['SERVER'].getint('port'))
 
     print(
         fg.brightgreen("""
@@ -420,8 +442,8 @@ def main(debug=False, reloader=False):
                           Application Loaded
 
       Open your browser and navigate to one of these addresses:
-      {yellow('http://localhost:5000/')}
-      {yellow('http://127.0.0.1:5000/')}
+      {yellow('http://localhost:' + str(port) + '/')}
+      {yellow('http://127.0.0.1:' + str(port) + '/')}
       {local_network_string()}
       {onion_string()}
     ----------------------------------------------------------------

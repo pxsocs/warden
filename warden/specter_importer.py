@@ -37,6 +37,8 @@ class Specter():
         self.specter_auth = True
 
     def rescan_progress(self, wallet_alias, load=True, session=None):
+        if wallet_alias is None:
+            return None
         if load:
             data = pickle_it(action='load', filename=f'specter_rescan_{wallet_alias}.pkl')
             if data != 'file not found':
@@ -114,16 +116,21 @@ class Specter():
                 # fees are only relevant for spends
                 if tx["category"] == "send":
                     # save a copy, as the original is still needed if it gets updated
-                    fee = tx["fee"]
+                    try:
+                        fee = tx["fee"]
+                        # accounting for CoinJoins is unique because there's no realized fee for re-mixes
+                        if tx["amount"] == fee:
+                            tx["fee"] = 0
 
-                    # accounting for CoinJoins is unique because there's no realized fee for re-mixes
-                    if tx["amount"] == fee:
-                        tx["fee"] = 0
+                        tx["amount"] -= fee
 
-                    tx["amount"] -= fee
+                        # ensure positivity for WARden (this needs to happen last)
+                        tx["fee"] = abs(tx["fee"])
+                    
+                    except Exception:
+                        tx['fee'] = 0
 
-                    # ensure positivity for WARden (this needs to happen last)
-                    tx["fee"] = abs(tx["fee"])
+                    
 
             # Save to pickle file
             pickle_it(action='save', filename='specter_txs.pkl', data=specter_data)
@@ -138,6 +145,9 @@ class Specter():
             return('[Specter Error] [refresh] {0}'.format(e))
 
     def wallet_info(self, wallet_alias, load=True):
+        if wallet_alias is None:
+            return None
+
         if load:
             data = pickle_it(action='load',
                              filename=f'wallet_info_{wallet_alias}.pkl')
@@ -210,6 +220,13 @@ class Specter():
         except Exception as e:
             metadata['version'] = f'Error: {e}'
         # Get Bitcoin Core Data
+        
+        # Check Sync Status
+        metadata['bitcoin_sync'] = False
+        txt_sc = 'Bitcoin Core is still syncing'
+        if soup.body.findAll(text=txt_sc) != []:
+                metadata['bitcoin_sync'] = True
+
         try:
             div_id = 'bitcoin_core_info'
             data = soup.find("div", {"id": div_id})
@@ -244,6 +261,8 @@ class Specter():
             for element in data:
                 try:
                     link = element['href']
+                    if 'wallets/new_wallet/' in link:
+                        continue
                     alias = list(filter(None, link.split('/')))[-1]
                     wallet_alias.append(alias)
                     wallet_dict[alias] = {}
@@ -255,11 +274,7 @@ class Specter():
                     wallet_dict[alias]['name'] = wallet_info[0].lstrip()
                     wallet_dict[alias]['keys'] = wallet_info[1]
                 except Exception as e:
-                    if alias is not None:
-                        wallet_alias.append(alias)
-                        wallet_dict[alias]['url'] = '#'
-                        wallet_dict[alias]['name'] = f'Error loading: {e}'
-                        wallet_dict[alias]['keys'] = 'error'
+                    pass
 
             metadata['alias_list'] = wallet_alias
             metadata['wallet_dict'] = wallet_dict
@@ -278,6 +293,8 @@ class Specter():
             for element in data:
                 try:
                     link = element['href']
+                    if 'devices/new_device_type' in link:
+                        continue
                     alias = list(filter(None, link.split('/')))[-1]
                     device_list.append(alias)
                     device_dict[alias] = {}
@@ -286,13 +303,8 @@ class Specter():
                     device_info = element.get_text().split('\n')
                     device_dict[alias]['name'] = list(filter(None, device_info))[0].lstrip()
                     device_dict[alias]['keys'] = list(filter(None, device_info))[1]
-                except Exception as e:
-                    if alias is not None:
-                        device_dict[alias] = {}
-                        device_dict[alias]['url'] = '#'
-                        device_dict[alias]['image'] = ''
-                        device_dict[alias]['name'] = f'Error loading: {e}'
-                        device_dict[alias]['keys'] = 'error'
+                except Exception:
+                    pass
 
             metadata['device_list'] = device_list
             metadata['device_dict'] = device_dict
@@ -323,6 +335,22 @@ class Specter():
             self.init_session()
             return True
         except Exception:
+            return False
+
+    # Check if Specter is currently connected to a node
+    def is_healthy(self):
+        reach = self.is_reachable()
+        auth = self.is_auth()
+        if reach is True and auth is True:
+            # Check Node Health
+            try:
+                if self.home_parser()['bitcoin_core_data']['sync'] is True:
+                    return False
+                else:
+                    return True
+            except Exception:
+                return False
+        else:
             return False
 
     # Seeks for Specter Server and returns where it is currently running
