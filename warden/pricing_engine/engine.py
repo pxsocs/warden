@@ -1,5 +1,5 @@
 import requests
-from utils import load_config, fxsymbol
+from utils import load_config, fxsymbol, pickle_it
 import pandas as pd
 import os
 import logging
