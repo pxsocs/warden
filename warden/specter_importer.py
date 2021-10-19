@@ -209,6 +209,10 @@ class Specter():
             metadata['error'] = str(e)
             return (metadata)
 
+        metadata['specter_health'] = pickle_it('load', 'specter_health.pkl')
+        if metadata['specter_health'] == 'file not found':
+            metadata['specter_health'] = 'Failed Check'
+
         soup = BeautifulSoup(page.text, 'html.parser')
         # Get Specter Version
         try:
@@ -340,18 +344,26 @@ class Specter():
     # Check if Specter is currently connected to a node
     def is_healthy(self):
         reach = self.is_reachable()
-        auth = self.is_auth()
-        if reach is True and auth is True:
-            # Check Node Health
-            try:
-                if self.home_parser()['bitcoin_core_data']['sync'] is True:
-                    return False
-                else:
-                    return True
-            except Exception:
-                return False
-        else:
+        if reach is False:
+            pickle_it("save", "specter_health.pkl", "Unreacheable")
             return False
+        auth = self.is_auth()
+        if auth is False:
+            pickle_it("save", "specter_health.pkl", "Could not Authenticate")
+            return False
+
+        # Check Node Health
+        try:
+            if self.home_parser()['bitcoin_core_data']['sync'] is True:
+                pickle_it("save", "specter_health.pkl", "Bitcoin Node Not Fully Synched")
+                return False
+            else:
+                pickle_it("save", "specter_health.pkl", "Running")
+                return True
+        except Exception as e:
+            pickle_it("save", "specter_health.pkl", f"Error: {e}")
+            return False
+        
 
     # Seeks for Specter Server and returns where it is currently running
     def seek_specter(self):

@@ -1,5 +1,5 @@
 import requests
-from utils import load_config, pickle_it, fxsymbol
+from utils import load_config, fxsymbol
 import pandas as pd
 import os
 import logging
@@ -11,6 +11,15 @@ from parseNumbers import parseNumber
 
 @ MWT(timeout=10)
 def apikey(source, required=True):
+    # Check if a cryptocompare key is stored at home directory
+    if source == 'cryptocompare':
+        from utils import pickle_it
+        API_KEY = pickle_it('load', 'cryptocompare_api.pkl')
+        if "\n" in API_KEY:
+            API_KEY = API_KEY.strip("\n")
+        if API_KEY != 'file not found':
+            return API_KEY
+
     # GET API_KEY
     if load_config().has_option('API', source):
         API_KEY = load_config()['API'][source]
