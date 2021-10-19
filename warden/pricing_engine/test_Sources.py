@@ -138,8 +138,6 @@ class TestPricing(unittest.TestCase):
     # =====================================
 
     def test_cc_found_api(self):
-        config = load_config()
-        self.assertEqual(config.has_option('API', 'cryptocompare'), True)
         api_key = apikey('cryptocompare', True)
         self.assertNotEqual(api_key, None)
 

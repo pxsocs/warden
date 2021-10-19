@@ -11,7 +11,7 @@ from warden_decorators import MWT
 api = apikey('cryptocompare', False)
 
 
-@MWT(timeout=10)
+# @MWT(timeout=10)
 def realtime(ticker, fxs='USD', parsed=True):
     '''
     Gets realtime prices using CryptoCompare

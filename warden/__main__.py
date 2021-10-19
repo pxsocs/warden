@@ -11,6 +11,7 @@ import socket
 import emoji
 import time
 import sqlite3
+import requests
 from logging.handlers import RotatingFileHandler
 from packaging import version
 from ansi.colour import fg
@@ -20,6 +21,8 @@ from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
+from ansi_management import (warning, success, error, info, clear_screen,
+                             muted, yellow, blue)
 
 
 # Make sure current libraries are found in path
@@ -165,8 +168,14 @@ def init_app(app):
     if users == []:
         app.warden_status['initial_setup'] = True
 
-    print(f"  [i] Running WARden version: {current_version}")
+    # Check for Cryptocompare API Keys
+    print("")
+    check_cryptocompare()
+    print("")
+    
+    print(f"[i] Running WARden version: {current_version}")
     app.warden_status['running_version'] = current_version
+    
     # CHECK FOR UPGRADE
     repo_url = 'https://api.github.com/repos/pxsocs/warden/releases'
     try:
@@ -177,7 +186,7 @@ def init_app(app):
     app.warden_status['github_version'] = github_version
 
     if github_version:
-        print(f"  [i] Newest WARden version available: {github_version}")
+        print(f"[i] Newest WARden version available: {github_version}")
         parsed_github = version.parse(github_version)
         parsed_version = version.parse(current_version)
 
@@ -186,13 +195,11 @@ def init_app(app):
             print(warning("  [i] Upgrade Available"))
             app.warden_status['needs_upgrade'] = True
         if parsed_github == parsed_version:
-            print(success("  [i] You are running the latest version"))
+            print(success("✅ You are running the latest version"))
     else:
-        print(warning("  [!] Could not check GitHub for updates"))
+        print(warning("[!] Could not check GitHub for updates"))
 
     print("")
-    print("  [i] Loading...")
-
     # Check if config.ini exists
     with app.app_context():
         app.settings = config_settings
@@ -246,10 +253,9 @@ def init_app(app):
     app.register_blueprint(user_routes)
     app.register_blueprint(simulator)
 
+    # Prepare app to receive Specter Server info
     # For the first load, just get a saved file if available
     # The background jobs will update later
-    print("  [i] Checking Specter Server...")
-    print("")
     with app.app_context():
         from specter_importer import Specter
         app.specter = Specter()
@@ -301,11 +307,123 @@ def init_app(app):
     return app
 
 
-def create_and_init():
-    app = create_app()
-    init_app(app)
-    app.app_context().push()
-    return app
+def check_cryptocompare():
+    from utils import pickle_it
+
+    with yaspin(text="Testing price grab from Cryptocompare",
+                color="green") as spinner:
+        data = {'Response': 'Error', 'Message': None}
+        try:
+            api_key = pickle_it('load', 'cryptocompare_api.pkl')
+            if api_key != 'file not found':
+                baseURL = (
+                    "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BTC"
+                    + "&tsyms=USD&api_key=" + api_key)
+                req = requests.get(baseURL)
+                data = req.json()
+                btc_price = (data['DISPLAY']['BTC']['USD']['PRICE'])
+                spinner.text = (success(f"BTC price is: {btc_price}"))
+                spinner.ok("✅ ")
+                pickle_it('save', 'cryptocompare_api.pkl', api_key)
+                return
+            else:
+                data = {'Response': 'Error', 'Message': 'No API Key is set'}
+        except Exception as e:
+            data = {'Response': 'Error', 'Message': str(e)}
+            logging.error(data)
+
+        try:
+            if data['Response'] == 'Error':
+                spinner.color = 'yellow'
+                spinner.text = "CryptoCompare Returned an error " + data[
+                    'Message']
+                # ++++++++++++++++++++++++++
+                #  Load Legacy
+                # ++++++++++++++++++++++++++
+                try:
+                    # Let's try to use one of the
+                    # legacy api keys stored under cryptocompare_api.keys file
+                    # You can add as many as you'd like there
+                    filename = 'warden/static/cryptocompare_api.keys'
+                    file = open(filename, 'r')
+                    for line in file:
+                        legacy_key = str(line)
+
+                        spinner.text = (
+                            warning(f"Trying different API Keys..."))
+
+                        baseURL = (
+                            "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BTC"
+                            + "&tsyms=USD&api_key=" + legacy_key)
+
+                        try:
+                            data = None
+                            logging.debug(f"Trying API Key {legacy_key}")
+                            request = requests.get(baseURL)
+                            data = request.json()
+                            btc_price = (
+                                data['DISPLAY']['BTC']['USD']['PRICE'])
+                            spinner.text = (
+                                success(f"BTC price is: {btc_price}"))
+                            spinner.ok("✅ ")
+                            logging.debug(f"API Key {legacy_key} Success")
+                            pickle_it('save', 'cryptocompare_api.pkl',
+                                      legacy_key)
+                            return
+                        except Exception as e:
+                            logging.debug(f"API Key {legacy_key} ERROR: {e}")
+                            logging.debug(
+                                f"API Key {legacy_key} Returned: {data}")
+                            spinner.text = "Didn't work... Trying another."
+                except Exception:
+                    pass
+                spinner.text = (error("Failed to get API Key - read below."))
+                spinner.fail("[!]")
+                print(
+                    '    -----------------------------------------------------------------'
+                )
+                print(yellow("    Looks like you need to get an API Key. "))
+                print(yellow("    The WARden comes with a shared key that"))
+                print(yellow("    eventually gets to the call limit."))
+                print(
+                    '    -----------------------------------------------------------------'
+                )
+                print(
+                    yellow(
+                        '    Go to: https://www.cryptocompare.com/cryptopian/api-keys'
+                    ))
+                print(
+                    yellow(
+                        '    To get an API Key. Keys from cryptocompare are free.'
+                    ))
+                print(
+                    yellow(
+                        '    [Tip] Get a disposable email to signup and protect privacy.'
+                    ))
+                print(
+                    yellow(
+                        '    Services like https://temp-mail.org/en/ work well.'
+                    ))
+
+                print(muted("    Current API:"))
+                print(f"    {api_key}")
+                new_key = input('    Enter new API key (Q to quit): ')
+                if new_key == 'Q' or new_key == 'q':
+                    exit()
+                pickle_it('save', 'cryptocompare_api.pkl', new_key)
+                check_cryptocompare()
+        except KeyError:
+            try:
+                btc_price = (data['DISPLAY']['BTC']['USD']['PRICE'])
+                spinner.ok("✅ ")
+                spinner.write(success(f"BTC price is: {btc_price}"))
+                pickle_it('save', 'cryptocompare_api.pkl', api_key)
+                return
+            except Exception:
+                spinner.text = (
+                    warning("CryptoCompare Returned an UNKNOWN error"))
+                spinner.fail("💥 ")
+        return (data)
 
 
 def get_local_ip():
@@ -359,9 +477,9 @@ def main(debug=False, reloader=False):
     # CLS + Welcome
     print("")
     print("")
-    print(yellow("  Welcome to the WARden <> Launching Application ..."))
+    print(yellow("Welcome to the WARden <> Launching Application ..."))
     print("")
-    print(f"  [i] Running from directory: {current_path}")
+    print(f"[i] Running from directory: {current_path}")
     print("")
 
     if runningInDocker():
@@ -373,10 +491,11 @@ def main(debug=False, reloader=False):
     app = init_app(app)
     app.app_context().push()
 
+
     def close_running_threads(app):
         print("")
         print("")
-        print(yellow("  [i] Please Wait... Shutting down."))
+        print(yellow("[i] Please Wait... Shutting down."))
         # Delete Debug File
         try:
             from config import Config

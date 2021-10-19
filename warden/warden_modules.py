@@ -17,7 +17,7 @@ from pricing_engine.engine import (fx_rate,
                                    historical_prices)
 from pricing_engine.cryptocompare import multiple_price_grab
 from warden_decorators import MWT, timing
-from utils import load_config, pickle_it
+from utils import load_config
 from dateutil import parser
 from parseNumbers import parseNumber
 
@@ -75,6 +75,7 @@ def get_specter_tx(wallet_alias, sort_by='time', idx=0, load=True, session=None)
 
 # This returns data to create the Warden Status Page
 def warden_metadata():
+    from utils import pickle_it
     meta = {}
     meta['full_df'] = specter_df()
     meta['wallet_list'] = current_app.specter.wallet_alias_list()
@@ -125,6 +126,7 @@ class Trades():
 
 
 def specter_df(delete_files=False, sort_by='trade_date'):
+    from utils import pickle_it
     df = pd.DataFrame()
     try:
         t = current_app.specter.refresh_txs(load=True)['txlist']

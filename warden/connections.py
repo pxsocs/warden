@@ -70,6 +70,7 @@ def test_tor():
     }
 
     pickle_it('save', 'tor.pkl', response)
+    session.close()
     return response
 
 
@@ -115,6 +116,7 @@ def tor_request(url, tor_only=False, method="get", headers=None):
             if method == "post":
                 request = session.post(url, timeout=20)
 
+            session.close()
         except (
                 requests.exceptions.ConnectionError,
                 requests.exceptions.ReadTimeout,
@@ -128,7 +130,7 @@ def tor_request(url, tor_only=False, method="get", headers=None):
                 request = requests.get(url, timeout=10)
             if method == "post":
                 request = requests.post(url, timeout=10)
-
+        
         except requests.exceptions.ConnectionError:
             return "ConnectionError"
 
