@@ -3,7 +3,7 @@ import logging
 import requests
 import time
 from flask import flash
-from flask.globals import current_app as app
+from flask import current_app as app
 from warden_modules import regenerate_nav
 from specter_importer import Specter
 from config import Config
@@ -16,7 +16,7 @@ from message_handler import Message
 
 
 def background_specter_update():
-    
+
     ts = time.time()
     message = Message(category='Specter Server',
                       message_txt="<span class='text-info'>Starting Background Update</span>",
@@ -26,77 +26,76 @@ def background_specter_update():
     # Is Specter reachable?
     if app.specter.is_reachable() is True:
         message = Message(category='Specter Server',
-                      message_txt="<span class='text-success'>Specter Server Found</span>",
-                      notes=f'Reachable at {app.specter.base_url}')
+                          message_txt="<span class='text-success'>Specter Server Found</span>",
+                          notes=f'Reachable at {app.specter.base_url}')
         app.message_handler.add_message(message)
     else:
         message = Message(category='Specter Server',
-                      message_txt="<span class='text-danger'>Specter Server Unreacheable</span>",
-                      notes=f'Tried at {app.specter.base_url}')
+                          message_txt="<span class='text-danger'>Specter Server Unreacheable</span>",
+                          notes=f'Tried at {app.specter.base_url}')
         app.message_handler.add_message(message)
         return
 
     # Is Authenticated?
     if app.specter.is_auth() is True:
         message = Message(category='Specter Server',
-                      message_txt="<span class='text-success'>Successfully Authenticated</span>",
-                      notes=f'Reachable at {app.specter.base_url}')
+                          message_txt="<span class='text-success'>Successfully Authenticated</span>",
+                          notes=f'Reachable at {app.specter.base_url}')
         app.message_handler.add_message(message)
     else:
         message = Message(category='Specter Server',
-                      message_txt="<span class='text-danger'>Could not Authenticate - CHECK LOGIN CREDENTIALS</span>",
-                      notes=f'Tried at {app.specter.base_url}')
+                          message_txt="<span class='text-danger'>Could not Authenticate - CHECK LOGIN CREDENTIALS</span>",
+                          notes=f'Tried at {app.specter.base_url}')
         app.message_handler.add_message(message)
         return
 
     # OK To start running background jobs
 
-    
     # Check if node is up and running
     message = Message(category='Specter Server',
-                        message_txt="<span class='text-info'>Checking for Synch Status...</span>")
+                      message_txt="<span class='text-info'>Checking for Synch Status...</span>")
     app.message_handler.add_message(message)
     try:
         metadata = app.specter.home_parser(load=False)
-        sync = app.specter.home_parser()['bitcoin_sync'] 
+        sync = metadata['bitcoin_core_is_syncing']
         if sync is False:
             message = Message(category='Specter Server',
-                        message_txt="<span class='text-success'>Specter is connected to a fully synched node</span>")
+                              message_txt="<span class='text-success'>Specter is connected to a fully synched node</span>")
             app.message_handler.add_message(message)
         else:
             app.message_handler.clean_category('Specter Server')
             message = Message(category='Specter Server',
-                        message_txt="<span class='text-warning'>Specter is connected to a node that is still synching...</span>",
-                        notes="Will not refresh Txs. Info may be outdated.")
+                              message_txt="<span class='text-warning'>Specter is connected to a node that is still synching...</span>",
+                              notes="Will not refresh Txs. Info may be outdated.")
             app.message_handler.add_message(message)
             return
 
     except Exception as e:
         app.message_handler.clean_category('Specter Server')
         message = Message(category='Specter Server',
-                      message_txt="<span class='text-warning'>Could not check node from Specter</span>",
-                      notes=f'{e}')
+                          message_txt="<span class='text-warning'>Could not check node from Specter</span>",
+                          notes=f'{e}')
         app.message_handler.add_message(message)
 
     # Refresh Transactions
     message = Message(category='Specter Server',
-                        message_txt="<span class='text-info'>Getting Specter TXs...</span>")
+                      message_txt="<span class='text-info'>Getting Specter TXs...</span>")
     app.message_handler.add_message(message)
     try:
         ts_t = time.time()
         txs = app.specter.refresh_txs(load=False)
-        
+
         te_t = time.time()
         message = Message(category='Specter Server',
-                        message_txt="<span class='text-success'>✅ Finished Transaction Refresh</span>",
-                        notes=f"<span class='text-info'>Loaded {len(txs['txlist'])} Transactions in {round((te_t - ts_t), 2)} seconds.</span>"
-                        )
+                          message_txt="<span class='text-success'>✅ Finished Transaction Refresh</span>",
+                          notes=f"<span class='text-info'>Loaded {len(txs['txlist'])} Transactions in {round((te_t - ts_t), 2)} seconds.</span>"
+                          )
         app.message_handler.add_message(message)
     except Exception as e:
         app.message_handler.clean_category('Specter Server')
         message = Message(category='Specter Server',
-                      message_txt="<span class='text-warning'>Could not get Transactions</span>",
-                      notes=f'{e}')
+                          message_txt="<span class='text-warning'>Could not get Transactions</span>",
+                          notes=f'{e}')
         app.message_handler.add_message(message)
         return
 
@@ -119,7 +118,6 @@ def background_specter_update():
                               )
             app.message_handler.add_message(message)
 
-
     # Success
     app.message_handler.clean_category('Specter Server')
     te = time.time()
@@ -129,7 +127,6 @@ def background_specter_update():
                       )
     app.message_handler.add_message(message)
     app.downloading = False
-
 
 
 def background_specter_update_old():
@@ -337,18 +334,18 @@ def background_scan_network():
     try:
         app.message_handler.clean_category('Scanning Network')
         message = Message(category='Scanning Network',
-                        message_txt="<span class='text-info'>Started Scanning Network for running services...</span>",
-                        notes=""
-                        )
+                          message_txt="<span class='text-info'>Started Scanning Network for running services...</span>",
+                          notes=""
+                          )
         app.message_handler.add_message(message)
         ts = time.time()
         app.scan_network = scan_network()
         te = time.time()
         logging.info("Finished Scanning Network in Background")
         message = Message(category='Scanning Network',
-                        message_txt="<span class='text-success'>Network Scan Finished</span>",
-                        notes=f"Scan took {round((te - ts) * 1000, 2)} ms"
-                        )
+                          message_txt="<span class='text-success'>Network Scan Finished</span>",
+                          notes=f"Scan took {round((te - ts) * 1000, 2)} ms"
+                          )
         app.message_handler.add_message(message)
     except Exception as e:
-        print (e)
+        print(e)

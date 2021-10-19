@@ -29,9 +29,12 @@ def realtime(ticker, fxs='USD', parsed=True):
     globalURL = 'https://min-api.cryptocompare.com/data/price?fsym=' + ticker
     globalURL += '&tsyms=' + fxs
 
-    response = tor_request(url=globalURL)
-    if response.status_code == 403:
-        response = requests.get(globalURL)
+    try:
+        response = tor_request(url=globalURL)
+        if response.status_code == 403:
+            response = requests.get(globalURL)
+    except Exception:
+        return None
 
     data = response.json()
 

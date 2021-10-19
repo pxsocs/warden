@@ -126,11 +126,9 @@ class Specter():
 
                         # ensure positivity for WARden (this needs to happen last)
                         tx["fee"] = abs(tx["fee"])
-                    
+
                     except Exception:
                         tx['fee'] = 0
-
-                    
 
             # Save to pickle file
             pickle_it(action='save', filename='specter_txs.pkl', data=specter_data)
@@ -220,12 +218,14 @@ class Specter():
         except Exception as e:
             metadata['version'] = f'Error: {e}'
         # Get Bitcoin Core Data
-        
+
         # Check Sync Status
-        metadata['bitcoin_sync'] = False
+        metadata['bitcoin_core_is_syncing'] = False
+        # This is the text that will be searched on Specter
+        # page to signal that Core is still synching
         txt_sc = 'Bitcoin Core is still syncing'
-        if soup.body.findAll(text=txt_sc) != []:
-                metadata['bitcoin_sync'] = True
+        if txt_sc in page.text:
+            metadata['bitcoin_core_is_syncing'] = True
 
         try:
             div_id = 'bitcoin_core_info'
