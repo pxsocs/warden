@@ -16,7 +16,18 @@ from message_handler import Message
 
 
 def background_specter_update():
+
+    health = app.specter.check_health()
+    if health is False:
+        message = Message(category='Specter Server',
+                      message_txt="<span class='text-danger'>Health Check Returned False</span>")
+        app.message_handler.add_message(message)    
     
+    health_text = pickle_it('load', 'specter_health.pkl')
+    message = Message(category='Specter Server',
+                      message_txt=f"<span class='text-info'>Health Check Result: {health_text}</span>")
+    app.message_handler.add_message(message)    
+
     ts = time.time()
     message = Message(category='Specter Server',
                       message_txt="<span class='text-info'>Starting Background Update</span>",
