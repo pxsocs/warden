@@ -279,7 +279,9 @@ def init_app(app):
     # Start Schedulers
     from backgroundjobs import (background_settings_update,
                                 background_specter_update,
-                                background_scan_network)
+                                background_scan_network,
+                                background_specter_health,
+                                background_mempool_seeker)
 
     def bk_su():
         with app.app_context():
@@ -293,10 +295,20 @@ def init_app(app):
         with app.app_context():
             background_scan_network()
 
+    def bk_specter_health():
+        with app.app_context():
+            background_specter_health()
+    
+    def bk_mempool_health():
+        with app.app_context():
+            background_mempool_seeker()
+
     app.scheduler = BackgroundScheduler()
     app.scheduler.add_job(bk_su, 'interval', seconds=1)
     app.scheduler.add_job(bk_stu, 'interval', seconds=1)
     app.scheduler.add_job(bk_scan, 'interval', seconds=1)
+    app.scheduler.add_job(bk_specter_health, 'interval', seconds=1)
+    app.scheduler.add_job(bk_mempool_health, 'interval', seconds=1)
     app.scheduler.start()
     print(success("✅ Background jobs running"))
     print("")

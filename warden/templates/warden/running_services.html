@@ -38,8 +38,7 @@
           <tr>
             <th></th>
             <th class='text-left'>Service</th>
-            <th class='text-center'>Host</th>
-            <th class='text-center'>IP Address</th>
+            <th class='text-left'>Host</th>
             <th class='text-right'>Last time reached</th>
           </tr>
         </thead>
@@ -58,11 +57,10 @@
             "</div>"
           )
         } else {
-          /*console.log(data);*/
           var event_data = '';
           $.each(data, function (index, value) {
-            time_ago = timeDifference(currentTimeStamp, parseFloat(value[2] * 1000))
-            difference = (currentTimeStamp - parseFloat(value[2] * 1000)) / 1000
+            time_ago = timeDifference(currentTimeStamp, parseFloat(value['last_update'] * 1000))
+            difference = (currentTimeStamp - parseFloat(value['last_update'] * 1000)) / 1000
             if (difference < 180) {
               icon = "<i style='color: green' class='far fa-lg fa-check-circle'></i>"
             } else if (difference < 400) {
@@ -74,13 +72,8 @@
             /*console.log(value);*/
             event_data += '<tr>';
             event_data += "<td class='text-center'>" + icon + '</td>';
-            event_data += "<td class='text-left'>" + value[1][1] + '</td>';
-            event_data += "<td class='text-center'> <a href='http://" + value[0][0] + ':' + value[1][0] +
-              "' target='_blank'>" +
-              value[0][0] + ':' + value[1][0] + '</a></td>';
-
-            event_data += "<td class='text-center'>" + value[0][1] + '</td>';
-
+            event_data += "<td class='text-left'>" + value['service'] + '</td>';
+            event_data += "<td class='text-left'><a href='" + value['url'] + "' target='_blank'>" +  value['url'] + "</a></td>";
             event_data += "<td class='text-right'>" + time_ago + '</td>';
             event_data += '</tr>';
           });

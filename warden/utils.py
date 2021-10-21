@@ -65,10 +65,15 @@ def pickle_it(action='load', filename=None, data=None):
 
     if action == 'load':
         try:
-            with open(filename, 'rb') as handle:
-                ld = pickle.load(handle)
-                logging.info(f"Loaded: Pickle {action} file: {filename}")
-                return (ld)
+            if os.path.getsize(filename) > 0:
+                with open(filename, 'rb') as handle:
+                    ld = pickle.load(handle)
+                    logging.info(f"Loaded: Pickle {action} file: {filename}")
+                    return (ld)
+            else:
+                os.remove(filename)
+                return ("file not found")
+
         except Exception as e:
             logging.warning(f"Error: Pickle {action} file: {filename} error:{e}")
             return ("file not found")
