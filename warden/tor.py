@@ -42,6 +42,8 @@ def start_hidden_service(app):
         app.tor_service_id = service.service_id
         print("")
         print(success("✅ Resumed %s.onion" % app.tor_service_id))
+        from utils import pickle_it
+        pickle_it('save', 'onion_address.pkl', app.tor_service_id + '.onion')
         print("")
 
     # save address to file

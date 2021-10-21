@@ -615,6 +615,11 @@ function getNodeInfo() {
             $('#connection_count').html(data['bitcoin_core_data']['Connections count']);
             $('#mempool_size').html(data['bitcoin_core_data']['Mempool Size']);
             $('#uptime').html(data['bitcoin_core_data']['Node uptime']);
+            if ('specter_health' in data) {
+            $("#specter_health").html(data['specter_health']);
+            } else {
+                $("#specter_health").html('Could not check [Retrying..]')
+            }
 
         },
         error: function (xhr, status, error) {
@@ -625,7 +630,6 @@ function getNodeInfo() {
         }
     });
 };
-
 
 
 // NAV CHART

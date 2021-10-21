@@ -49,6 +49,7 @@ class Specter():
                 session = self.init_session()
             response = session.get(url)
             data = response.json()
+            session.close()
             # Save to pickle file
             pickle_it(action='save', filename=f'specter_rescan_{wallet_alias}.pkl', data=data)
             return(data)
@@ -66,6 +67,7 @@ class Specter():
         session = self.init_session()
         url = self.base_url + url
         response = session.post(url, data=payload)
+        session.close()
         return (response)
 
     def init_session(self):
@@ -101,6 +103,8 @@ class Specter():
             session = self.init_session()
             response = session.post(self.tx_url, data=self.tx_payload)
             specter_data = response.json()
+            session.close()
+
             # Include last update_time
             specter_data['last_update'] = datetime.now().strftime('%m/%d/%Y, %H:%M:%S')
             specter_data['txlist'] = json.loads(specter_data['txlist'])
@@ -126,11 +130,9 @@ class Specter():
 
                         # ensure positivity for WARden (this needs to happen last)
                         tx["fee"] = abs(tx["fee"])
-                    
+
                     except Exception:
                         tx['fee'] = 0
-
-                    
 
             # Save to pickle file
             pickle_it(action='save', filename='specter_txs.pkl', data=specter_data)
@@ -158,6 +160,7 @@ class Specter():
         session = self.init_session()
         page = session.get(url)
         soup = BeautifulSoup(page.text, 'html.parser')
+        session.close()
         metadata['url'] = url
         # Get device list
         div_id = 'wallet_info_settings_tab'
@@ -203,13 +206,19 @@ class Specter():
             if data != 'file not found':
                 return (data)
         url = self.base_url + 'about'
+
         metadata = {}
         try:
             session = self.init_session()
             page = session.get(url)
+            session.close()
         except Exception as e:
             metadata['error'] = str(e)
             return (metadata)
+
+        metadata['specter_health'] = pickle_it('load', 'specter_health.pkl')
+        if metadata['specter_health'] == 'file not found':
+            metadata['specter_health'] = 'Failed Check'
 
         soup = BeautifulSoup(page.text, 'html.parser')
         # Get Specter Version
@@ -220,12 +229,19 @@ class Specter():
         except Exception as e:
             metadata['version'] = f'Error: {e}'
         # Get Bitcoin Core Data
-        
+
         # Check Sync Status
-        metadata['bitcoin_sync'] = False
+        metadata['bitcoin_core_is_syncing'] = False
+        # This is the text that will be searched on Specter
+        # page to signal that Core is still synching
         txt_sc = 'Bitcoin Core is still syncing'
-        if soup.body.findAll(text=txt_sc) != []:
-                metadata['bitcoin_sync'] = True
+        if txt_sc in page.text:
+            metadata['bitcoin_core_is_syncing'] = True
+        # Same but for updating Wallets Check
+        txt_sc = 'Updating wallets data'
+        metadata['wallets_is_syncing'] = False
+        if txt_sc in page.text:
+            metadata['wallets_is_syncing'] = True
 
         try:
             div_id = 'bitcoin_core_info'
@@ -340,19 +356,37 @@ class Specter():
     # Check if Specter is currently connected to a node
     def is_healthy(self):
         reach = self.is_reachable()
+        if reach is False:
+            pickle_it("save", "specter_health.pkl", "Unreacheable")
+            return False
         auth = self.is_auth()
-        if reach is True and auth is True:
-            # Check Node Health
-            try:
-                if self.home_parser()['bitcoin_core_data']['sync'] is True:
-                    return False
-                else:
-                    return True
-            except Exception:
-                return False
-        else:
+        if auth is False:
+            pickle_it("save", "specter_health.pkl", "Could not Authenticate")
             return False
 
+        # Check Node Health
+        try:
+            if self.home_parser()['bitcoin_core_is_syncing'] is True:
+                pickle_it("save", "specter_health.pkl", "Bitcoin Node Not Fully Synched")
+                return False
+            else:
+                pickle_it("save", "specter_health.pkl", "Running")
+                return True
+        except Exception as e:
+            pickle_it("save", "specter_health.pkl", f"Error: {e}")
+            return False
+        
+
     # Seeks for Specter Server and returns where it is currently running
+    # Also updates the base_url 
     def seek_specter(self):
-        services = pickle_it('load', 'services_found.pkl')
+        # Will return a value if a server was found in the last 5 minutes
+        EXPIRY = 300
+        from connections import is_service_running
+        server_found = is_service_running('Specter Server', EXPIRY)
+        if server_found[0] is True:
+            self.base_url = server_found[1]['url']
+            return server_found[1]
+        else:
+            return None
+

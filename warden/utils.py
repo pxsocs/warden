@@ -4,7 +4,6 @@ import os
 import json
 import pickle
 
-from flask import current_app
 
 from config import Config
 
@@ -40,6 +39,7 @@ def create_config(config_file):
 
 def update_config(config_file=Config.config_file):
     logging.info("Updating Config file")
+    from flask import current_app
     with open(config_file, 'w') as file:
         current_app.settings.write(file)
 
@@ -54,7 +54,6 @@ def load_config(config_file=Config.config_file):
 # Function to load and save data into pickles
 def pickle_it(action='load', filename=None, data=None):
     logging.info(f"Pickle {action} file: {filename}")
-    from warden_modules import home_path
     filename = 'warden/' + filename
     filename = os.path.join(home_path(), filename)
     if action == 'delete':
@@ -66,10 +65,15 @@ def pickle_it(action='load', filename=None, data=None):
 
     if action == 'load':
         try:
-            with open(filename, 'rb') as handle:
-                ld = pickle.load(handle)
-                logging.info(f"Loaded: Pickle {action} file: {filename}")
-                return (ld)
+            if os.path.getsize(filename) > 0:
+                with open(filename, 'rb') as handle:
+                    ld = pickle.load(handle)
+                    logging.info(f"Loaded: Pickle {action} file: {filename}")
+                    return (ld)
+            else:
+                os.remove(filename)
+                return ("file not found")
+
         except Exception as e:
             logging.warning(f"Error: Pickle {action} file: {filename} error:{e}")
             return ("file not found")

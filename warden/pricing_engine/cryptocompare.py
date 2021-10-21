@@ -11,7 +11,7 @@ from warden_decorators import MWT
 api = apikey('cryptocompare', False)
 
 
-@MWT(timeout=10)
+# @MWT(timeout=10)
 def realtime(ticker, fxs='USD', parsed=True):
     '''
     Gets realtime prices using CryptoCompare
@@ -29,9 +29,12 @@ def realtime(ticker, fxs='USD', parsed=True):
     globalURL = 'https://min-api.cryptocompare.com/data/price?fsym=' + ticker
     globalURL += '&tsyms=' + fxs
 
-    response = tor_request(url=globalURL)
-    if response.status_code == 403:
-        response = requests.get(globalURL)
+    try:
+        response = tor_request(url=globalURL)
+        if response.status_code == 403:
+            response = requests.get(globalURL)
+    except Exception:
+        return None
 
     data = response.json()
 

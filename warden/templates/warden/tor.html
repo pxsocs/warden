@@ -38,7 +38,7 @@
                             <td class="text-right">
                                 {%if current_app.tor%}
                                 <span class="text-disabled">
-                                    {{current_app.tor.pre_proxy.origin.split(',')[0]}}
+                                    {{current_app.tor.pre_proxy['ip']}}
                                 </span>
                                 {%else%}
                                 <span class="text-disabled">
@@ -68,7 +68,7 @@
                             <td class="text-right">
                                 {%if current_app.tor.status%}
                                 <span class="text-disabled">
-                                    {{current_app.tor.post_proxy.origin.split(',')[0]}}
+                                    {{current_app.tor.post_proxy['ip']}}
                                 </span>
                                 {%else%}
                                 <span class="text-disabled">

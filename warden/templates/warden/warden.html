@@ -529,7 +529,7 @@
                                                 <i class=" far fa-edit"></i>
                                             </td>
                                         </tr>
-                                        
+
                                         {%endfor%}
                                     </tbody>
                                 </table>
@@ -915,6 +915,14 @@
                         </br>
                         <table id="btctable" class="table table-sm small-text">
                             <tbody>
+                                <tr>
+                                    <td>Status</td>
+                                    <td id='specter_health' class="text-right">  
+                                        <img src='{{url_for('warden.static',
+                                        filename='images/loading_small.gif' )}}' width="30" height="30"></img>
+                                    </td>
+                                </tr>
+
                                 <tr>
                                     <td>Last Data Refresh</td>
                                     <td id='specter_refresh' class="text-right"> <img src='{{url_for('warden.static',
