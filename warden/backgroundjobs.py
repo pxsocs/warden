@@ -11,8 +11,10 @@ from utils import fxsymbol, pickle_it
 from datetime import datetime
 from message_handler import Message
 
-# Searches local network for an instance of Mempool Space to avoid using 
+# Searches local network for an instance of Mempool Space to avoid using
 # the open net version
+
+
 def background_mempool_seeker():
     # Will return a value if a server was found in the last 3 minutes
     EXPIRY = 180
@@ -32,7 +34,8 @@ def background_mempool_seeker():
         app.message_handler.add_message(message)
 
     # Wait 1 minute before running again
-    time.sleep(60)    
+    time.sleep(60)
+
 
 def background_specter_health():
     health = app.specter.is_healthy()
@@ -42,7 +45,7 @@ def background_specter_health():
         app.message_handler.add_message(message)
         health_text = pickle_it('load', 'specter_health.pkl')
         message = Message(category='Specter Server',
-                      message_txt=f"<span class='text-danger'>Health Check Result: {health_text}</span>")
+                          message_txt=f"<span class='text-danger'>Health Check Result: {health_text}</span>")
         app.message_handler.add_message(message)
         # Check for other URLs where Specter could be located
         seeker = app.specter.seek_specter()
@@ -56,14 +59,14 @@ def background_specter_health():
                 config_settings.write(file)
 
             message = Message(category='Specter Server',
-                          message_txt=f"<span class='text-success'>Found an alternative server at {app.specter.base_url}.<br>Updated to use this server.</span>")
+                              message_txt=f"<span class='text-success'>Found an alternative server at {app.specter.base_url}.<br>Updated to use this server.</span>")
             app.message_handler.add_message(message)
             return
         else:
             message = Message(category='Specter Server',
-                      message_txt=f"<span class='text-danger'>Could not find any alternative servers running</span>")
+                              message_txt=f"<span class='text-danger'>Could not find any alternative servers running</span>")
             app.message_handler.add_message(message)
-        
+
     health_text = pickle_it('load', 'specter_health.pkl')
     message = Message(category='Specter Server',
                       message_txt=f"<span class='text-info'>Health Check Result: {health_text}</span>")
@@ -119,9 +122,8 @@ def background_specter_update():
         else:
             message = Message(category='Specter Server',
                               message_txt="<span class='text-warning'>Specter is connected to a node that is still synching...</span>",
-                              notes="Will not refresh Txs. Info may be outdated.")
+                              notes="Txs info may be outdated.")
             app.message_handler.add_message(message)
-            return
 
     except Exception as e:
         message = Message(category='Specter Server',
@@ -267,4 +269,8 @@ def background_scan_network():
                           )
         app.message_handler.add_message(message)
     except Exception as e:
-        print(e)
+        message = Message(category='Scanning Network',
+                          message_txt="<span class='text-danger'>Started Scanning Network returned an error</span>",
+                          notes=f"{e}"
+                          )
+        app.message_handler.add_message(message)

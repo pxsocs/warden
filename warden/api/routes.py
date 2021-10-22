@@ -615,12 +615,28 @@ def mempool_json():
             url += '/'
 
         # Get recommended fees
-        mp_fee = tor_request(url + 'api/v1/fees/recommended').json()
+        try:
+            mp_fee = tor_request(url + 'api/v1/fees/recommended').json()
+        except Exception:
+            mp_fee = tor_request(url + 'api/v1/fees/recommended').text
+
+        if 'Service Unavailable' in mp_fee:
+            return json.dumps({'mp_fee': '-',
+                               'mp_blocks': '-',
+                               'mp_url': url,
+                               'error': 'Mempool.space seems to be unavailable. Maybe node is still synching.'})
         mp_blocks = tor_request(url + 'api/blocks').json()
 
-        return json.dumps({'mp_fee': mp_fee, 'mp_blocks': mp_blocks, 'mp_url': url})
-    except Exception:
-        return json.dumps({'mp_fee': '-', 'mp_blocks': '-', 'mp_url': 'Error: Retrying...'})
+        return json.dumps({'mp_fee': mp_fee,
+                           'mp_blocks': mp_blocks,
+                           'mp_url': url,
+                           'error': None})
+
+    except Exception as e:
+        return json.dumps({'mp_fee': '-',
+                           'mp_blocks': '-',
+                           'mp_url': url,
+                           'error': f'Error: {e}'})
 
 
 @api.route("/portfolio_compare_json", methods=["GET"])
@@ -850,6 +866,8 @@ def generatenav_json():
 
 # Return the list of hosts found + the ones at standard list
 # Also used to include new hosts or delete old ones
+
+
 @api.route("/host_list", methods=["GET", "POST"])
 @login_required
 def host_list():
@@ -894,10 +912,10 @@ def host_list():
         if url[-1] == '/':
             url = url[:-1]
         hosts[url] = {
-                'ip': url, 
-                'host': url, 
-                'last_time': None} 
-        
+            'ip': url,
+            'host': url,
+            'last_time': None}
+
         pickle_it('save', 'hosts_found.pkl', hosts)
 
         try:
@@ -915,6 +933,5 @@ def host_list():
 
         except Exception:
             pass
-
 
         return redirect(url_for("warden.running_services"))
