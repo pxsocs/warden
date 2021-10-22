@@ -33,7 +33,7 @@ sys.path.append(current_path)
 def create_app():
     # Config of Logging
     from config import Config
-    formatter = "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
+    formatter = "[%(asctime)s] {%(module)s:%(funcName)s:%(lineno)d} %(levelname)s in %(module)s: %(message)s"
     logging.basicConfig(
         handlers=[RotatingFileHandler(
             filename=str(Config.debug_file),
@@ -41,6 +41,8 @@ def create_app():
         level=logging.INFO,
         format=formatter,
         datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.getLogger('apscheduler').setLevel(logging.CRITICAL)
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
     logging.info("Starting main program...")
 
     # Launch app
@@ -172,10 +174,10 @@ def init_app(app):
     print("")
     check_cryptocompare()
     print("")
-    
+
     print(f"[i] Running WARden version: {current_version}")
     app.warden_status['running_version'] = current_version
-    
+
     # CHECK FOR UPGRADE
     repo_url = 'https://api.github.com/repos/pxsocs/warden/releases'
     try:
@@ -298,7 +300,7 @@ def init_app(app):
     def bk_specter_health():
         with app.app_context():
             background_specter_health()
-    
+
     def bk_mempool_health():
         with app.app_context():
             background_mempool_seeker()
@@ -502,7 +504,6 @@ def main(debug=False, reloader=False):
     app.app_context().push()
     app = init_app(app)
     app.app_context().push()
-
 
     def close_running_threads(app):
         print("")

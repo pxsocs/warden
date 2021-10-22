@@ -262,7 +262,6 @@ def background_scan_network():
         ts = time.time()
         app.scan_network = scan_network()
         te = time.time()
-        logging.info("Finished Scanning Network in Background")
         message = Message(category='Scanning Network',
                           message_txt="<span class='text-success'>Network Scan Finished</span>",
                           notes=f"Scan took {round((te - ts) * 1000, 2)} ms"

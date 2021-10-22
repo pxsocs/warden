@@ -16,6 +16,7 @@
   <div class="row">
     <div class='col-lg-12'>
       <div id="display_list">
+        Loading...
       </div>
     </div>
   </div>
@@ -26,17 +27,18 @@
 
 <script type="text/javascript">
   $(document).ready(function () {
-    setInterval(run_ajax(), 1000);
+    var intervalId = window.setInterval(function () {
+      run_ajax()
+    }, 1000);
   });
 
   function run_ajax() {
     $.ajax({
       type: "GET",
       dataType: 'json',
-      url: "/log",
+      url: "/log?tail=200",
       success: function (data) {
-        $('#display_list').html("<pre style='font-size:9px; color: darkgreen;>" + data + "</pre>")
-        console.log("ajax request: OK");
+        $('#display_list').html("<pre style='font-size:11px; color: darkgreen;>" + data + "</pre>")
       },
       error: function (xhr, status, error) {
         $('#display_list').html(

@@ -772,10 +772,27 @@ def portfolio_compare_json():
 @api.route('/log')
 @login_required
 def progress_log():
+    lines = request.args.get("lines")
+    if lines is not None:
+        try:
+            lines = int(lines)
+        except Exception:
+            lines = 200
+    else:
+        lines = 200
     from config import Config
     from warden_modules import tail
     debug = Config.debug_file
-    data = tail(debug, 200)
+    data = tail(debug, lines)
+    # Filter if needed
+    level = request.args.get("level")
+    tmp = ""
+    if level is not None:
+        for item in str(data).split("\n"):
+            if level in item:
+                tmp += item + "\n"
+        data = tmp
+
     return json.dumps(str(data))
 
 

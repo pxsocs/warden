@@ -53,7 +53,6 @@ def load_config(config_file=Config.config_file):
 
 # Function to load and save data into pickles
 def pickle_it(action='load', filename=None, data=None):
-    logging.info(f"Pickle {action} file: {filename}")
     filename = 'warden/' + filename
     filename = os.path.join(home_path(), filename)
     if action == 'delete':
@@ -68,19 +67,16 @@ def pickle_it(action='load', filename=None, data=None):
             if os.path.getsize(filename) > 0:
                 with open(filename, 'rb') as handle:
                     ld = pickle.load(handle)
-                    logging.info(f"Loaded: Pickle {action} file: {filename}")
                     return (ld)
             else:
                 os.remove(filename)
                 return ("file not found")
 
         except Exception as e:
-            logging.warning(f"Error: Pickle {action} file: {filename} error:{e}")
             return ("file not found")
     else:
         with open(filename, 'wb') as handle:
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            logging.info(f"Saved: Pickle {action} file: {filename}")
             return ("saved")
 
 

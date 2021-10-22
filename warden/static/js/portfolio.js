@@ -394,9 +394,9 @@ function update_mempool() {
         dataType: 'json',
         success: function (data) {
             if (data['error'] == 'Mempool.space seems to be unavailable. Maybe node is still synching.') {
-                $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occured while connecting to Mempool.space at <a href='" + data['mp_url'] + "'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
+                $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occured while connecting to Mempool.space at <a href='" + data['mp_url'] + "' target='_blank'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
             } else if (data['error'].includes('Error')) {
-                $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occured while connecting to Mempool.space at <a href='" + data['mp_url'] + "'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
+                $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occured while connecting to Mempool.space at <a href='" + data['mp_url'] + "' target='_blank'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
             } else {
                 const currentTimeStamp = new Date().getTime();
                 $('#fastest_fee').html(formatNumber(data['mp_fee']['fastestFee'], 0, '', ' sats/Vb'));
