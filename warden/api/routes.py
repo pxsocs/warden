@@ -1,4 +1,4 @@
-from flask import (Blueprint, flash,  request, current_app,  jsonify, Response)
+from flask import (Blueprint, flash,  request, current_app,  jsonify, Response, redirect, url_for)
 from warden_modules import (warden_metadata,
                             positions_dynamic,
                             generatenav, specter_df,
@@ -24,6 +24,7 @@ import os
 import math
 import csv
 import requests
+import socket
 
 
 api = Blueprint('api', __name__)
@@ -846,3 +847,74 @@ def generatenav_json():
             force = False
         nav = generatenav(current_user.username, force, filter)
         return nav.to_json()
+
+# Return the list of hosts found + the ones at standard list
+# Also used to include new hosts or delete old ones
+@api.route("/host_list", methods=["GET", "POST"])
+@login_required
+def host_list():
+    services = pickle_it('load', 'services_found.pkl')
+    hosts = pickle_it('load', 'hosts_found.pkl')
+    if request.method == "GET":
+        delete = request.args.get("delete")
+        if delete is not None:
+            try:
+                del services[delete]
+            except Exception:
+                pass
+            try:
+                host = delete.strip("http://")
+                host = host.strip("https://")
+                host = host.strip("/")
+                if ':' in host:
+                    host = host.split(":")[0]
+                for key, item in hosts.items():
+                    if item['host'] == host:
+                        del hosts[key]
+                        break
+
+            except Exception:
+                pass
+
+            pickle_it('save', 'services_found.pkl', services)
+            pickle_it('save', 'hosts_found.pkl', hosts)
+            return redirect(url_for("warden.running_services"))
+
+        return (json.dumps(hosts))
+    if request.method == "POST":
+        url = request.form.get("new_url")
+        # Parse it
+        from urllib.parse import urlparse
+        parse_object = urlparse(url)
+        scheme = 'http' if parse_object.scheme == '' else parse_object.scheme
+        if parse_object.netloc != '':
+            url = scheme + '://' + parse_object.netloc + '/'
+        if url.startswith('http'):
+            url = url.strip('http://')
+        if url[-1] == '/':
+            url = url[:-1]
+        hosts[url] = {
+                'ip': url, 
+                'host': url, 
+                'last_time': None} 
+        
+        pickle_it('save', 'hosts_found.pkl', hosts)
+
+        try:
+            if not '.onion' in url:
+                host_ip = socket.gethostbyname(url)
+            else:
+                host_ip = url
+            services[host_ip] = {
+                'url': url,
+                'status': 'Loading...',
+                'port': None,
+                'service': 'Checking Status'
+            }
+            pickle_it('save', 'services_found.pkl', services)
+
+        except Exception:
+            pass
+
+
+        return redirect(url_for("warden.running_services"))

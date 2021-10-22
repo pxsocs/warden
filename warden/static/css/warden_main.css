@@ -640,3 +640,9 @@ a {
   position: sticky;
   top: -32px;
 }
+
+.fabutton {
+  background: none;
+  padding: 0px;
+  border: none;
+}

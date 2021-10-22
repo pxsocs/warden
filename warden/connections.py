@@ -82,6 +82,7 @@ def tor_request(url, tor_only=False, method="get", headers=None):
     # tor_only:  request will only be executed if tor is available
     # method:    'get or' 'post'
     # Store TOR Status here to avoid having to check on all http requests
+    
     if not 'http' in url:
         url = 'http://' + url 
     TOR = pickle_it('load', 'tor.pkl')
@@ -155,7 +156,15 @@ def scan_network():
         'raspberrypi-2.local', 'umbrel-2.local', 'umbrel-3.local', '127.0.0.1', 
         onion, local_ip
     ]
+
     just_found = []
+    # Add any host not on list above but saved on hosts_found
+    # This ensures that added hosts will be searched
+    hosts_found = pickle_it('load', 'hosts_found.pkl')
+    for host, value in hosts_found.items():
+        if value['host'] not in host_list:
+            host_list.append(value['host'])
+            just_found.append(value['host'])
 
     def check_host(host):
         # try to Load history of nodes reached
@@ -289,6 +298,18 @@ def scan_network():
             if isinstance(element.result(), dict):
                 services_found = {**services_found, **element.result()}
     
+    # Clean Checking Status	
+    try:
+        for key, item in services_found.items():
+            if item['service'] == 'Checking Status':
+                del services_found[key]
+                break
+    except Exception:
+        pass
+
+    # Sort the list
+    # services_found = sorted(services_found.items(), key=lambda k_v: k_v['last_update'], reverse=True)
+
     pickle_it('save', 'services_found.pkl', services_found)
     
     return (services_found)
@@ -317,3 +338,5 @@ def is_service_running(service, expiry = None):
                     continue                
             return (True, val)
     return (False, None)
+
+

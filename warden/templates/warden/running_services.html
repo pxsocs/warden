@@ -5,11 +5,14 @@
 
 <div class='container-fluid' style='padding-bottom: 200px;'>
 
-
+  <form class="form-group" method="post" action="/host_list">
+    <input type="text" class="form-control" name="new_url" id="new_url"
+      placeholder="[+] Add new host / service URL (ex. http://192.168.1.1:5000/ or xyzxyz.onion)" />
+  </form>
 
   <div class="row">
     <div class='col-lg-12'>
-
+    
       <div id="output">
         Loading...
       </div>
@@ -38,8 +41,9 @@
           <tr>
             <th></th>
             <th class='text-left'>Service</th>
-            <th class='text-left'>Host</th>
+            <th class='text-left'>Location</th>
             <th class='text-right'>Last time reached</th>
+            <th></th>
           </tr>
         </thead>
     <tbody>
@@ -73,8 +77,9 @@
             event_data += '<tr>';
             event_data += "<td class='text-center'>" + icon + '</td>';
             event_data += "<td class='text-left'>" + value['service'] + '</td>';
-            event_data += "<td class='text-left'><a href='" + value['url'] + "' target='_blank'>" +  value['url'] + "</a></td>";
+            event_data += "<td class='text-left'><a href='" + value['url'] + "' target='_blank'>" + value['url'] + "</a></td>";
             event_data += "<td class='text-right'>" + time_ago + '</td>';
+            event_data += "<td class='text-right'><a href='/host_list?delete=" + encodeURIComponent(value['url']) + "'><i style='color: red' class='far fa-trash-alt'></i></a> </td>";
             event_data += '</tr>';
           });
           $("#output").html(table_header + event_data + table_footer)

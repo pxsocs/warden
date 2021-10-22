@@ -138,7 +138,7 @@ def background_specter_update():
         txs = app.specter.refresh_txs(load=False)
         te_t = time.time()
         message = Message(category='Specter Server',
-                          message_txt="<span class='text-success'>✅ Finished Transaction Refresh</span>",
+                          message_txt="<span class='text-success'>Finished Transaction Refresh</span>",
                           notes=f"<span class='text-info'>Loaded {len(txs['txlist'])} Transactions in {round((te_t - ts_t), 2)} seconds.</span>"
                           )
         app.message_handler.add_message(message)
