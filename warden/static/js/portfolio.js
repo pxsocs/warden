@@ -393,50 +393,54 @@ function update_mempool() {
         url: '/mempool_json',
         dataType: 'json',
         success: function (data) {
-            const currentTimeStamp = new Date().getTime();
-            $('#fastest_fee').html(formatNumber(data['mp_fee']['fastestFee'], 0, '', ' sats/Vb'));
-            $('#30min_fee').html(formatNumber(data['mp_fee']['halfHourFee'], 0, '', ' sats/Vb'));
-            $('#1hr_fee').html(formatNumber(data['mp_fee']['hourFee'], 0, '', ' sats/Vb'));
-            // Block 0
-            time_ago_0 = timeDifference(currentTimeStamp, data['mp_blocks'][0]['timestamp'] * 1000)
-            $('#time_0').html(time_ago_0);
-            $('#height_0').html(formatNumber(data['mp_blocks'][0]['height'], 0, ''));
-            $('#txs_0').html(formatNumber(data['mp_blocks'][0]['tx_count'], 0, ''));
-            $('#size_0').html(formatNumber(data['mp_blocks'][0]['size'] / 1000, 0, '', ' MB'));
-            // Block 1
-            time_ago_1 = timeDifference(currentTimeStamp, data['mp_blocks'][1]['timestamp'] * 1000)
-            $('#time_1').html(time_ago_1);
-            $('#height_1').html(formatNumber(data['mp_blocks'][1]['height'], 0, ''));
-            $('#txs_1').html(formatNumber(data['mp_blocks'][1]['tx_count'], 0, ''));
-            $('#size_1').html(formatNumber(data['mp_blocks'][1]['size'] / 1000, 0, '', ' MB'));
-            // Block 2
-            time_ago_2 = timeDifference(currentTimeStamp, data['mp_blocks'][2]['timestamp'] * 1000)
-            $('#time_2').html(time_ago_2);
-            $('#height_2').html(formatNumber(data['mp_blocks'][2]['height'], 0, ''));
-            $('#txs_2').html(formatNumber(data['mp_blocks'][2]['tx_count'], 0, ''));
-            $('#size_2').html(formatNumber(data['mp_blocks'][2]['size'] / 1000, 0, '', ' MB'));
-            // Block 3
-            time_ago_3 = timeDifference(currentTimeStamp, data['mp_blocks'][3]['timestamp'] * 1000)
-            $('#time_3').html(time_ago_3);
-            $('#height_3').html(formatNumber(data['mp_blocks'][3]['height'], 0, ''));
-            $('#txs_3').html(formatNumber(data['mp_blocks'][3]['tx_count'], 0, ''));
-            $('#size_3').html(formatNumber(data['mp_blocks'][3]['size'] / 1000, 0, '', ' MB'));
-            // Block 4
-            time_ago_4 = timeDifference(currentTimeStamp, data['mp_blocks'][4]['timestamp'] * 1000)
-            $('#time_4').html(time_ago_4);
-            $('#height_4').html(formatNumber(data['mp_blocks'][4]['height'], 0, ''));
-            $('#txs_4').html(formatNumber(data['mp_blocks'][4]['tx_count'], 0, ''));
-            $('#size_4').html(formatNumber(data['mp_blocks'][4]['size'] / 1000, 0, '', ' MB'));
-            // Block 5
-            time_ago_5 = timeDifference(currentTimeStamp, data['mp_blocks'][5]['timestamp'] * 1000)
-            $('#time_5').html(time_ago_5);
-            $('#height_5').html(formatNumber(data['mp_blocks'][5]['height'], 0, ''));
-            $('#txs_5').html(formatNumber(data['mp_blocks'][5]['tx_count'], 0, ''));
-            $('#size_5').html(formatNumber(data['mp_blocks'][5]['size'] / 1000, 0, '', ' MB'));
+            if (data['error'] == 'Mempool.space seems to be unavailable. Maybe node is still synching.') {
+                $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occured while connecting to Mempool.space at <a href='" + data['mp_url'] + "'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
+            } else if (data['error'].includes('Error')) {
+                $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occured while connecting to Mempool.space at <a href='" + data['mp_url'] + "'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
+            } else {
+                const currentTimeStamp = new Date().getTime();
+                $('#fastest_fee').html(formatNumber(data['mp_fee']['fastestFee'], 0, '', ' sats/Vb'));
+                $('#30min_fee').html(formatNumber(data['mp_fee']['halfHourFee'], 0, '', ' sats/Vb'));
+                $('#1hr_fee').html(formatNumber(data['mp_fee']['hourFee'], 0, '', ' sats/Vb'));
+                // Block 0
+                time_ago_0 = timeDifference(currentTimeStamp, data['mp_blocks'][0]['timestamp'] * 1000)
+                $('#time_0').html(time_ago_0);
+                $('#height_0').html(formatNumber(data['mp_blocks'][0]['height'], 0, ''));
+                $('#txs_0').html(formatNumber(data['mp_blocks'][0]['tx_count'], 0, ''));
+                $('#size_0').html(formatNumber(data['mp_blocks'][0]['size'] / 1000, 0, '', ' MB'));
+                // Block 1
+                time_ago_1 = timeDifference(currentTimeStamp, data['mp_blocks'][1]['timestamp'] * 1000)
+                $('#time_1').html(time_ago_1);
+                $('#height_1').html(formatNumber(data['mp_blocks'][1]['height'], 0, ''));
+                $('#txs_1').html(formatNumber(data['mp_blocks'][1]['tx_count'], 0, ''));
+                $('#size_1').html(formatNumber(data['mp_blocks'][1]['size'] / 1000, 0, '', ' MB'));
+                // Block 2
+                time_ago_2 = timeDifference(currentTimeStamp, data['mp_blocks'][2]['timestamp'] * 1000)
+                $('#time_2').html(time_ago_2);
+                $('#height_2').html(formatNumber(data['mp_blocks'][2]['height'], 0, ''));
+                $('#txs_2').html(formatNumber(data['mp_blocks'][2]['tx_count'], 0, ''));
+                $('#size_2').html(formatNumber(data['mp_blocks'][2]['size'] / 1000, 0, '', ' MB'));
+                // Block 3
+                time_ago_3 = timeDifference(currentTimeStamp, data['mp_blocks'][3]['timestamp'] * 1000)
+                $('#time_3').html(time_ago_3);
+                $('#height_3').html(formatNumber(data['mp_blocks'][3]['height'], 0, ''));
+                $('#txs_3').html(formatNumber(data['mp_blocks'][3]['tx_count'], 0, ''));
+                $('#size_3').html(formatNumber(data['mp_blocks'][3]['size'] / 1000, 0, '', ' MB'));
+                // Block 4
+                time_ago_4 = timeDifference(currentTimeStamp, data['mp_blocks'][4]['timestamp'] * 1000)
+                $('#time_4').html(time_ago_4);
+                $('#height_4').html(formatNumber(data['mp_blocks'][4]['height'], 0, ''));
+                $('#txs_4').html(formatNumber(data['mp_blocks'][4]['tx_count'], 0, ''));
+                $('#size_4').html(formatNumber(data['mp_blocks'][4]['size'] / 1000, 0, '', ' MB'));
+                // Block 5
+                time_ago_5 = timeDifference(currentTimeStamp, data['mp_blocks'][5]['timestamp'] * 1000)
+                $('#time_5').html(time_ago_5);
+                $('#height_5').html(formatNumber(data['mp_blocks'][5]['height'], 0, ''));
+                $('#txs_5').html(formatNumber(data['mp_blocks'][5]['tx_count'], 0, ''));
+                $('#size_5').html(formatNumber(data['mp_blocks'][5]['size'] / 1000, 0, '', ' MB'));
 
-
-
-            $('#mempool_source').html('<a href=' + data['mp_url'] + '>Source : ' + data['mp_url'] + '</a>')
+                $('#mempool_source').html('<a href=' + data['mp_url'] + '>Source : ' + data['mp_url'] + '</a>')
+            }
         }
     });
 }
@@ -616,7 +620,7 @@ function getNodeInfo() {
             $('#mempool_size').html(data['bitcoin_core_data']['Mempool Size']);
             $('#uptime').html(data['bitcoin_core_data']['Node uptime']);
             if ('specter_health' in data) {
-            $("#specter_health").html(data['specter_health']);
+                $("#specter_health").html(data['specter_health']);
             } else {
                 $("#specter_health").html('Could not check [Retrying..]')
             }

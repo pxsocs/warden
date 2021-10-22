@@ -554,7 +554,7 @@
                             {{current_app.specter.home_parser()['device_dict'][device]['name']}}
                             {%endfor%}
                             {%endif%}
-                            
+
                         </td>
                         <td class='text-right'>
                             --
@@ -917,7 +917,7 @@
                             <tbody>
                                 <tr>
                                     <td>Status</td>
-                                    <td id='specter_health' class="text-right">  
+                                    <td id='specter_health' class="text-right">
                                         <img src='{{url_for('warden.static',
                                         filename='images/loading_small.gif' )}}' width="30" height="30"></img>
                                     </td>
@@ -1021,181 +1021,184 @@
                         <span class='float-right small' id='mempool_source'>
                         </span>
 
-                        <h6 style='padding-top: 10px;'>Fee Estimates</h6>
+                        <div id='mempool_body'>
 
-                        <table id="time" class="table-condensed table-right text-right">
-                            <tbody>
-                                <tr>
+                            <h6 style='padding-top: 10px;'>Fee Estimates</h6>
 
-                                    <td id='fastest_fee' class="text-left border-bottom hinumbersmall"
-                                        data-toggle="tooltip" data-placement="top"
-                                        title="If you are in a rush, this is how much you need to pay in fees to have fast confirmation time">
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
+                            <table id="time" class="table-condensed table-right text-right">
+                                <tbody>
+                                    <tr>
 
-                                    <td id='30min_fee' class="text-center border-bottom hinumbersmall"
-                                        data-toggle="tooltip" data-placement="top"
-                                        title="This is how much you need to pay to get your transaction confirmed in 30 min (estimate)">
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
+                                        <td id='fastest_fee' class="text-left border-bottom hinumbersmall"
+                                            data-toggle="tooltip" data-placement="top"
+                                            title="If you are in a rush, this is how much you need to pay in fees to have fast confirmation time">
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
 
-                                    <td id='1hr_fee' class="text-right border-bottom hinumbersmall"
-                                        data-toggle="tooltip" data-placement="top"
-                                        title="This is how much you need to pay to get your transaction confirmed in 60 min (estimate)">
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
+                                        <td id='30min_fee' class="text-center border-bottom hinumbersmall"
+                                            data-toggle="tooltip" data-placement="top"
+                                            title="This is how much you need to pay to get your transaction confirmed in 30 min (estimate)">
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+
+                                        <td id='1hr_fee' class="text-right border-bottom hinumbersmall"
+                                            data-toggle="tooltip" data-placement="top"
+                                            title="This is how much you need to pay to get your transaction confirmed in 60 min (estimate)">
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
 
 
-                                </tr>
-                                <tr>
-                                    <td class="small text-left">
-                                        Fastest Fee
-                                    </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="small text-left">
+                                            Fastest Fee
+                                        </td>
 
-                                    <td class="small text-center">
-                                        30 min Fee
-                                    </td>
+                                        <td class="small text-center">
+                                            30 min Fee
+                                        </td>
 
-                                    <td class="small text-right">
-                                        1 hour Fee
-                                    </td>
+                                        <td class="small text-right">
+                                            1 hour Fee
+                                        </td>
 
-                                </tr>
-                            </tbody>
-                        </table>
-                        <br>
-                        <h6>Latest Blocks</h6>
-                        <table id="mempooltable" class="table table-sm small-text">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th class='text-center'>
-                                        Time
-                                    </th>
-                                    <td class='text-right'>
-                                        Block Height
-                                    </td>
-                                    <td class='text-right'>
-                                        # Transactions
-                                    </td>
-                                    <td class='text-right'>
-                                        Size
-                                    </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br>
+                            <h6>Latest Blocks</h6>
+                            <table id="mempooltable" class="table table-sm small-text">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th class='text-center'>
+                                            Time
+                                        </th>
+                                        <td class='text-right'>
+                                            Block Height
+                                        </td>
+                                        <td class='text-right'>
+                                            # Transactions
+                                        </td>
+                                        <td class='text-right'>
+                                            Size
+                                        </td>
 
-                                </tr>
-                                <tr>
-                                    <th class='text-center' id='time_0'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </th>
-                                    <td class='text-right' id='height_0'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                    <td class='text-right' id='txs_0'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                    <td class='text-right' id='size_0'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
+                                    </tr>
+                                    <tr>
+                                        <th class='text-center' id='time_0'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </th>
+                                        <td class='text-right' id='height_0'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                        <td class='text-right' id='txs_0'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                        <td class='text-right' id='size_0'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
 
-                                </tr>
-                                <tr>
-                                    <th class='text-center' id='time_1'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </th>
-                                    <td class='text-right' id='height_1'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                    <td class='text-right' id='txs_1'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                    <td class='text-right' id='size_1'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class='text-center' id='time_2'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </th>
-                                    <td class='text-right' id='height_2'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                    <td class='text-right' id='txs_2'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                    <td class='text-right' id='size_2'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class='text-center' id='time_3'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </th>
-                                    <td class='text-right' id='height_3'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                    <td class='text-right' id='txs_3'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                    <td class='text-right' id='size_3'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class='text-center' id='time_4'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </th>
-                                    <td class='text-right' id='height_4'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                    <td class='text-right' id='txs_4'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                    <td class='text-right' id='size_4'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class='text-center' id='time_5'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </th>
-                                    <td class='text-right' id='height_5'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                    <td class='text-right' id='txs_5'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                    <td class='text-right' id='size_5'>
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                </tr>
-                            </thead>
-                        </table>
+                                    </tr>
+                                    <tr>
+                                        <th class='text-center' id='time_1'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </th>
+                                        <td class='text-right' id='height_1'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                        <td class='text-right' id='txs_1'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                        <td class='text-right' id='size_1'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class='text-center' id='time_2'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </th>
+                                        <td class='text-right' id='height_2'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                        <td class='text-right' id='txs_2'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                        <td class='text-right' id='size_2'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class='text-center' id='time_3'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </th>
+                                        <td class='text-right' id='height_3'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                        <td class='text-right' id='txs_3'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                        <td class='text-right' id='size_3'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class='text-center' id='time_4'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </th>
+                                        <td class='text-right' id='height_4'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                        <td class='text-right' id='txs_4'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                        <td class='text-right' id='size_4'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class='text-center' id='time_5'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </th>
+                                        <td class='text-right' id='height_5'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                        <td class='text-right' id='txs_5'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                        <td class='text-right' id='size_5'>
+                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                                width="30" height="30"></img>
+                                        </td>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
                     </div>
                     <!-- END Mempool Data Section -->
 

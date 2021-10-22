@@ -375,10 +375,10 @@ class Specter():
         except Exception as e:
             pickle_it("save", "specter_health.pkl", f"Error: {e}")
             return False
-        
 
     # Seeks for Specter Server and returns where it is currently running
-    # Also updates the base_url 
+    # Also updates the base_url
+
     def seek_specter(self):
         # Will return a value if a server was found in the last 5 minutes
         EXPIRY = 300
@@ -389,4 +389,3 @@ class Specter():
             return server_found[1]
         else:
             return None
-

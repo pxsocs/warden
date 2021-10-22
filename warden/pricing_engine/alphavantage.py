@@ -85,8 +85,6 @@ def realtime(ticker, fx='USD', function='CURRENCY_EXCHANGE_RATE', parsed=True):
     #   'timezone':
     # }
 
-    if "Information" in data:
-        flash(f"Alphavantage API returned an error: {data['Information']}", "warning")
 
     if parsed:
         try:
@@ -206,9 +204,6 @@ def historical(ticker, function='TIME_SERIES_DAILY_ADJUSTED', fx='USD', parsed=T
         response = requests.get(globalURL)
 
     data = response.json()
-
-    if "Information" in data:
-        flash(f"Alphavantage API returned an error: {data['Information']}", "warning")
 
     if parsed:
         if function == 'DIGITAL_CURRENCY_DAILY':
