@@ -17,7 +17,7 @@ from models import User, AccountInfo, Trades
 from utils import update_config, heatmap_generator, pickle_it
 from operator import itemgetter
 from packaging import version
-from connections import tor_request
+from connections import tor_request, url_parser
 from specter_importer import Specter
 
 from datetime import datetime
@@ -82,7 +82,8 @@ def before_request():
     try:
         specter_version = str(current_app.specter.home_parser()['version'])
         if version.parse(specter_version) < version.parse("1.1.0"):
-            flash(f"Sorry, you need Specter version 1.1.0 or higher to connect to WARden. You are running version {specter_version}. Please upgrade.", "danger")
+            flash(
+                f"Sorry, you need Specter version 1.1.0 or higher to connect to WARden. You are running version {specter_version}. Please upgrade.", "danger")
             return redirect(url_for('warden.specter_auth'))
     # An error below means no file was ever created - probably needs setup
     except Exception:
@@ -245,14 +246,16 @@ def warden_page():
     try:
         logging.info(current_app.specter.wallet_alias_list())
         for wallet in current_app.specter.wallet_alias_list():
-            wallet_df = meta['full_df'].loc[meta['full_df']['wallet_alias'] == wallet]
+            wallet_df = meta['full_df'].loc[meta['full_df']
+                                            ['wallet_alias'] == wallet]
             if wallet_df.empty:
                 balance = 0
             else:
                 balance = wallet_df['amount'].sum()
             sorted_wallet_list.append((wallet, balance))
 
-        sorted_wallet_list = sorted(sorted_wallet_list, reverse=True, key=itemgetter(1))
+        sorted_wallet_list = sorted(
+            sorted_wallet_list, reverse=True, key=itemgetter(1))
         sorted_wallet_list = [i[0] for i in sorted_wallet_list]
         wallets_exist = True
     except Exception as e:
@@ -330,16 +333,7 @@ def specter_auth():
         from message_handler import Message
         current_app.message_handler.clean_category('Specter Connection')
         url = request.form.get('url')
-        # Parse it
-        from urllib.parse import urlparse
-        parse_object = urlparse(url)
-        scheme = 'http' if parse_object.scheme == '' else parse_object.scheme
-        if parse_object.netloc != '':
-            url = scheme + '://' + parse_object.netloc + '/'
-        if not url.startswith('http'):
-            url = 'http://' + url
-        if url[-1] != '/':
-            url += '/'
+        url = url_parser(url)
 
         # Try to ping this url
         if 'onion' not in url:
@@ -385,8 +379,10 @@ def specter_auth():
 
         current_app.downloading = True
         current_app.settings['SPECTER']['specter_url'] = url
-        current_app.settings['SPECTER']['specter_login'] = request.form.get('username')
-        current_app.settings['SPECTER']['specter_password'] = request.form.get('password')
+        current_app.settings['SPECTER']['specter_login'] = request.form.get(
+            'username')
+        current_app.settings['SPECTER']['specter_password'] = request.form.get(
+            'password')
         update_config()
 
         current_app.specter = Specter()
@@ -403,7 +399,8 @@ def specter_auth():
 def donated():
     counter_file = os.path.join(home_path(),
                                 'warden/counter.json')
-    templateData = {"title": "Thank You!", "donated": donate_check(), "current_app": current_app}
+    templateData = {"title": "Thank You!",
+                    "donated": donate_check(), "current_app": current_app}
     with open(counter_file, 'w') as fp:
         json.dump("donated", fp)
     return (render_template('warden/warden_thanks.html', **templateData))
@@ -503,7 +500,8 @@ def price_and_position():
     price_chart = historical_data[["close_converted", "close"]].copy()
     # dates need to be in Epoch time for Highcharts
     price_chart.index = price_chart.index.astype('datetime64[ns]')
-    price_chart.index = (price_chart.index - datetime(1970, 1, 1)).total_seconds()
+    price_chart.index = (price_chart.index -
+                         datetime(1970, 1, 1)).total_seconds()
     price_chart.index = price_chart.index * 1000
     price_chart.index = price_chart.index.astype(np.int64)
     price_chart = price_chart.to_dict()
@@ -525,8 +523,10 @@ def price_and_position():
             df_trades['trade_quantity_cum'] = df_trades['trade_quantity'].cumsum()
             position_chart = df_trades[["trade_quantity_cum"]].copy()
             # dates need to be in Epoch time for Highcharts
-            position_chart.index = position_chart.index.astype('datetime64[ns]')
-            position_chart.index = (position_chart.index - datetime(1970, 1, 1)).total_seconds()
+            position_chart.index = position_chart.index.astype(
+                'datetime64[ns]')
+            position_chart.index = (
+                position_chart.index - datetime(1970, 1, 1)).total_seconds()
             position_chart.index = position_chart.index * 1000
             position_chart.index = position_chart.index.astype(np.int64)
             position_chart = position_chart.to_dict()

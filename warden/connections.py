@@ -289,7 +289,8 @@ def scan_network():
 
     # Launch thread to check urls
     with concurrent.futures.ThreadPoolExecutor(30) as executor:
-        futures = [executor.submit(check_service_url, args) for args in check_list]
+        futures = [executor.submit(check_service_url, args)
+                   for args in check_list]
         wait(futures, timeout=120, return_when=ALL_COMPLETED)
         for element in futures:
             if isinstance(element.result(), dict):
@@ -336,3 +337,17 @@ def is_service_running(service, expiry=None):
                     continue
             return (True, val)
     return (False, None)
+
+
+def url_parser(url):
+    # Parse it
+    from urllib.parse import urlparse
+    parse_object = urlparse(url)
+    scheme = 'http' if parse_object.scheme == '' else parse_object.scheme
+    if parse_object.netloc != '':
+        url = scheme + '://' + parse_object.netloc + '/'
+    if not url.startswith('http'):
+        url = 'http://' + url
+    if url[-1] != '/':
+        url += '/'
+    return(url)

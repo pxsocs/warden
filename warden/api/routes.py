@@ -1,10 +1,11 @@
-from flask import (Blueprint, flash,  request, current_app,  jsonify, Response, redirect, url_for)
+from flask import (Blueprint, flash,  request, current_app,
+                   jsonify, Response, redirect, url_for)
 from warden_modules import (warden_metadata,
                             positions_dynamic,
                             generatenav, specter_df,
                             current_path, regenerate_nav,
                             home_path, transactions_fx)
-from connections import tor_request
+from connections import tor_request, url_parser
 from pricing_engine.engine import price_ondate, historical_prices
 from flask_login import login_required, current_user
 from random import randrange
@@ -188,11 +189,13 @@ def positions_json():
 def realtime_btc():
     try:
         fx_details = fx_rate()
-        fx_r = {'cross': fx_details['symbol'], 'fx_rate': fx_details['fx_rate']}
+        fx_r = {'cross': fx_details['symbol'],
+                'fx_rate': fx_details['fx_rate']}
         fx_r['btc_usd'] = realtime_price("BTC", fx='USD')['price']
         fx_r['btc_fx'] = fx_r['btc_usd'] * fx_r['fx_rate']
     except Exception as e:
-        logging.warn(f"There was an error while getting realtime prices. Error: {e}")
+        logging.warn(
+            f"There was an error while getting realtime prices. Error: {e}")
         fx_r = 0
     return json.dumps(fx_r)
 
@@ -361,7 +364,8 @@ def stackchartdatajson():
         data['BTC_cum'] = data['PORT_VALUE_BTC']
         stackchart = data[["BTC_cum"]]
         # dates need to be in Epoch time for Highcharts
-        stackchart.index = (stackchart.index - datetime(1970, 1, 1)).total_seconds()
+        stackchart.index = (stackchart.index -
+                            datetime(1970, 1, 1)).total_seconds()
         stackchart.index = stackchart.index * 1000
         stackchart.index = stackchart.index.astype(np.int64)
         stackchart = stackchart.to_dict()
@@ -603,16 +607,7 @@ def mempool_json():
     try:
         mp_config = current_app.settings['MEMPOOL']
         url = mp_config.get('url')
-
-        from urllib.parse import urlparse
-        parse_object = urlparse(url)
-        scheme = 'http' if parse_object.scheme == '' else parse_object.scheme
-        if parse_object.netloc != '':
-            url = scheme + '://' + parse_object.netloc + '/'
-        if not url.startswith('http'):
-            url = 'http://' + url
-        if url[-1] != '/':
-            url += '/'
+        url = url_parser(url)
 
         # Get recommended fees
         try:
@@ -918,16 +913,7 @@ def host_list():
         return (json.dumps(hosts))
     if request.method == "POST":
         url = request.form.get("new_url")
-        # Parse it
-        from urllib.parse import urlparse
-        parse_object = urlparse(url)
-        scheme = 'http' if parse_object.scheme == '' else parse_object.scheme
-        if parse_object.netloc != '':
-            url = scheme + '://' + parse_object.netloc + '/'
-        if url.startswith('http'):
-            url = url.strip('http://')
-        if url[-1] == '/':
-            url = url[:-1]
+        url = url_parser(url)
         hosts[url] = {
             'ip': url,
             'host': url,
