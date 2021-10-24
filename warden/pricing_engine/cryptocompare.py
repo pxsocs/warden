@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 import requests
 from pricing_engine.engine import apikey
 from connections import tor_request
@@ -99,8 +100,13 @@ def historical(ticker, fx='USD', parsed=True):
     globalURL += '&limit=2000'
 
     response = tor_request(url=globalURL)
-    if response.status_code == 403:
-        response = requests.get(globalURL)
+    try:
+        if response.status_code == 403:
+            response = requests.get(globalURL)
+    except Exception:
+        logging.error(f"Could not get Cryptocompare price for {ticker}")
+        logging.error(f"url was {globalURL}")
+        logging.error(f"response was {response}")
 
     data = response.json()['Data']
 

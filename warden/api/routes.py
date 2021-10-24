@@ -379,6 +379,63 @@ def stackchartdatajson():
     return stackchart
 
 
+# API end point - returns a json with Portfolio Fiat Value
+@api.route("/fiatchartdatajson", methods=["GET", "POST"])
+@login_required
+#  Creates a table with dates and Fiat values
+def fiatchartdatajson():
+    data = generatenav()
+    # Generate data for Stack chart
+    # Filter to Only BTC Positions
+    fx = current_app.settings['PORTFOLIO']['base_fx']
+    if fx is None:
+        fx = 'USD'
+
+    try:
+        data['fiat'] = data['PORT_fx_pos']
+        fiatchart = data[["fiat"]]
+        # dates need to be in Epoch time for Highcharts
+        fiatchart.index = (fiatchart.index -
+                           datetime(1970, 1, 1)).total_seconds()
+        fiatchart.index = fiatchart.index * 1000
+        fiatchart.index = fiatchart.index.astype(np.int64)
+        fiatchart = fiatchart.to_dict()
+        fiatchart = fiatchart["fiat"]
+        # Sort for HighCharts
+        import collections
+        fiatchart = collections.OrderedDict(sorted(fiatchart.items()))
+        fiatchart = json.dumps(fiatchart)
+    except Exception as e:
+        return (json.dumps({"Error": str(e)}))
+    return fiatchart
+
+# API end point - returns a json with BTC Fiat Price
+
+
+@api.route("/btcchartdatajson", methods=["GET", "POST"])
+@login_required
+#  Creates a table with dates and Fiat values
+def btcchartdatajson():
+    data = generatenav()
+    try:
+        data['fiat'] = data['BTC_price']
+        fiatchart = data[["fiat"]]
+        # dates need to be in Epoch time for Highcharts
+        fiatchart.index = (fiatchart.index -
+                           datetime(1970, 1, 1)).total_seconds()
+        fiatchart.index = fiatchart.index * 1000
+        fiatchart.index = fiatchart.index.astype(np.int64)
+        fiatchart = fiatchart.to_dict()
+        fiatchart = fiatchart["fiat"]
+        # Sort for HighCharts
+        import collections
+        fiatchart = collections.OrderedDict(sorted(fiatchart.items()))
+        fiatchart = json.dumps(fiatchart)
+    except Exception as e:
+        return (json.dumps({"Error": str(e)}))
+    return fiatchart
+
+
 # Return the price of a ticker on a given date
 # Takes arguments:
 # ticker:       Single ticker for filter (default = NAV)

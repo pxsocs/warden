@@ -232,7 +232,7 @@ def scan_network():
     # Create the list of hosts to reach
     for host in just_found:
         if 'onion' in host:
-            url = 'http://' + host + '/'
+            url = url_parser(host)
             check_list.append(url)
         else:
             for port in port_list:
@@ -350,4 +350,5 @@ def url_parser(url):
         url = 'http://' + url
     if url[-1] != '/':
         url += '/'
+
     return(url)

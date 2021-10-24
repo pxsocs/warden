@@ -2,7 +2,7 @@ from connections import tor_request, url_parser
 from bs4 import BeautifulSoup
 
 
-SERVICES = ['Umbrel Node', 'Ride the Lightning',
+SERVICES = ['Umbrel Dashboard', 'Ride the Lightning',
             'Specter Server', 'Samourai Server Dojo',
             'Electrum Server', 'Electrum Server',
             'Bitcoin RPC Explorer',
@@ -41,25 +41,28 @@ def search_in_txt(txt, search_terms):
 # --------------------------------------------------------
 # Start here the autodetect functions.
 # They should return (boolean, data)
-def is_umbrel_url(url):
+def autodetect(url):
     txt = url_text(url)
-    search_terms = ['<title>Umbrel</title>', 'Welcome back']
-    return(search_in_txt(txt, search_terms))
 
+    # Detect Umbrel
+    search_terms = ['<title>Umbrel</title>']
+    if search_in_txt(txt, search_terms) is True:
+        return ("Umbrel Dashboard")
 
-def is_specter_url(url):
-    txt = url_text(url)
+    # Detect Specter Desktop
     search_terms = ['<title>Specter Desktop</title>']
-    return(search_in_txt(txt, search_terms))
+    if search_in_txt(txt, search_terms) is True:
+        return ("Specter Server")
 
-
-def is_mempoolspace_url(url):
-    txt = url_text(url)
+    # Detect Mempool Space
     search_terms = ['<title>mempool - Bitcoin Explorer</title>']
-    return(search_in_txt(txt, search_terms))
+    if search_in_txt(txt, search_terms) is True:
+        return ("Mempool.space Explorer")
 
-
-def is_warden_url(url):
-    txt = url_text(url)
+    # Detect WARden
     search_terms = ['Welcome to the WARDen']
-    return(search_in_txt(txt, search_terms))
+    if search_in_txt(txt, search_terms) is True:
+        return ("WARden Server")
+
+    # None Found
+    return ("Unknown Service")

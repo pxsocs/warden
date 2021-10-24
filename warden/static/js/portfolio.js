@@ -385,6 +385,26 @@ $(document).ready(function () {
             stackChart(data);
         }
     });
+
+    // Get stack Data for chart
+    $.ajax({
+        type: 'GET',
+        url: '/fiatchartdatajson',
+        dataType: 'json',
+        success: function (data) {
+            fiatChart(data);
+        }
+    });
+
+    // Get stack Data for chart
+    $.ajax({
+        type: 'GET',
+        url: '/btcchartdatajson',
+        dataType: 'json',
+        success: function (data) {
+            btcChart(data);
+        }
+    });
 });
 
 function update_mempool() {
@@ -395,9 +415,7 @@ function update_mempool() {
         success: function (data) {
             if (data['error'] == 'Mempool.space seems to be unavailable. Maybe node is still synching.') {
                 $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occured while connecting to Mempool.space at <a href='" + data['mp_url'] + "' target='_blank'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
-            } else if (data['error'].includes('Error')) {
-                $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occured while connecting to Mempool.space at <a href='" + data['mp_url'] + "' target='_blank'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
-            } else {
+            } else if (data['error'] == null) {
                 const currentTimeStamp = new Date().getTime();
                 $('#fastest_fee').html(formatNumber(data['mp_fee']['fastestFee'], 0, '', ' sats/Vb'));
                 $('#30min_fee').html(formatNumber(data['mp_fee']['halfHourFee'], 0, '', ' sats/Vb'));
@@ -440,6 +458,8 @@ function update_mempool() {
                 $('#size_5').html(formatNumber(data['mp_blocks'][5]['size'] / 1000, 0, '', ' MB'));
 
                 $('#mempool_source').html('<a href=' + data['mp_url'] + '>Source : ' + data['mp_url'] + '</a>')
+            } else {
+                $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occured while connecting to Mempool.space at <a href='" + data['mp_url'] + "' target='_blank'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
             }
         }
     });
@@ -646,7 +666,7 @@ function navChart(data) {
             enabled: false
         },
         rangeSelector: {
-            selected: 5
+            selected: 4
         },
         chart: {
             zoomType: 'xy',
@@ -731,7 +751,7 @@ function stackChart(data) {
             enabled: false
         },
         rangeSelector: {
-            selected: 5,
+            selected: 4,
             style: {
                 fontSize: '10px'
             }
@@ -802,6 +822,184 @@ function stackChart(data) {
             turboThreshold: 0,
             tooltip: {
                 pointFormat: "Stack Size: {point.y:,.0f} ₿"
+            }
+        }]
+    });
+
+};
+
+
+// Stack CHART
+function fiatChart(data) {
+    var myChart = Highcharts.stockChart('fiatchart', {
+        credits: {
+            text: "Remember all Fiat is trending to the same place... Zero."
+        },
+        navigator: {
+            enabled: false
+        },
+        rangeSelector: {
+            selected: 4,
+            style: {
+                fontSize: '10px'
+            }
+        },
+        chart: {
+            zoomType: 'xy',
+            backgroundColor: "#FAFAFA",
+        },
+        title: {
+            text: 'Portfolio value in Fiat',
+            style: {
+                fontSize: '12px'
+            }
+        },
+        subtitle: {
+            text: ''
+        },
+        xAxis: {
+            type: 'datetime'
+        },
+        yAxis: {
+            title: {
+                text: 'Value in Fiat ($)'
+            },
+            startOnTick: false,
+            endOnTick: false
+        },
+        legend: {
+            enabled: false
+        },
+        plotOptions: {
+            area: {
+                fillColor: {
+                    linearGradient: {
+                        x1: 0,
+                        y1: 0,
+                        x2: 0,
+                        y2: 1
+                    },
+                    stops: [
+                        [0, Highcharts.getOptions().colors[0]],
+                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                    ]
+                },
+                marker: {
+                    radius: 2
+                },
+                lineWidth: 1,
+                states: {
+                    hover: {
+                        lineWidth: 1
+                    }
+                },
+                threshold: null
+            }
+        },
+
+        series: [{
+            type: 'area',
+            dataGrouping: {
+                enabled: false
+            },
+            name: 'Stack',
+            // The line below maps the dictionary coming from Python into
+            // the data needed for highcharts. It's weird but the *1 is
+            // needed, otherwise the date does not show on chart.
+            data: Object.keys(data).map((key) => [((key * 1)), data[key]]),
+            turboThreshold: 0,
+            tooltip: {
+                pointFormat: "$ {point.y:,.0f}"
+            }
+        }]
+    });
+
+};
+
+
+
+// Stack CHART
+function btcChart(data) {
+    var myChart = Highcharts.stockChart('btcchart', {
+        credits: {
+            text: "Useless chart since 1 BTC = 1 BTC. But here it is."
+        },
+        navigator: {
+            enabled: false
+        },
+        rangeSelector: {
+            selected: 4,
+            style: {
+                fontSize: '10px'
+            }
+        },
+        chart: {
+            zoomType: 'xy',
+            backgroundColor: "#FAFAFA",
+        },
+        title: {
+            text: ' BTC value in Fiat',
+            style: {
+                fontSize: '12px'
+            }
+        },
+        subtitle: {
+            text: ''
+        },
+        xAxis: {
+            type: 'datetime'
+        },
+        yAxis: {
+            title: {
+                text: 'Value in Fiat ($)'
+            },
+            startOnTick: false,
+            endOnTick: false
+        },
+        legend: {
+            enabled: false
+        },
+        plotOptions: {
+            area: {
+                fillColor: {
+                    linearGradient: {
+                        x1: 0,
+                        y1: 0,
+                        x2: 0,
+                        y2: 1
+                    },
+                    stops: [
+                        [0, Highcharts.getOptions().colors[0]],
+                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                    ]
+                },
+                marker: {
+                    radius: 2
+                },
+                lineWidth: 1,
+                states: {
+                    hover: {
+                        lineWidth: 1
+                    }
+                },
+                threshold: null
+            }
+        },
+
+        series: [{
+            type: 'spline',
+            color: 'darkgreen',
+            dataGrouping: {
+                enabled: false
+            },
+            name: 'Stack',
+            // The line below maps the dictionary coming from Python into
+            // the data needed for highcharts. It's weird but the *1 is
+            // needed, otherwise the date does not show on chart.
+            data: Object.keys(data).map((key) => [((key * 1)), data[key]]),
+            turboThreshold: 0,
+            tooltip: {
+                pointFormat: "$ {point.y:,.0f}"
             }
         }]
     });

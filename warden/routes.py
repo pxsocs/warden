@@ -244,7 +244,6 @@ def warden_page():
     # Sort the wallets by balance
     sorted_wallet_list = []
     try:
-        logging.info(current_app.specter.wallet_alias_list())
         for wallet in current_app.specter.wallet_alias_list():
             wallet_df = meta['full_df'].loc[meta['full_df']
                                             ['wallet_alias'] == wallet]

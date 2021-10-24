@@ -117,7 +117,8 @@ def init_app(app):
         app.warden_status['initial_setup'] = False
         print(success("✅ Config Loaded from config.ini - edit it for customization"))
     else:
-        print(error("  Config File could not be loaded, created a new one with default values..."))
+        print(error(
+            "  Config File could not be loaded, created a new one with default values..."))
         create_config(config_file)
         config_settings.read(config_file)
         app.warden_status['initial_setup'] = True
@@ -497,7 +498,8 @@ def main(debug=False, reloader=False):
     print("")
 
     if runningInDocker():
-        print(success(f"✅ Running inside docker container {emoji.emojize(':whale:')} Getting some James Bartley vibes..."))
+        print(success(
+            f"✅ Running inside docker container {emoji.emojize(':whale:')} Getting some James Bartley vibes..."))
         print("")
 
     app = create_app()
@@ -528,12 +530,14 @@ def main(debug=False, reloader=False):
     print("")
     print(success("✅ WARden Server is Ready... Launch cool ASCII logo!"))
     print("")
+    logging.info("Launched WARden Server [Success]")
 
     def onion_string():
         from utils import pickle_it
         if app.settings['SERVER'].getboolean('onion_server'):
             try:
-                pickle_it('save', 'onion_address.pkl', app.tor_service_id + '.onion')
+                pickle_it('save', 'onion_address.pkl',
+                          app.tor_service_id + '.onion')
                 return (f"""
         {emoji.emojize(':onion:')} Tor Onion server running at:
         {yellow(app.tor_service_id + '.onion')}
