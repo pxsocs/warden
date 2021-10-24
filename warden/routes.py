@@ -904,6 +904,15 @@ def running_services():
     )
 
 
+@warden.route("/drawdown", methods=["GET"])
+@login_required
+def drawdown():
+    return render_template("warden/drawdown.html",
+                           title="Drawdown Analysis",
+                           current_app=current_app,
+                           current_user=fx_rate())
+
+
 # -------------------------------------------------
 #  START JINJA 2 Filters
 # -------------------------------------------------

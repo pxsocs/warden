@@ -1,0 +1,161 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+
+<!--  High Charts -->
+<script src="https://code.highcharts.com/stock/highstock.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="{{url_for('warden.static', filename='js/highcharts.js')}}"></script>
+<script src="{{url_for('warden.static', filename='js/utils.js')}}"></script>
+<script src="{{url_for('warden.static', filename='js/drawdown.js')}}"></script>
+<script src="{{url_for('warden.static', filename='js/tagsinput.js')}}"></script>
+
+<div id="alerts" class="container">
+</div>
+
+<div class="content-section">
+    <div class="row">
+        <div class="col-sm-5">
+            <div class="input-group input-group-sm mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="ticker-addon">Ticker (NAV = portfolio): </span>
+                </div>
+                <input id="ticker" type="text" class="form-control text-right change_monitor" value="NAV"
+                    aria-label="Username" aria-describedby="ticker-addon">
+            </div>
+            <div class="input-group input-group-sm mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="ticker-addon">Number of drawdowns: </span>
+                </div>
+                <input id="n_dd" type="number" class="form-control text-right change_monitor" value="2"
+                    aria-label="Username" aria-describedby="ticker-addon">
+            </div>
+        </div>
+
+        <div class="col-sm-2">
+        </div>
+
+        <div class="col-sm-5">
+            <div class="input-group input-group-sm mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="start-addon1">Start Date</span>
+                </div>
+                <input id="start_date" type="date" class="form-control change_monitor text-right"
+                    aria-describedby="start-addon1">
+            </div>
+
+            <div class="input-group input-group-sm mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="end-addon1">End Date&nbsp;&nbsp;</span>
+                </div>
+                <input id="end_date" type="date" class="form-control change_monitor text-right"
+                    aria-describedby="end-addon1">
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div id="ddchart" style="height: 400px; min-width: 90%; max-width: 100%; margin: 0 auto">
+            <span class="loadanim">&nbsp;GENERATING CHART AND TABLES. PLEASE HOLD...</span>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="row">
+    <div class="col-sm-12" id="dd_table">
+        <table class="table table-striped small text-center">
+            <thead class="thead-dark">
+                <tr>
+                    <th>
+                        DD
+                    </th>
+                    <th>
+                        Start
+                    </th>
+                    <th>
+                        End
+                    </th>
+                    <th>
+                        Top
+                    </th>
+                    <th>
+                        Bottom
+                    </th>
+                    <th>
+                        Cycle<br>(days)
+                    </th>
+                    <th>
+                        Days<br>to bottom
+                    </th>
+                    <th>
+                        Days to<br> Recovery
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="table_body">
+
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+<div class="row">
+    <!-- Days in Drawdown -->
+    <div class="col-sm-3">
+        <ul class="list-group small text-center">
+            <li class="list-group-item list-group-item-dark">Drawdown Days</li>
+            <li class="list-group-item disabled" id="dd_days"></li>
+        </ul>
+    </div>
+    <!-- Days in Recovery -->
+    <div class="col-sm-3">
+        <ul class="list-group small text-center">
+            <li class="list-group-item list-group-item-dark">Recovery Days</li>
+            <li class="list-group-item disabled" id="recovery_days"></li>
+        </ul>
+    </div>
+    <!-- Days in DD + Recovery -->
+    <div class="col-sm-3">
+        <ul class="list-group small text-center">
+            <li class="list-group-item list-group-item-dark">Trending Days</li>
+            <li class="list-group-item disabled" id="cycle_days"></li>
+        </ul>
+    </div>
+    <!-- Total Days -->
+    <div class="col-sm-3">
+        <ul class="list-group small text-center">
+            <li class="list-group-item list-group-item-dark">Total days</li>
+            <li class="list-group-item disabled" id="total_days"></li>
+        </ul>
+    </div>
+</div>
+
+<div class='row'>
+    <div class="container-fluid">
+
+        <i>
+            <sup>1</sup> All returns in this page are in {{current_app.fx['name_plural'].title()}}.
+            <br>
+            {%if current_app.fx['code'] != 'USD'%}
+            This means that the returns include the asset returns plus the currency return in the period.
+            <br>For example, if Bitcoin in USD is up 5% and the {{current_app.fx['name']}} is
+            up
+            1%, the
+            return will be 6.05% in {{FX}}.
+            {%endif%}
+        </i>
+
+    </div>
+</div>
+
+
+
+{% endblock content %}
