@@ -1102,7 +1102,7 @@ def tail(file, lines=20):
         blocks = []
         while lines_to_go > 0 and block_end_byte > 0:
             if (block_end_byte - BLOCK_SIZE > 0):
-                f.seek(block_number*BLOCK_SIZE, 2)
+                f.seek(block_number * BLOCK_SIZE, 2)
                 blocks.append(f.read(BLOCK_SIZE))
             else:
                 f.seek(0, 0)

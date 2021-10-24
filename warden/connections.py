@@ -82,9 +82,9 @@ def tor_request(url, tor_only=False, method="get", headers=None):
     # tor_only:  request will only be executed if tor is available
     # method:    'get or' 'post'
     # Store TOR Status here to avoid having to check on all http requests
-    
+
     if not 'http' in url:
-        url = 'http://' + url 
+        url = 'http://' + url
     TOR = pickle_it('load', 'tor.pkl')
     if TOR == 'file not found':
         TOR = {
@@ -92,7 +92,7 @@ def tor_request(url, tor_only=False, method="get", headers=None):
             "port": "failed",
             "last_refresh": None,
         }
-    
+
     # Do not use Tor for Local Network requests
     if '.local' in url or '127.0.0.1' in url or 'localhost' in url:
         try:
@@ -145,15 +145,13 @@ def tor_request(url, tor_only=False, method="get", headers=None):
 # Check Local Network for nodes and services
 # Need to optimize this to run several threads instead of sequentially
 def scan_network():
-    logging.info("Scanning Network for services...")
-
     # Add WARden to services
     onion = pickle_it('load', 'onion_address.pkl')
     local_ip = pickle_it('load', 'local_ip_address.pkl')
 
     host_list = [
         'umbrel.local', 'mynode.local', 'raspberrypi.local', 'ronindojo.local',
-        'raspberrypi-2.local', 'umbrel-2.local', 'umbrel-3.local', '127.0.0.1', 
+        'raspberrypi-2.local', 'umbrel-2.local', 'umbrel-3.local', '127.0.0.1',
         onion, local_ip
     ]
 
@@ -195,8 +193,7 @@ def scan_network():
             return(host_found)
         except Exception as e:
             return None
-    
-    
+
     # Launch thread to check hosts
     with concurrent.futures.ThreadPoolExecutor(20) as executor:
         futures = [executor.submit(check_host, args) for args in host_list]
@@ -208,9 +205,9 @@ def scan_network():
         pickle_it('save', 'hosts_found.pkl', hosts_found)
         # Sample return:
         # {
-        # '192.168.15.8': {'ip': '192.168.15.8', 'host': 'umbrel.local', 'last_time': 1634751093.1874}, 
-        # '192.168.15.14': {'ip': '192.168.15.14', 'host': 'raspberrypi.local', 'last_time': 1634751093.18819}, 
-        # '127.0.0.1': {'ip': '127.0.0.1', 'host': '127.0.0.1', 'last_time': 1634751093.185246}, 
+        # '192.168.15.8': {'ip': '192.168.15.8', 'host': 'umbrel.local', 'last_time': 1634751093.1874},
+        # '192.168.15.14': {'ip': '192.168.15.14', 'host': 'raspberrypi.local', 'last_time': 1634751093.18819},
+        # '127.0.0.1': {'ip': '127.0.0.1', 'host': '127.0.0.1', 'last_time': 1634751093.185246},
         # '192.168.15.18': {'ip': '192.168.15.18', 'host': '192.168.15.18', 'last_time': 1634751093.185638}
         # }
 
@@ -230,19 +227,19 @@ def scan_network():
     # (8085, 'Gitea'),
     # (8081, 'Nextcloud'),
     # (8083, "Home Assistant")
-    
+
     check_list = []
     # Create the list of hosts to reach
     for host in just_found:
         if 'onion' in host:
-            url = 'http://' + host + '/'
+            url = url_parser(host)
             check_list.append(url)
         else:
             for port in port_list:
                 url = 'http://' + host + ':' + str(int(port[0])) + '/'
                 check_list.append(url)
 
-    def service_name(port):    
+    def service_name(port):
         for element in port_list:
             if element[0] == port:
                 return element[1]
@@ -250,7 +247,7 @@ def scan_network():
 
     def check_service_url(url):
         try:
-            service_found = {} 
+            service_found = {}
             result = tor_request(url)
             status = 'ok'
             if not isinstance(result, requests.models.Response):
@@ -279,8 +276,8 @@ def scan_network():
                     'last_update': epoch_time,
                     'port': port,
                     'service': service_name(port)
-                }    
-                
+                }
+
             return(service_found)
         except Exception:
             return None
@@ -292,13 +289,14 @@ def scan_network():
 
     # Launch thread to check urls
     with concurrent.futures.ThreadPoolExecutor(30) as executor:
-        futures = [executor.submit(check_service_url, args) for args in check_list]
+        futures = [executor.submit(check_service_url, args)
+                   for args in check_list]
         wait(futures, timeout=120, return_when=ALL_COMPLETED)
         for element in futures:
             if isinstance(element.result(), dict):
                 services_found = {**services_found, **element.result()}
-    
-    # Clean Checking Status	
+
+    # Clean Checking Status
     try:
         for key, item in services_found.items():
             if item['service'] == 'Checking Status':
@@ -311,19 +309,20 @@ def scan_network():
     # services_found = sorted(services_found.items(), key=lambda k_v: k_v['last_update'], reverse=True)
 
     pickle_it('save', 'services_found.pkl', services_found)
-    
+
     return (services_found)
     # {
     # 'http://umbrel.local:80/': {
-    #   'url': 'http://umbrel.local:80/', 
-    #   'status': 'ok', 
-    #   'last_update': 1634758799.142936, 
+    #   'url': 'http://umbrel.local:80/',
+    #   'status': 'ok',
+    #   'last_update': 1634758799.142936,
     #   'port': '80',
     #   'service': 'Web Server'
     #   }
     # }
 
-def is_service_running(service, expiry = None): 
+
+def is_service_running(service, expiry=None):
     # Expiry in seconds since last time reached
     # usage: is_service_running('WARden Server', 10)
     services_found = pickle_it('load', 'services_found.pkl')
@@ -335,8 +334,21 @@ def is_service_running(service, expiry = None):
                 utc_time = datetime.utcnow()
                 epoch_time = (utc_time - datetime(1970, 1, 1)).total_seconds()
                 if epoch_time - val['last_update'] > expiry:
-                    continue                
+                    continue
             return (True, val)
     return (False, None)
 
 
+def url_parser(url):
+    # Parse it
+    from urllib.parse import urlparse
+    parse_object = urlparse(url)
+    scheme = 'http' if parse_object.scheme == '' else parse_object.scheme
+    if parse_object.netloc != '':
+        url = scheme + '://' + parse_object.netloc + '/'
+    if not url.startswith('http'):
+        url = 'http://' + url
+    if url[-1] != '/':
+        url += '/'
+
+    return(url)

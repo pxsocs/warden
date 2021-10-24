@@ -120,9 +120,9 @@ function get_version() {
         dataType: 'json',
         url: "/gitreleases",
         success: function (data) {
-            if ('tag_name' in data[0]) {
+            try {
                 $('#version').html("<p>Latest Version " + data[0]['tag_name'] + "</p>")
-            } else {
+            } catch (err) {
                 $('#version').html("<p>Could not retrieve version</p>")
             }
         },

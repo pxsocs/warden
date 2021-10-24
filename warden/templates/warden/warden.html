@@ -20,32 +20,32 @@
                     <td class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
                         title="Market Value in {{current_app.fx['symbol']}}">
                         <span id="pvalue">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img>
                         </span>
                     </td>
                     <td id="chg1" class="redgreen border-bottom hinumber text-right">
                         <span id="">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img>
                         </span>
                     </td>
                     <td id="chg2" class="redgreen border-bottom hinumber text-right">
-                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                        <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                             height="30"></img>
                     </td>
                     <td></td>
                     <td class="border-bottom hinumber text-right" data-toggle="tooltip" data-placement="top"
                         title="Market Value in BTC">
                         <span id="pvaluebtc">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img>
                         </span>
                     </td>
                     <td class="border-bottom hinumber text-right" data-toggle="tooltip" data-placement="top"
                         title="Market Value in Sats">
                         <span id="pvaluesats">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img>
                         </span>
                     </td>
@@ -82,19 +82,19 @@
 
                     <td id='latest_btc_price' class="text-center border-bottom hinumbersmall" data-toggle="tooltip"
                         data-placement="top" title="Bitcoin's Latest Price">
-                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                        <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                             height="30"></img>
                     </td>
 
                     <td id='latest_btc_block' class="text-center border-bottom hinumbersmall small"
                         data-toggle="tooltip" data-placement="top" title="Bitcoin's Latest Block">
-                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                        <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                             height="30"></img>
                     </td>
 
                     <td class="border-bottom hinumbersmall text-right small">
                         <span id="lstupd">
-                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img>
                         </span>
 
@@ -190,7 +190,7 @@
                         <td class="text-right align-middle hinumbersmall">
                             <strong>
                                 <span id="{{position}}_price">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
                             </strong>
@@ -198,7 +198,7 @@
 
                         <td class="text-right small align-middle redgreen">
                             <span id="{{position}}_24hchg">
-                                <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
 
@@ -211,21 +211,21 @@
 
                         <td class="text-right align-middle">
                             <span id="{{position}}_position">
-                                <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
                         </td>
 
                         <td class="text-right align-middle">
                             <span id="{{position}}_btc_position">
-                                <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
                         </td>
 
                         <td class="text-right small align-middle">
                             <span id="{{position}}_allocation">
-                                <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
 
@@ -243,6 +243,39 @@
             </table>
         </div>
         <!-- END Portfolio Snapshot section  -->
+
+        <!-- START Charts -->
+
+        <div class="row">
+            <div class="col-sm-6">
+                <div id="fiatchart" style="height: 350px; margin: 0 auto">
+                    <span class="loadanim">&nbsp;Loading Fiat Chart</span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div id="stackchart" style="height: 350px; margin: 0 auto">
+                    <span class="loadanim">&nbsp;Loading Stack Chart</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-6">
+                <div id="navchart" style="height: 350px; margin: 0 auto">
+                    <span class="loadanim">&nbsp;Loading NAV Chart</span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div id="btcchart" style="height: 350px; margin: 0 auto">
+                    <span class="loadanim">&nbsp;Loading BTC Price Chart</span>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- END Charts -->
+
 
         <!-- START Address activity ALERTS -->
         {%if alerts%}
@@ -381,7 +414,8 @@
                 <tbody>
 
                     {%for wallet in sorted_wallet_list%}
-                    {% set wallet_df = warden_metadata['full_df'].loc[warden_metadata['full_df']['wallet_alias'] == wallet] %}
+                    {% set wallet_df = warden_metadata['full_df'].loc[warden_metadata['full_df']['wallet_alias'] ==
+                    wallet] %}
 
                     {%if current_app.specter.rescan_progress(wallet)['active']%}
                     <div class="alert alert-dark" role="alert"><i class="fab fa-searchengin fa-lg"></i>&nbsp;&nbsp;
@@ -642,7 +676,7 @@
 
                             <td class="text-right align-middle">
                                 <span id="{{position}}_F_position">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
 
@@ -651,7 +685,7 @@
 
                             <td class="text-right align-middle">
                                 <span id="{{position}}_F_trade_fees_fx">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
 
@@ -659,20 +693,20 @@
 
                             <td class="text-right align-middle redgreen">
                                 <span id="{{position}}_F_pnl_net">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
 
                             </td>
                             <td class="text-right align-middle">
                                 <span id="{{position}}_F_breakeven">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
                             </td>
                             <td class="text-right align-middle">
                                 <span id="{{position}}_perc_breakeven">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
                             </td>
@@ -696,7 +730,7 @@
 
                             <td class="text-right align-middle">
                                 <span id="F_total">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
 
@@ -704,14 +738,14 @@
 
                             <td class="text-right align-middle">
                                 <span id="F_fees">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
                             </td>
 
                             <td class="text-right align-middle">
                                 <span id="F_pnl">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
                             </td>
@@ -785,7 +819,7 @@
                         <td class="text-right align-middle hinumbersmall">
                             <strong>
                                 <span id="{{position}}_mkt_price">
-                                    <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
+                                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
 
@@ -795,14 +829,14 @@
 
                         <td class="text-right align-middle small redgreen">
                             <span id="{{position}}_24h_change">
-                                <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
                         </td>
 
                         <td class="text-center small">
                             <span id="{{position}}_24h_range">
-                                <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
 
@@ -811,7 +845,7 @@
 
                         <td class="text-right align-middle small">
                             <span id="{{position}}_volume">
-                                <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
                         </td>
@@ -819,7 +853,7 @@
 
                         <td class="text-right align-middle small">
                             <span id="{{position}}_mktcap">
-                                <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
 
@@ -827,7 +861,7 @@
 
                         <td class="text-right align-middle small">
                             <span id="{{position}}_lastupdate">
-                                <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
                         </td>
@@ -835,7 +869,7 @@
 
                         <td class="text-right align-middle small">
                             <span id="{{position}}_source">
-                                <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
 
@@ -899,314 +933,6 @@
 
         <!-- END Custody List -->
 
-        <!-- START Bitcoin Address Summary -->
-        {%if wallets_exist%}
-        <div>
-            <div class='row'>
-                <div class='col-6'>
-                    <div class="content-section table-responsive">
-                        <span class="lead">Specter Server Status</span>
-                        <span class="float-right">
-                            <a href="{{current_app.specter.base_url}}" target="_blank"
-                                style="text-decoration: none; color:gray;">
-                                <i class="fas fa-external-link-square-alt fa-lg"></i>
-                            </a>
-                        </span>
-                        </br>
-                        <table id="btctable" class="table table-sm small-text">
-                            <tbody>
-                                <tr>
-                                    <td>Status</td>
-                                    <td id='specter_health' class="text-right">
-                                        <img src='{{url_for('warden.static',
-                                        filename='images/loading_small.gif' )}}' width="30" height="30"></img>
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td>Last Data Refresh</td>
-                                    <td id='specter_refresh' class="text-right"> <img src='{{url_for('warden.static',
-                                        filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
-                                </tr>
-                                <tr>
-                                    <td></td>
-                                    <td id='specter_refresh_ago' class="text-right"> <img src='{{url_for('warden.static',
-                                        filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
-                                </tr>
-                                {%if current_app.downloading%}
-                                <tr>
-                                    <td></td>
-                                    <td class="text-right text-danger">Downloading transactions...</td>
-                                </tr>
-                                {%endif%}
-
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="content-section table-responsive">
-
-                        <span class="lead">Bitcoin Node Status</span>
-                        <span class="float-right">
-
-                        </span>
-                        </br>
-
-                        <table id="btctable" class="table table-sm small-text">
-                            <tbody>
-
-                                <tr>
-                                    <td>Latest Block</td>
-                                    <td id='current_block' class="text-right"> <img src='{{url_for('warden.static',
-                                        filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
-                                </tr>
-
-
-                                <tr>
-                                    <td>Size on Disk</td>
-                                    <td id='size_on_disk' class="text-right">
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Difficulty</td>
-                                    <td id='difficulty' class="text-right">
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Bitcoin Core Version</td>
-                                    <td id='core_version' class="text-right">
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Connection Count</td>
-                                    <td id='connection_count' class="text-right">
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Mempool Size</td>
-                                    <td id='mempool_size' class="text-right">
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Node Uptime</td>
-                                    <td id='uptime' class="text-right">
-                                        <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                            width="30" height="30"></img>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                    </td>
-                                    <td>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class='col-6'>
-                    <!-- START Mempool  Section -->
-                    <div class="content-section table-responsive">
-                        <span class="lead">Mempool Data</span>
-                        <span class='float-right small' id='mempool_source'>
-                        </span>
-
-                        <div id='mempool_body'>
-
-                            <h6 style='padding-top: 10px;'>Fee Estimates</h6>
-
-                            <table id="time" class="table-condensed table-right text-right">
-                                <tbody>
-                                    <tr>
-
-                                        <td id='fastest_fee' class="text-left border-bottom hinumbersmall"
-                                            data-toggle="tooltip" data-placement="top"
-                                            title="If you are in a rush, this is how much you need to pay in fees to have fast confirmation time">
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-
-                                        <td id='30min_fee' class="text-center border-bottom hinumbersmall"
-                                            data-toggle="tooltip" data-placement="top"
-                                            title="This is how much you need to pay to get your transaction confirmed in 30 min (estimate)">
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-
-                                        <td id='1hr_fee' class="text-right border-bottom hinumbersmall"
-                                            data-toggle="tooltip" data-placement="top"
-                                            title="This is how much you need to pay to get your transaction confirmed in 60 min (estimate)">
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-
-
-                                    </tr>
-                                    <tr>
-                                        <td class="small text-left">
-                                            Fastest Fee
-                                        </td>
-
-                                        <td class="small text-center">
-                                            30 min Fee
-                                        </td>
-
-                                        <td class="small text-right">
-                                            1 hour Fee
-                                        </td>
-
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <br>
-                            <h6>Latest Blocks</h6>
-                            <table id="mempooltable" class="table table-sm small-text">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th class='text-center'>
-                                            Time
-                                        </th>
-                                        <td class='text-right'>
-                                            Block Height
-                                        </td>
-                                        <td class='text-right'>
-                                            # Transactions
-                                        </td>
-                                        <td class='text-right'>
-                                            Size
-                                        </td>
-
-                                    </tr>
-                                    <tr>
-                                        <th class='text-center' id='time_0'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </th>
-                                        <td class='text-right' id='height_0'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                        <td class='text-right' id='txs_0'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                        <td class='text-right' id='size_0'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-
-                                    </tr>
-                                    <tr>
-                                        <th class='text-center' id='time_1'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </th>
-                                        <td class='text-right' id='height_1'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                        <td class='text-right' id='txs_1'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                        <td class='text-right' id='size_1'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class='text-center' id='time_2'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </th>
-                                        <td class='text-right' id='height_2'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                        <td class='text-right' id='txs_2'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                        <td class='text-right' id='size_2'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class='text-center' id='time_3'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </th>
-                                        <td class='text-right' id='height_3'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                        <td class='text-right' id='txs_3'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                        <td class='text-right' id='size_3'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class='text-center' id='time_4'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </th>
-                                        <td class='text-right' id='height_4'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                        <td class='text-right' id='txs_4'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                        <td class='text-right' id='size_4'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class='text-center' id='time_5'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </th>
-                                        <td class='text-right' id='height_5'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                        <td class='text-right' id='txs_5'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                        <td class='text-right' id='size_5'>
-                                            <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}'
-                                                width="30" height="30"></img>
-                                        </td>
-                                    </tr>
-                                </thead>
-                            </table>
-                        </div>
-                    </div>
-                    <!-- END Mempool Data Section -->
-
-                </div>
-            </div>
-            <!-- END Bitcoin Address Summary -->
-        </div>
-        {%endif%}
 
         <!-- Notes -->
         <div class='row'>
@@ -1239,25 +965,25 @@
                 <tbody>
                     <tr>
                         <td>Current NAV</td>
-                        <td id='end_nav' class="text-right"> <img src='{{url_for('warden.static',
-                                filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
+                        <td id='end_nav' class="text-right"> <img src="{{url_for('warden.static',
+                                filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Highest NAV</td>
-                        <td id='max_nav' class="text-right"> <img src='{{url_for('warden.static',
-                                filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
+                        <td id='max_nav' class="text-right"> <img src="{{url_for('warden.static',
+                                filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Lowest NAV</td>
-                        <td id='min_nav' class="text-right"> <img src='{{url_for('warden.static',
-                                filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
+                        <td id='min_nav' class="text-right"> <img src="{{url_for('warden.static',
+                                filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Portfolio Value</td>
                         <td class="text-right">
                             {{current_app.fx['symbol']}}
-                            <span id='end_portvalue'> <img src='{{url_for('warden.static',
-                                    filename='images/loading_small.gif' )}}' width="30" height="30"></img>
+                            <span id='end_portvalue'> <img src="{{url_for('warden.static',
+                                    filename='images/loading_small.gif')}}" width="30" height="30"></img>
                             </span>
                         </td>
                     </tr>
@@ -1267,7 +993,7 @@
                         <td class="text-right">
                             {{current_app.fx['symbol']}}
                             <span id='max_portvalue'>
-                                <img src='{{url_for('warden.static', filename='images/loading_small.gif' )}}' width="30"
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
                         </td>
@@ -1280,34 +1006,34 @@
 
                     <tr>
                         <td>Since last 'close'</td>
-                        <td id='return_1d' class="text-right redgreen"> <img src='{{url_for('warden.static',
-                                filename='images/loading_small.gif' )}}' width="30" height="30">
+                        <td id='return_1d' class="text-right redgreen"> <img src="{{url_for('warden.static',
+                                filename='images/loading_small.gif')}}" width="30" height="30">
                             </img> </td>
                     </tr>
                     <tr>
                         <td>1 week</td>
-                        <td id='return_1wk' class="text-right redgreen"> <img src='{{url_for('warden.static',
-                                filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
+                        <td id='return_1wk' class="text-right redgreen"> <img src="{{url_for('warden.static',
+                                filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>30 days</td>
-                        <td id='return_30d' class="text-right redgreen"> <img src='{{url_for('warden.static',
-                                filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
+                        <td id='return_30d' class="text-right redgreen"> <img src="{{url_for('warden.static',
+                                filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>90 days</td>
-                        <td id='return_90d' class="text-right redgreen"> <img src='{{url_for('warden.static',
-                                filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
+                        <td id='return_90d' class="text-right redgreen"> <img src="{{url_for('warden.static',
+                                filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Since ATH</td>
-                        <td id='return_ATH' class="text-right redgreen"> <img src='{{url_for('warden.static',
-                                filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
+                        <td id='return_ATH' class="text-right redgreen"> <img src="{{url_for('warden.static',
+                                filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Since inception</td>
-                        <td id='return_SI' class="text-right redgreen"> <img src='{{url_for('warden.static',
-                                filename='images/loading_small.gif' )}}' width="30" height="30"></img> </td>
+                        <td id='return_SI' class="text-right redgreen"> <img src="{{url_for('warden.static',
+                                filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
 
                 </tbody>
@@ -1317,32 +1043,305 @@
         </div>
         <!-- END Portfolio Statistics section -->
 
-        <!-- START stackcharts -->
-        <div class="row">
-            <div class='col-sm-12'>
-                <div>
-                    <!-- NAV Chart -->
-                    <div id="stackchart" style="height: 350px; margin: 0 auto">
-                        <span class="loadanim">&nbsp;Loading Stack Chart</span>
-                    </div>
-                </div>
+        <!-- START BITCOIN Node section -->
+        <div class="content-section table-responsive">
+            <span class="lead">Specter Server Status</span>
+            <span class="float-right">
+                <a href="{{current_app.specter.base_url}}" target="_blank" style="text-decoration: none; color:gray;">
+                    <i class="fas fa-external-link-square-alt fa-lg"></i>
+                </a>
+            </span>
+            </br>
+            <table id="btctable" class="table table-sm small-text">
+                <tbody>
+                    <tr>
+                        <td>Status</td>
+                        <td id='specter_health' class="text-right">
+                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                                height="30"></img>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>Last Data Refresh</td>
+                        <td id='specter_refresh' class="text-right"> <img src="{{url_for('warden.static',
+                                filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td id='specter_refresh_ago' class="text-right"> <img
+                                src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                                height="30"></img> </td>
+                    </tr>
+                    {%if current_app.downloading%}
+                    <tr>
+                        <td></td>
+                        <td class="text-right text-danger">Downloading transactions...</td>
+                    </tr>
+                    {%endif%}
+
+                </tbody>
+            </table>
+        </div>
+        <div class="content-section table-responsive">
+
+            <span class="lead">Bitcoin Node Status</span>
+            <span class="float-right">
+
+            </span>
+            </br>
+
+            <table id="btctable" class="table table-sm small-text">
+                <tbody>
+
+                    <tr>
+                        <td>Latest Block</td>
+                        <td id='current_block' class="text-right"> <img src="{{url_for('warden.static',
+                                filename='images/loading_small.gif')}}"" width=" 30" height="30"></img>
+                        </td>
+                    </tr>
+
+
+                    <tr>
+                        <td>Size on Disk</td>
+                        <td id='size_on_disk' class="text-right">
+                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                                height="30"></img>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Difficulty</td>
+                        <td id='difficulty' class="text-right">
+                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                                height="30"></img>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Bitcoin Core Version</td>
+                        <td id='core_version' class="text-right">
+                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                                height="30"></img>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Connection Count</td>
+                        <td id='connection_count' class="text-right">
+                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                                height="30"></img>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Mempool Size</td>
+                        <td id='mempool_size' class="text-right">
+                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                                height="30"></img>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Node Uptime</td>
+                        <td id='uptime' class="text-right">
+                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                                height="30"></img>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                        </td>
+                        <td>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- END BITCOIN Node section -->
+
+        <!-- START MEMPOOL section -->
+        <div class="content-section table-responsive">
+            <span class="lead">Mempool Data</span>
+            <span class='float-right small' id='mempool_source'>
+            </span>
+
+            <div id='mempool_body'>
+
+                <h6 style='padding-top: 10px;'>Fee Estimates</h6>
+
+                <table id="time" class="table-condensed table-right text-right">
+                    <tbody>
+                        <tr>
+
+                            <td id='fastest_fee' class="text-left border-bottom hinumbersmall" data-toggle="tooltip"
+                                data-placement="top"
+                                title="If you are in a rush, this is how much you need to pay in fees to have fast confirmation time">
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+
+                            <td id='30min_fee' class="text-center border-bottom hinumbersmall" data-toggle="tooltip"
+                                data-placement="top"
+                                title="This is how much you need to pay to get your transaction confirmed in 30 min (estimate)">
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+
+                            <td id='1hr_fee' class="text-right border-bottom hinumbersmall" data-toggle="tooltip"
+                                data-placement="top"
+                                title="This is how much you need to pay to get your transaction confirmed in 60 min (estimate)">
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+
+
+                        </tr>
+                        <tr>
+                            <td class="small text-left">
+                                Fastest Fee
+                            </td>
+
+                            <td class="small text-center">
+                                30 min Fee
+                            </td>
+
+                            <td class="small text-right">
+                                1 hour Fee
+                            </td>
+
+                        </tr>
+                    </tbody>
+                </table>
+                <br>
+                <h6>Latest Blocks</h6>
+                <table id="mempooltable" class="table table-sm small-text">
+                    <thead class="thead-light">
+                        <tr>
+                            <th class='text-center'>
+                                Time
+                            </th>
+                            <td class='text-right'>
+                                Block Height
+                            </td>
+                            <td class='text-right'>
+                                # Transactions
+                            </td>
+                            <td class='text-right'>
+                                Size
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <th class='text-center' id='time_0'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </th>
+                            <td class='text-right' id='height_0'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                            <td class='text-right' id='txs_0'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                            <td class='text-right' id='size_0'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <th class='text-center' id='time_1'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </th>
+                            <td class='text-right' id='height_1'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                            <td class='text-right' id='txs_1'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                            <td class='text-right' id='size_1'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class='text-center' id='time_2'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </th>
+                            <td class='text-right' id='height_2'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                            <td class='text-right' id='txs_2'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                            <td class='text-right' id='size_2'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class='text-center' id='time_3'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </th>
+                            <td class='text-right' id='height_3'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                            <td class='text-right' id='txs_3'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                            <td class='text-right' id='size_3'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class='text-center' id='time_4'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </th>
+                            <td class='text-right' id='height_4'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                            <td class='text-right' id='txs_4'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                            <td class='text-right' id='size_4'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class='text-center' id='time_5'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </th>
+                            <td class='text-right' id='height_5'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                            <td class='text-right' id='txs_5'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                            <td class='text-right' id='size_5'>
+                                <img src="{{url_for('warden.static', filename='images/loading_small.gif'
+                                    )}}" width="30" height="30"></img>
+                            </td>
+                        </tr>
+                    </thead>
+                </table>
             </div>
         </div>
-        <!-- END Charts -->
-
-        <!-- START charts -->
-        <div class="row">
-            <div class='col-sm-12'>
-                <div>
-                    <!-- NAV Chart -->
-                    <div id="navchart" style="height: 350px; margin: 0 auto">
-                        <span class="loadanim">&nbsp;Loading NAV Chart</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- END Charts -->
-
+        <!-- END MEMPOOL Section -->
 
     </div>
 

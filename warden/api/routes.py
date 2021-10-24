@@ -1,10 +1,11 @@
-from flask import (Blueprint, flash,  request, current_app,  jsonify, Response, redirect, url_for)
+from flask import (Blueprint, flash,  request, current_app,
+                   jsonify, Response, redirect, url_for)
 from warden_modules import (warden_metadata,
                             positions_dynamic,
                             generatenav, specter_df,
                             current_path, regenerate_nav,
                             home_path, transactions_fx)
-from connections import tor_request
+from connections import tor_request, url_parser
 from pricing_engine.engine import price_ondate, historical_prices
 from flask_login import login_required, current_user
 from random import randrange
@@ -188,11 +189,13 @@ def positions_json():
 def realtime_btc():
     try:
         fx_details = fx_rate()
-        fx_r = {'cross': fx_details['symbol'], 'fx_rate': fx_details['fx_rate']}
+        fx_r = {'cross': fx_details['symbol'],
+                'fx_rate': fx_details['fx_rate']}
         fx_r['btc_usd'] = realtime_price("BTC", fx='USD')['price']
         fx_r['btc_fx'] = fx_r['btc_usd'] * fx_r['fx_rate']
     except Exception as e:
-        logging.warn(f"There was an error while getting realtime prices. Error: {e}")
+        logging.warn(
+            f"There was an error while getting realtime prices. Error: {e}")
         fx_r = 0
     return json.dumps(fx_r)
 
@@ -361,7 +364,8 @@ def stackchartdatajson():
         data['BTC_cum'] = data['PORT_VALUE_BTC']
         stackchart = data[["BTC_cum"]]
         # dates need to be in Epoch time for Highcharts
-        stackchart.index = (stackchart.index - datetime(1970, 1, 1)).total_seconds()
+        stackchart.index = (stackchart.index -
+                            datetime(1970, 1, 1)).total_seconds()
         stackchart.index = stackchart.index * 1000
         stackchart.index = stackchart.index.astype(np.int64)
         stackchart = stackchart.to_dict()
@@ -373,6 +377,63 @@ def stackchartdatajson():
     except Exception as e:
         return (json.dumps({"Error": str(e)}))
     return stackchart
+
+
+# API end point - returns a json with Portfolio Fiat Value
+@api.route("/fiatchartdatajson", methods=["GET", "POST"])
+@login_required
+#  Creates a table with dates and Fiat values
+def fiatchartdatajson():
+    data = generatenav()
+    # Generate data for Stack chart
+    # Filter to Only BTC Positions
+    fx = current_app.settings['PORTFOLIO']['base_fx']
+    if fx is None:
+        fx = 'USD'
+
+    try:
+        data['fiat'] = data['PORT_fx_pos']
+        fiatchart = data[["fiat"]]
+        # dates need to be in Epoch time for Highcharts
+        fiatchart.index = (fiatchart.index -
+                           datetime(1970, 1, 1)).total_seconds()
+        fiatchart.index = fiatchart.index * 1000
+        fiatchart.index = fiatchart.index.astype(np.int64)
+        fiatchart = fiatchart.to_dict()
+        fiatchart = fiatchart["fiat"]
+        # Sort for HighCharts
+        import collections
+        fiatchart = collections.OrderedDict(sorted(fiatchart.items()))
+        fiatchart = json.dumps(fiatchart)
+    except Exception as e:
+        return (json.dumps({"Error": str(e)}))
+    return fiatchart
+
+# API end point - returns a json with BTC Fiat Price
+
+
+@api.route("/btcchartdatajson", methods=["GET", "POST"])
+@login_required
+#  Creates a table with dates and Fiat values
+def btcchartdatajson():
+    data = generatenav()
+    try:
+        data['fiat'] = data['BTC_price']
+        fiatchart = data[["fiat"]]
+        # dates need to be in Epoch time for Highcharts
+        fiatchart.index = (fiatchart.index -
+                           datetime(1970, 1, 1)).total_seconds()
+        fiatchart.index = fiatchart.index * 1000
+        fiatchart.index = fiatchart.index.astype(np.int64)
+        fiatchart = fiatchart.to_dict()
+        fiatchart = fiatchart["fiat"]
+        # Sort for HighCharts
+        import collections
+        fiatchart = collections.OrderedDict(sorted(fiatchart.items()))
+        fiatchart = json.dumps(fiatchart)
+    except Exception as e:
+        return (json.dumps({"Error": str(e)}))
+    return fiatchart
 
 
 # Return the price of a ticker on a given date
@@ -603,16 +664,7 @@ def mempool_json():
     try:
         mp_config = current_app.settings['MEMPOOL']
         url = mp_config.get('url')
-
-        from urllib.parse import urlparse
-        parse_object = urlparse(url)
-        scheme = 'http' if parse_object.scheme == '' else parse_object.scheme
-        if parse_object.netloc != '':
-            url = scheme + '://' + parse_object.netloc + '/'
-        if not url.startswith('http'):
-            url = 'http://' + url
-        if url[-1] != '/':
-            url += '/'
+        url = url_parser(url)
 
         # Get recommended fees
         try:
@@ -772,10 +824,27 @@ def portfolio_compare_json():
 @api.route('/log')
 @login_required
 def progress_log():
+    lines = request.args.get("lines")
+    if lines is not None:
+        try:
+            lines = int(lines)
+        except Exception:
+            lines = 200
+    else:
+        lines = 200
     from config import Config
     from warden_modules import tail
     debug = Config.debug_file
-    data = tail(debug, 200)
+    data = tail(debug, lines)
+    # Filter if needed
+    level = request.args.get("level")
+    tmp = ""
+    if level is not None:
+        for item in str(data).split("\n"):
+            if level in item:
+                tmp += item + "\n"
+        data = tmp
+
     return json.dumps(str(data))
 
 
@@ -901,16 +970,7 @@ def host_list():
         return (json.dumps(hosts))
     if request.method == "POST":
         url = request.form.get("new_url")
-        # Parse it
-        from urllib.parse import urlparse
-        parse_object = urlparse(url)
-        scheme = 'http' if parse_object.scheme == '' else parse_object.scheme
-        if parse_object.netloc != '':
-            url = scheme + '://' + parse_object.netloc + '/'
-        if url.startswith('http'):
-            url = url.strip('http://')
-        if url[-1] == '/':
-            url = url[:-1]
+        url = url_parser(url)
         hosts[url] = {
             'ip': url,
             'host': url,

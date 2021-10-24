@@ -33,7 +33,7 @@ sys.path.append(current_path)
 def create_app():
     # Config of Logging
     from config import Config
-    formatter = "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
+    formatter = "[%(asctime)s] {%(module)s:%(funcName)s:%(lineno)d} %(levelname)s in %(module)s: %(message)s"
     logging.basicConfig(
         handlers=[RotatingFileHandler(
             filename=str(Config.debug_file),
@@ -41,6 +41,8 @@ def create_app():
         level=logging.INFO,
         format=formatter,
         datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.getLogger('apscheduler').setLevel(logging.CRITICAL)
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
     logging.info("Starting main program...")
 
     # Launch app
@@ -115,7 +117,8 @@ def init_app(app):
         app.warden_status['initial_setup'] = False
         print(success("✅ Config Loaded from config.ini - edit it for customization"))
     else:
-        print(error("  Config File could not be loaded, created a new one with default values..."))
+        print(error(
+            "  Config File could not be loaded, created a new one with default values..."))
         create_config(config_file)
         config_settings.read(config_file)
         app.warden_status['initial_setup'] = True
@@ -172,10 +175,10 @@ def init_app(app):
     print("")
     check_cryptocompare()
     print("")
-    
+
     print(f"[i] Running WARden version: {current_version}")
     app.warden_status['running_version'] = current_version
-    
+
     # CHECK FOR UPGRADE
     repo_url = 'https://api.github.com/repos/pxsocs/warden/releases'
     try:
@@ -298,7 +301,7 @@ def init_app(app):
     def bk_specter_health():
         with app.app_context():
             background_specter_health()
-    
+
     def bk_mempool_health():
         with app.app_context():
             background_mempool_seeker()
@@ -495,14 +498,14 @@ def main(debug=False, reloader=False):
     print("")
 
     if runningInDocker():
-        print(success(f"✅ Running inside docker container {emoji.emojize(':whale:')} Getting some James Bartley vibes..."))
+        print(success(
+            f"✅ Running inside docker container {emoji.emojize(':whale:')} Getting some James Bartley vibes..."))
         print("")
 
     app = create_app()
     app.app_context().push()
     app = init_app(app)
     app.app_context().push()
-
 
     def close_running_threads(app):
         print("")
@@ -527,12 +530,14 @@ def main(debug=False, reloader=False):
     print("")
     print(success("✅ WARden Server is Ready... Launch cool ASCII logo!"))
     print("")
+    logging.info("Launched WARden Server [Success]")
 
     def onion_string():
         from utils import pickle_it
         if app.settings['SERVER'].getboolean('onion_server'):
             try:
-                pickle_it('save', 'onion_address.pkl', app.tor_service_id + '.onion')
+                pickle_it('save', 'onion_address.pkl',
+                          app.tor_service_id + '.onion')
                 return (f"""
         {emoji.emojize(':onion:')} Tor Onion server running at:
         {yellow(app.tor_service_id + '.onion')}
