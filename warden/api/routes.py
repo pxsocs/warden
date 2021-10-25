@@ -685,6 +685,8 @@ def mempool_json():
                            'error': None})
 
     except Exception as e:
+        if not url:
+            url = 'Could not find url'
         return json.dumps({'mp_fee': '-',
                            'mp_blocks': '-',
                            'mp_url': url,
