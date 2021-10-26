@@ -685,6 +685,8 @@ def mempool_json():
                            'error': None})
 
     except Exception as e:
+        if not url:
+            url = 'Could not find url'
         return json.dumps({'mp_fee': '-',
                            'mp_blocks': '-',
                            'mp_url': url,
@@ -995,3 +997,213 @@ def host_list():
             pass
 
         return redirect(url_for("warden.running_services"))
+
+
+@api.route("/drawdown_json", methods=["GET"])
+@login_required
+# Return the largest drawdowns in a time period
+# Takes arguments:
+# ticker:       Single ticker for filter (default = NAV)
+# start_date:   If none, defaults to all available
+# end_date:     If none, defaults to today
+# n_dd:         Top n drawdowns to be calculated
+# chart:        Boolean - return data for chart
+def drawdown_json():
+    # Get the arguments and store
+    if request.method == "GET":
+        start_date = request.args.get("start")
+        ticker = request.args.get("ticker")
+        n_dd = request.args.get("n_dd")
+        chart = request.args.get("chart")
+        if not ticker:
+            ticker = "NAV"
+        ticker = ticker.upper()
+        if n_dd:
+            try:
+                n_dd = int(n_dd)
+            except TypeError:
+                n_dd = 2
+        if not n_dd:
+            n_dd = 2
+        # Check if start and end dates exist, if not assign values
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        except (ValueError, TypeError) as e:
+            logging.info(f"Warning: {e}, " + "setting start_date to zero")
+            start_date = datetime(2000, 1, 1)
+
+        end_date = request.args.get("end")
+        try:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        except (ValueError, TypeError) as e:
+            logging.info(f"Warning: {e}, " + "setting end_date to now")
+            end_date = datetime.now()
+
+    # Create a df with either NAV or ticker prices
+    if ticker == "NAV":
+        data = generatenav(current_user.username)
+        data = data[["NAV_fx"]]
+        data = data.rename(columns={'NAV_fx': 'close'})
+    else:
+        # Get price of ticker passed as argument
+        data = price_data_fx(ticker)
+        # If notification is an error, skip this ticker
+        if data is None:
+            messages = data.errors
+            return jsonify(messages)
+        data = data.rename(columns={'close_converted': ticker + '_price'})
+        data = data[[ticker + '_price']]
+        data = data.astype(float)
+        data.sort_index(ascending=True, inplace=True)
+        data = data.rename(columns={ticker + '_price': 'close'})
+    # Trim the df only to start_date to end_date:
+    mask = (data.index >= start_date) & (data.index <= end_date)
+    data = data.loc[mask]
+    # # Calculate drawdowns
+    # df = 100 * (1 + data / 100).cumprod()
+
+    df = pd.DataFrame()
+    df["close"] = data['close']
+    df["ret"] = df.close / df.close[0]
+    df["modMax"] = df.ret.cummax()
+    df["modDD"] = (df.ret / df["modMax"]) - 1
+    # Starting date of the currency modMax
+    df["end_date"] = df.index
+    # is this the first occurence of this modMax?
+    df["dup"] = df.duplicated(["modMax"])
+
+    # Now, exclude the drawdowns that have overlapping data, keep only highest
+    df_group = df.groupby(["modMax"]).min().sort_values(
+        by="modDD", ascending=True)
+    # Trim to fit n_dd
+    df_group = df_group.head(n_dd)
+    # Format a dict for return
+    return_list = []
+    for index, row in df_group.iterrows():
+        # access data using column names
+        tmp_dict = {}
+        tmp_dict["dd"] = row["modDD"]
+        tmp_dict["start_date"] = row["end_date"].strftime("%Y-%m-%d")
+        tmp_dict["end_value"] = row["close"]
+        tmp_dict["recovery_date"] = (
+            df[df.modMax == index].tail(1).end_date[0].strftime("%Y-%m-%d")
+        )
+        tmp_dict["end_date"] = (
+            df[df.close == row["close"]].tail(
+                1).end_date[0].strftime("%Y-%m-%d")
+        )
+        tmp_dict["start_value"] = df[df.index ==
+                                     row["end_date"]].tail(1).close[0]
+        tmp_dict["days_to_recovery"] = (
+            df[df.modMax == index].tail(1).end_date[0] - row["end_date"]
+        ).days
+        tmp_dict["days_to_bottom"] = (
+            df[df.close == row["close"]].tail(1).end_date[0] - row["end_date"]
+        ).days
+        tmp_dict["days_bottom_to_recovery"] = (
+            df[df.modMax == index].tail(1).end_date[0] -
+            df[df.close == row["close"]].tail(1).end_date[0]
+        ).days
+        return_list.append(tmp_dict)
+
+    if chart:
+        start_date = data.index.min()
+        total_days = (end_date - start_date).days
+        # dates need to be in Epoch time for Highcharts
+        data.index = (data.index - datetime(1970, 1, 1)).total_seconds()
+        data.index = data.index * 1000
+        data.index = data.index.astype(np.int64)
+        data = data.to_dict()
+        # Generate the flags for the chart
+        # {
+        #         x: 1500076800000,
+        #         title: 'TEST',
+        #         text: 'TEST text'
+        # }
+        flags = []
+        plot_bands = []
+        # Create a dict for flags and plotBands on chart
+        total_recovery_days = 0
+        total_drawdown_days = 0
+        for item in return_list:
+            # First the start date for all dd
+            tmp_dict = {}
+            start_date = datetime.strptime(item["start_date"], "%Y-%m-%d")
+            start_date = (start_date - datetime(1970, 1, 1)
+                          ).total_seconds() * 1000
+            tmp_dict["x"] = start_date
+            tmp_dict["title"] = "TOP"
+            tmp_dict["text"] = "Start of drawdown"
+            flags.append(tmp_dict)
+            # Now the bottom for all dd
+            tmp_dict = {}
+            end_date = datetime.strptime(item["end_date"], "%Y-%m-%d")
+            end_date = (end_date - datetime(1970, 1, 1)
+                        ).total_seconds() * 1000
+            tmp_dict["x"] = end_date
+            tmp_dict["title"] = "BOTTOM"
+            tmp_dict["text"] = "Bottom of drawdown"
+            flags.append(tmp_dict)
+            # Now the bottom for all dd
+            tmp_dict = {}
+            recovery_date = datetime.strptime(
+                item["recovery_date"], "%Y-%m-%d")
+            recovery_date = (
+                recovery_date - datetime(1970, 1, 1)
+            ).total_seconds() * 1000
+            tmp_dict["x"] = recovery_date
+            tmp_dict["title"] = "RECOVERED"
+            tmp_dict["text"] = "End of drawdown Cycle"
+            flags.append(tmp_dict)
+            # Now create the plot bands
+            drop_days = (end_date - start_date) / 1000 / 60 / 60 / 24
+            recovery_days = (recovery_date - end_date) / 1000 / 60 / 60 / 24
+            total_drawdown_days += round(drop_days, 0)
+            total_recovery_days += round(recovery_days, 0)
+            tmp_dict = {}
+            tmp_dict["label"] = {}
+            tmp_dict["label"]["align"] = "center"
+            tmp_dict["label"]["textAlign"] = "left"
+            tmp_dict["label"]["rotation"] = 90
+            tmp_dict["label"]["text"] = "Lasted " + \
+                str(round(drop_days, 0)) + " days"
+            tmp_dict["label"]["style"] = {}
+            tmp_dict["label"]["style"]["color"] = "white"
+            tmp_dict["label"]["style"]["fontWeight"] = "bold"
+            tmp_dict["color"] = "#E6A68E"
+            tmp_dict["from"] = start_date
+            tmp_dict["to"] = end_date
+            plot_bands.append(tmp_dict)
+            tmp_dict = {}
+            tmp_dict["label"] = {}
+            tmp_dict["label"]["rotation"] = 90
+            tmp_dict["label"]["align"] = "center"
+            tmp_dict["label"]["textAlign"] = "left"
+            tmp_dict["label"]["text"] = (
+                "Lasted " + str(round(recovery_days, 0)) + " days"
+            )
+            tmp_dict["label"]["style"] = {}
+            tmp_dict["label"]["style"]["color"] = "white"
+            tmp_dict["label"]["style"]["fontWeight"] = "bold"
+            tmp_dict["color"] = "#8CADE1"
+            tmp_dict["from"] = end_date
+            tmp_dict["to"] = recovery_date
+            plot_bands.append(tmp_dict)
+
+        return jsonify(
+            {
+                "chart_data": data['close'],
+                "messages": "OK",
+                "chart_flags": flags,
+                "plot_bands": plot_bands,
+                "days": {
+                    "recovery": total_recovery_days,
+                    "drawdown": total_drawdown_days,
+                    "trending": total_days - total_drawdown_days - total_recovery_days,
+                    "non_trending": total_drawdown_days + total_recovery_days,
+                    "total": total_days,
+                },
+            }
+        )
+
+    return simplejson.dumps(return_list)
