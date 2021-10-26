@@ -71,8 +71,11 @@ def realtime(ticker, fx='USD', function='CURRENCY_EXCHANGE_RATE', parsed=True):
         # }
 
     response = tor_request(url=globalURL)
-    if response.status_code == 403:
-        response = requests.get(globalURL)
+    try:
+        if response.status_code == 403:
+            response = requests.get(globalURL)
+    except AttributeError:
+        return None
 
     data = response.json()
 
@@ -84,7 +87,6 @@ def realtime(ticker, fx='USD', function='CURRENCY_EXCHANGE_RATE', parsed=True):
     #   'time':
     #   'timezone':
     # }
-
 
     if parsed:
         try:
@@ -220,7 +222,8 @@ def historical(ticker, function='TIME_SERIES_DAILY_ADJUSTED', fx='USD', parsed=T
                 # Clean columns
                 for i in range(0, 7):
                     for string in ['a', 'b', 'c', 'd', 'e', 'f']:
-                        df.columns = df.columns.str.replace(f'{i}{string}. ', '')
+                        df.columns = df.columns.str.replace(
+                            f'{i}{string}. ', '')
 
                 df = df.rename(
                     columns={
@@ -266,7 +269,8 @@ def asset_list(term=None):
     if term is None:
         term = ""
     # Alphavantage Currency List - CSV
-    filename = os.path.join(current_path(), 'static/csv_files/physical_currency_list.csv')
+    filename = os.path.join(
+        current_path(), 'static/csv_files/physical_currency_list.csv')
     with open(filename, newline='') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
@@ -279,7 +283,8 @@ def asset_list(term=None):
                     }
                 )
     # Alphavantage Digital Currency list
-    filename = os.path.join(current_path(), 'static/csv_files/digital_currency_list.csv')
+    filename = os.path.join(
+        current_path(), 'static/csv_files/digital_currency_list.csv')
     with open(filename, newline='') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:

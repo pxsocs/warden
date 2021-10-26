@@ -153,21 +153,6 @@ def logout():
     return redirect(url_for("warden.warden_page"))
 
 
-# Support method to check if donation was acknowledged
-def donate_check():
-    counter_file = os.path.join(home_path(),
-                                'warden/counter.json')
-    donated = False
-    try:
-        with open(counter_file) as data_file:
-            json_all = json.loads(data_file.read())
-        if json_all == "donated":
-            donated = True
-    except Exception:
-        donated = False
-    return (donated)
-
-
 # Main page for WARden
 @ warden.route("/", methods=['GET'])
 @ warden.route("/warden", methods=['GET'])
@@ -199,45 +184,32 @@ def warden_page():
                                        ])[["trade_quantity"]].sum()
 
     # Open Counter, increment, send data
-    counter_file = os.path.join(home_path(),
-                                'warden/counter.json')
-    donated = False
     try:
-        with open(counter_file) as data_file:
-            json_all = json.loads(data_file.read())
-        if json_all == "donated":
-            donated = True
-        else:
-            counter = int(json_all)
-            counter += 1
-            if counter == 25:
-                flash(
-                    "Looks like you've been using the app frequently. " +
-                    "Awesome! Consider donating.", "info")
-            if counter == 50:
-                flash(
-                    "Open Source software is transparent and free. " +
-                    "Support it. Make a donation.", "info")
-            if counter == 200:
-                flash(
-                    "Looks like you are a frequent user of the WARden. " +
-                    "Have you donated?", "info")
-            if counter >= 1000:
-                flash(
-                    "You've opened this page 1,000 times or more. " +
-                    "Really! Time to make a donation?", "danger")
-            with open(counter_file, 'w') as fp:
-                json.dump(counter, fp)
+        counter = pickle_it('load', 'counter.pkl')
+        if counter == 'file not found':
+            raise
+        counter += 1
+        pickle_it('save', 'counter.pkl', counter)
+        if counter == 25:
+            flash(
+                "Looks like you've been using the app frequently. " +
+                "Consider donating to support it.", "info")
+        if counter == 50:
+            flash(
+                "Open Source software is transparent and free. " +
+                "Support it. Make a donation.", "info")
+        if counter % 100:
+            flash(
+                "Looks like you are a frequent user of the WARden. " +
+                "Consider a donation.", "info")
 
     except Exception:
         # File wasn't found. Create start at zero
-        if not donated:
-            flash(
-                "Welcome. Consider making a donation " +
-                "to support this software.", "info")
-            counter = 0
-            with open(counter_file, 'w') as fp:
-                json.dump(counter, fp)
+        flash(
+            "Welcome. Consider making a donation " +
+            "to support this software.", "info")
+        counter = 0
+        pickle_it('save', 'counter.pkl', counter)
 
     meta = warden_metadata()
 
@@ -273,7 +245,6 @@ def warden_page():
         "warden_metadata": meta,
         "portfolio_data": df,
         "FX": current_app.settings['PORTFOLIO']['base_fx'],
-        "donated": donated,
         "alerts": activity,
         "current_app": current_app,
         "sorted_wallet_list": sorted_wallet_list,
@@ -322,7 +293,6 @@ def specter_auth():
 
         templateData = {
             "title": "Login to Specter",
-            "donated": donate_check(),
             "current_app": current_app,
             "current_user": current_user
         }
@@ -393,15 +363,13 @@ def specter_auth():
 
 
 # Donation Thank you Page
-@ warden.route("/donated", methods=['GET'])
+@ warden.route("/donate", methods=['GET'])
 @login_required
-def donated():
+def donate():
     counter_file = os.path.join(home_path(),
                                 'warden/counter.json')
-    templateData = {"title": "Thank You!",
-                    "donated": donate_check(), "current_app": current_app}
-    with open(counter_file, 'w') as fp:
-        json.dump("donated", fp)
+    templateData = {"title": "Support this Software",
+                    "current_app": current_app}
     return (render_template('warden/warden_thanks.html', **templateData))
 
 
@@ -437,7 +405,6 @@ def navchart():
                            port_value_chart=port_value_chart,
                            fx=current_app.settings['PORTFOLIO']['base_fx'],
                            current_user=fx_rate(),
-                           donated=donate_check(),
                            data=data,
                            current_app=current_app)
 
