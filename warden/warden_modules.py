@@ -310,7 +310,8 @@ def find_fx(row, fx=None):
     # row.name is the date being passed
     # row['trade_currency'] is the base fx (the one where the trade was included)
     # Create an instance of PriceData:
-    price = fx_price_ondate(current_app.settings['PORTFOLIO']['base_fx'], row['trade_currency'], row.name)
+    price = fx_price_ondate(
+        current_app.settings['PORTFOLIO']['base_fx'], row['trade_currency'], row.name)
     return price
 
 
@@ -378,7 +379,8 @@ def transactions_fx():
 # UTILS -----------------------------------
 
 # Better to use parseNumber most of the times...
-def clean_float(text):  # Function to clean CSV fields - leave only digits and .
+# Function to clean CSV fields - leave only digits and .
+def clean_float(text):
     if isinstance(text, int):
         return (float(text))
     if isinstance(text, float):
@@ -553,7 +555,8 @@ def positions_dynamic():
                     price_class = historical_prices(ticker, fx)
                     if price_class is None:
                         raise KeyError
-                    price = clean_float(price_class.df['close_converted'].iloc[0])
+                    price = clean_float(
+                        price_class.df['close_converted'].iloc[0])
                     high = '-'
                     low = '-'
                     volume = '-'
@@ -591,7 +594,8 @@ def positions_dynamic():
     df['position_btc'] = df['price'] * df['trade_quantity'] / btc_price
 
     # Force some fields to float and clean
-    float_fields = ['price', '24h_high', '24h_low', '24h_change', 'mktcap', 'volume']
+    float_fields = ['price', '24h_high', '24h_low',
+                    '24h_change', 'mktcap', 'volume']
     for field in float_fields:
         df[field] = df[field].apply(clean_float)
 
@@ -599,7 +603,8 @@ def positions_dynamic():
     df['change_fx'] = df['position_fx'] * df['24h_change'].astype(float) / 100
 
     # Pnl and Cost calculations
-    df['breakeven'] = (df['cash_value_fx'] + df['trade_fees_fx']) / df['trade_quantity']
+    df['breakeven'] = (df['cash_value_fx'] +
+                       df['trade_fees_fx']) / df['trade_quantity']
     df['pnl_gross'] = df['position_fx'] - df['cash_value_fx']
     df['pnl_net'] = df['pnl_gross'] - df['trade_fees_fx']
     # FIFO and LIFO PnL calculations
@@ -615,8 +620,9 @@ def positions_dynamic():
         (df['FIFO_unreal'] / df['trade_quantity'])
     # Allocations below 0.01% are marked as small
     # this is used to hide small and closed positions at html
-    df.loc[df.allocation <= 0, 'small_pos'] = 'True'
-    df.loc[df.allocation >= 0, 'small_pos'] = 'False'
+    df['small_pos'] = 'False'
+    # df.loc[df.allocation <= 0, 'small_pos'] = 'True'
+    # df.loc[df.allocation >= 0, 'small_pos'] = 'False'
     # Prepare for delivery. Change index, add total
     df.set_index('trade_asset_ticker', inplace=True)
     df.loc['Total'] = 0
@@ -752,7 +758,8 @@ def generatenav(user=None, force=False, filter=None):
 
             if prices.empty:
                 dailynav[id + '_price'] = 0
-                flash(f"Prices for ticker {id} could not be downloaded", "warning")
+                flash(
+                    f"Prices for ticker {id} could not be downloaded", "warning")
                 save_nav = False
                 raise ValueError(f"Ticker {id} had download issues")
 
@@ -876,7 +883,8 @@ def generatenav(user=None, force=False, filter=None):
     dailynav['NAV_fx'] = dailynav['NAV_fx'] * 100
     dailynav['PORT_ac_CFs_fx'] = dailynav['PORT_cash_value_fx'].cumsum()
 
-    dailynav['PORT_VALUE_BTC'] = dailynav['PORT_fx_pos'] / dailynav['BTC_price']
+    dailynav['PORT_VALUE_BTC'] = dailynav['PORT_fx_pos'] / \
+        dailynav['BTC_price']
 
     # Save NAV Locally as Pickle
     if save_nav:

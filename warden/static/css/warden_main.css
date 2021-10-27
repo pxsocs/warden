@@ -43,7 +43,8 @@ h6 {
   background: #ffffff;
   padding: 5px 10px;
   border: 1px solid #dddddd;
-  border-radius: 3px;
+  border-left: 6px solid #dfa38e;
+  border-radius: 10px 0px 0px 10px;
   margin-bottom: 20px;
 }
 
