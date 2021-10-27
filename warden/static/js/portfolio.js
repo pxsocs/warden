@@ -777,7 +777,7 @@ function stackChart(data) {
                 text: 'Stack Size'
             },
             startOnTick: false,
-            endOnTick: false
+            endOnTick: false,
         },
         legend: {
             enabled: false
@@ -988,7 +988,7 @@ function btcChart(data) {
 
         series: [{
             type: 'spline',
-            color: 'darkgreen',
+            color: '#dfa38e',
             dataGrouping: {
                 enabled: false
             },
