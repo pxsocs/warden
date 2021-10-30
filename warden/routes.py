@@ -81,10 +81,9 @@ def before_request():
     # (this is the version where tx API was implemented)
     try:
         specter_version = str(current_app.specter.home_parser()['version'])
-        if version.parse(specter_version) < version.parse("1.1.0"):
+        if version.parse(specter_version) < version.parse("1.1.0") and specter_version != "unknown":
             flash(
                 f"Sorry, you need Specter version 1.1.0 or higher to connect to WARden. You are running version {specter_version}. Please upgrade.", "danger")
-            return redirect(url_for('warden.specter_auth'))
     # An error below means no file was ever created - probably needs setup
     except Exception:
         pass
