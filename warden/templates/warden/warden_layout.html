@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <link rel="icon" href="{{url_for('warden.static', filename='images/favicon-bitcoin.ico')}}" class="invert">
 
@@ -8,6 +8,9 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/bootstrap/css/bootstrap.min.css')}}">
     <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/font-awesome/css/all.css')}}">
+    <!-- Tags Input -->
+    <link rel="stylesheet"
+        href="{{url_for('warden.static', filename='dependencies/bootstrap-tagsinput/bootstrap-tagsinput.css')}}">
     <!-- JQuery UI -->
     <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/jquery/themes/flicker.css')}}">
     <link rel="stylesheet" href="{{url_for('warden.static', filename='css/warden_main.css')}}">
@@ -31,13 +34,15 @@
     <!-- JQuery -->
     <script src="{{url_for('warden.static', filename='dependencies/jquery/jquery-3.4.1.js')}}"></script>
     <!-- Popper -->
-    <script src="{{url_for('warden.static', filename='dependencies/popper/popper.js')}}">
-    </script>
+    <!-- Production version -->
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="{{url_for('warden.static', filename='dependencies/popper/tooltip.js')}}">
     </script>
     <!-- Bootstrap -->
     <script src="{{url_for('warden.static', filename='dependencies/jquery-ui/jquery-ui.js')}}"></script>
     <script src="{{url_for('warden.static', filename='dependencies/bootstrap/js/bootstrap.js')}}"></script>
+    <script
+        src="{{url_for('warden.static', filename='dependencies/bootstrap-tagsinput/bootstrap-tagsinput.js')}}"></script>
 
     <!-- END JavaScript Loaders -->
 
@@ -341,29 +346,31 @@
 
         <!-- Main Content -->
         <div id="page-content-wrapper">
-            <main role=" main">
+            <main role="main">
                 <div style='padding-top: 0px; padding-bottom: 200px;'>
 
+                    <div class='container-fluid'>
+                        <div class='row'>
+                            <div id='alertsection' class='col-12'>
 
-                    <div class='row'>
-                        <div id='alertsection' class='col-12'>
+                                {% with messages = get_flashed_messages(with_categories=true) %}
+                                {% if messages %}
+                                {% for category, message in messages %}
+                                <div id="messagealert" class="alert alert-{{ category }}">
+                                    {{message}}
+                                </div>
+                                {% endfor %}
+                                {% endif %}
+                                {% endwith %}
 
-                            {% with messages = get_flashed_messages(with_categories=true) %}
-                            {% if messages %}
-                            {% for category, message in messages %}
-                            <div id="messagealert" class="alert alert-{{ category }}">
-                                {{message}}
                             </div>
-                            {% endfor %}
-                            {% endif %}
-                            {% endwith %}
+                        </div>
 
+                        <div class='row'>
+                            {% block content %}
+                            {% endblock %}
                         </div>
                     </div>
-
-                    {% block content %}
-                    {% endblock %}
-                </div>
             </main>
         </div>
 

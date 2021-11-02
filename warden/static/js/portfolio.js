@@ -53,15 +53,7 @@ $(document).ready(function () {
     // Popover management
     // Default popover enabler from Bootstrap
     $('[data-toggle="popover"]').popover()
-    // The below lines are needed to include a table inside a popover
-    // Taken from here:
-    // https://stackoverflow.com/questions/55362609/bootstrap-4-3-1-popover-does-not-display-table-inside-popover-content
-    $.fn.popover.Constructor.Default.whiteList.table = [];
-    $.fn.popover.Constructor.Default.whiteList.tr = [];
-    $.fn.popover.Constructor.Default.whiteList.td = [];
-    $.fn.popover.Constructor.Default.whiteList.div = [];
-    $.fn.popover.Constructor.Default.whiteList.tbody = [];
-    $.fn.popover.Constructor.Default.whiteList.thead = [];
+
     // If clicked outside of popover, it closes
     $('.popover-dismiss').popover({
         trigger: 'focus'
@@ -614,7 +606,6 @@ function getNodeInfo() {
         url: '/specter',
         dataType: 'json',
         success: function (data) {
-            console.log(data)
             $('#latest_btc_block').html(data['bitcoin_core_data']['Blocks count']);
             $('#current_block').html(data['bitcoin_core_data']['Blocks count']);
             $('#size_on_disk').html(data['bitcoin_core_data']['Size on disk']);
