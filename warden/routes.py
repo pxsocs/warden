@@ -37,6 +37,12 @@ warden = Blueprint("warden",
 
 @warden.before_request
 def before_request():
+    # Remove duplicate messages from Flask Flash
+    messages = get_flashed_messages(with_categories=True)
+    messages = list(set(messages))
+    for category, message in messages:
+        flash(message, category)
+
     # if no users found, send to setup
     try:
         users = User.query.all()
@@ -57,11 +63,6 @@ def before_request():
 
     if not current_user.is_authenticated:
         return redirect(url_for("warden.login"))
-
-    txs = transactions_fx()
-    if txs.empty:
-        flash("No Transactions Found. You can start by including a transaction below. You may also Connect to Specter or import a CSV file.", "info")
-        return redirect(url_for("warden.newtrade"))
 
     # Create empty status dictionary
     meta = {
@@ -88,12 +89,6 @@ def before_request():
     # An error below means no file was ever created - probably needs setup
     except Exception:
         pass
-
-    # Remove duplicate messages from Flask Flash
-    messages = get_flashed_messages(with_categories=True)
-    messages = list(set(messages))
-    for category, message in messages:
-        flash(message, category)
 
 
 @warden.after_request
@@ -165,12 +160,8 @@ def warden_page():
 
     try:
         df = positions()
-    except Exception:
-        flash("Seems like transactions may be downloading... Check Specter Transactions for status.", "warning")
-        return redirect(url_for("warden.newtrade"))
-
-    if df.empty:
-        flash("No Transactions Found. You can start by including a transaction below. You may also Connect to Specter or import a CSV file.", "info")
+    except Exception as e:
+        flash(f"Error getting transactions: {e}", "danger")
         return redirect(url_for("warden.newtrade"))
 
     if df.index.name != 'trade_asset_ticker':
