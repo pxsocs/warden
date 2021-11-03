@@ -661,6 +661,7 @@ def histvol():
 @api.route("/mempool_json", methods=["GET", "POST"])
 @login_required
 def mempool_json():
+    url = None
     try:
         mp_config = current_app.settings['MEMPOOL']
         url = mp_config.get('url')
@@ -685,7 +686,7 @@ def mempool_json():
                            'error': None})
 
     except Exception as e:
-        if not url:
+        if url is None:
             url = 'Could not find url'
         return json.dumps({'mp_fee': '-',
                            'mp_blocks': '-',

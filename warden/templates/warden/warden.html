@@ -9,116 +9,116 @@
 <script src="{{url_for('warden.static', filename='js/utils.js')}}"></script>
 <script src="{{url_for('warden.static', filename='js/highcharts.js')}}"></script>
 
-<div class="row">
 
-    <!-- Start of left side column with positions, etc -->
-    <div class="col-sm-8">
-        <table id="portfoliosummary" class="table-condensed">
 
-            <tbody>
-                <tr>
-                    <td class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
-                        title="Market Value in {{current_app.fx['symbol']}}">
-                        <span id="pvalue">
-                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
-                                height="30"></img>
-                        </span>
-                    </td>
-                    <td id="chg1" class="redgreen border-bottom hinumber text-right">
-                        <span id="">
-                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
-                                height="30"></img>
-                        </span>
-                    </td>
-                    <td id="chg2" class="redgreen border-bottom hinumber text-right">
+<!-- Start of left side column with positions, etc -->
+<div class="col-sm-8">
+    <table id="portfoliosummary" class="table-condensed">
+
+        <tbody>
+            <tr>
+                <td class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
+                    title="Market Value in {{current_app.fx['symbol']}}">
+                    <span id="pvalue">
                         <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                             height="30"></img>
-                    </td>
-                    <td></td>
-                    <td class="border-bottom hinumber text-right" data-toggle="tooltip" data-placement="top"
-                        title="Market Value in BTC">
-                        <span id="pvaluebtc">
-                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
-                                height="30"></img>
-                        </span>
-                    </td>
-                    <td class="border-bottom hinumber text-right" data-toggle="tooltip" data-placement="top"
-                        title="Market Value in Sats">
-                        <span id="pvaluesats">
-                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
-                                height="30"></img>
-                        </span>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="small text-left">
-                        portfolio value
-                    </td>
-                    <td class="small text-right">
-                        24hr change
-                    </td>
-                    <td class="small text-right">
-                        24hr change
-                    </td>
-                    <td>
-                    </td>
-                    <td class="small text-right">
-                        portfolio value
-                    </td>
-                    <td class="small text-right">
-                        portfolio value
-                    </td>
-
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Portfolio Summary Bar at top -->
-    <div class="col-sm-4 align-right">
-        <table id="time" class="table-condensed table-right text-right">
-            <tbody>
-                <tr>
-
-                    <td id='latest_btc_price' class="text-center border-bottom hinumbersmall" data-toggle="tooltip"
-                        data-placement="top" title="Bitcoin's Latest Price">
+                    </span>
+                </td>
+                <td id="chg1" class="redgreen border-bottom hinumber text-right">
+                    <span id="">
                         <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                             height="30"></img>
-                    </td>
-
-                    <td id='latest_btc_block' class="text-center border-bottom hinumbersmall small"
-                        data-toggle="tooltip" data-placement="top" title="Bitcoin's Latest Block">
+                    </span>
+                </td>
+                <td id="chg2" class="redgreen border-bottom hinumber text-right">
+                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                        height="30"></img>
+                </td>
+                <td></td>
+                <td class="border-bottom hinumber text-right" data-toggle="tooltip" data-placement="top"
+                    title="Market Value in BTC">
+                    <span id="pvaluebtc">
                         <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                             height="30"></img>
-                    </td>
+                    </span>
+                </td>
+                <td class="border-bottom hinumber text-right" data-toggle="tooltip" data-placement="top"
+                    title="Market Value in Sats">
+                    <span id="pvaluesats">
+                        <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                            height="30"></img>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="small text-left">
+                    portfolio value
+                </td>
+                <td class="small text-right">
+                    24hr change
+                </td>
+                <td class="small text-right">
+                    24hr change
+                </td>
+                <td>
+                </td>
+                <td class="small text-right">
+                    portfolio value
+                </td>
+                <td class="small text-right">
+                    portfolio value
+                </td>
 
-                    <td class="border-bottom hinumbersmall text-right small">
-                        <span id="lstupd">
-                            <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
-                                height="30"></img>
-                        </span>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
-                    </td>
+<!-- Portfolio Summary Bar at top -->
+<div class="col-sm-4 align-right">
+    <table id="time" class="table-condensed table-right text-right">
+        <tbody>
+            <tr>
+
+                <td id='latest_btc_price' class="text-center border-bottom hinumbersmall" data-toggle="tooltip"
+                    data-placement="top" title="Bitcoin's Latest Price">
+                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                        height="30"></img>
+                </td>
+
+                <td id='latest_btc_block' class="text-center border-bottom hinumbersmall small" data-toggle="tooltip"
+                    data-placement="top" title="Bitcoin's Latest Block">
+                    <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                        height="30"></img>
+                </td>
+
+                <td class="border-bottom hinumbersmall text-right small">
+                    <span id="lstupd">
+                        <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
+                            height="30"></img>
+                    </span>
+
+                </td>
 
 
-                </tr>
-                <tr>
-                    <td class="small text-center">
-                        &#8383 Price
-                    </td>
+            </tr>
+            <tr>
+                <td class="small text-center">
+                    &#8383 Price
+                </td>
 
-                    <td class="small text-center">
-                        &#8383 Block Height
-                    </td>
+                <td class="small text-center">
+                    &#8383 Block Height
+                </td>
 
-                    <td class="small text-right">
-                        last update
-                    </td>
+                <td class="small text-right">
+                    last update
+                </td>
 
-                </tr>
-            </tbody>
-        </table>
-    </div>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
 </div>
 </br>

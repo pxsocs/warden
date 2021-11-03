@@ -162,7 +162,8 @@ def background_specter_update():
         for wallet in wallets:
             ts_a = time.time()
             app.specter.wallet_info(wallet_alias=wallet, load=False)
-            rescan = app.specter.rescan_progress(wallet_alias=wallet, load=False)
+            rescan = app.specter.rescan_progress(
+                wallet_alias=wallet, load=False)
             te_a = time.time()
             message = Message(category='Specter Server',
                               message_txt=f"<span class='text-success'>Loaded wallet {wallet} </span>",
@@ -254,11 +255,7 @@ def test_RealTimeBTC():
 def background_scan_network():
     from connections import scan_network
     try:
-        message = Message(category='Scanning Network',
-                          message_txt="<span class='text-info'>Started Scanning Network for running services...</span>",
-                          notes=""
-                          )
-        app.message_handler.add_message(message)
+        app.message_handler.clean_category('Scanning Network')
         ts = time.time()
         app.scan_network = scan_network()
         te = time.time()

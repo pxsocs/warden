@@ -132,7 +132,6 @@ def specter_df(delete_files=False, sort_by='trade_date'):
         t = current_app.specter.refresh_txs(load=True)['txlist']
         df = df.append(t)
     except Exception as e:
-        print(e)
         # Check if txs exists
         return df
 
@@ -346,7 +345,28 @@ def transactions_fx():
     df = df.append(df_sql, sort=False)
 
     if df.empty:
-        logging.warning("Transactions_FX - No txs found")
+        flash(f"No Transactions Found. Running Demo Portfolio.", "info")
+        logging.warning(
+            "Transactions_FX - No txs found - using Demo Portfolio")
+        sample_trade = {
+            'user_id': current_user.username,
+            'trade_date': datetime(2018, 1, 1),
+            'trade_currency': 'USD',
+            'trade_fees': 0,
+            'trade_fees_fx': 0,
+            'trade_quantity': 0.1,
+            'trade_multiplier': 1,
+            'trade_price': 14920,
+            'trade_asset_ticker': 'BTC',
+            'trade_operation': 'B',
+            'status': 'Demo Line',
+            'trade_account': 'Demo Account',
+            'cash_value': 1492,
+            'cash_value_fx': 1492,
+        }
+        df = df.append(sample_trade, ignore_index=True)
+        df = df.set_index('trade_date')
+
         return df
 
     # The current fx needs no conversion, set to 1
