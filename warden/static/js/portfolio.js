@@ -801,7 +801,7 @@ function stackChart(data) {
         },
 
         series: [{
-            type: 'area',
+            type: 'spline',
             dataGrouping: {
                 enabled: false
             },
@@ -889,7 +889,7 @@ function fiatChart(data) {
         },
 
         series: [{
-            type: 'area',
+            type: 'spline',
             dataGrouping: {
                 enabled: false
             },
