@@ -24,7 +24,8 @@ def home_path():
 
 
 def create_config(config_file):
-    logging.warning("Config File not found. Getting default values and saving.")
+    logging.warning(
+        "Config File not found. Getting default values and saving.")
     # Get the default config and save into config.ini
     default_file = Config.default_config_file
 
@@ -77,6 +78,39 @@ def pickle_it(action='load', filename=None, data=None):
     else:
         with open(filename, 'wb') as handle:
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            return ("saved")
+
+
+# Function to load and save data into json
+def json_it(action='load', filename=None, data=None):
+    filename = 'warden/' + filename
+    filename = os.path.join(home_path(), filename)
+    if action == 'delete':
+        try:
+            os.remove(filename)
+            return('deleted')
+        except Exception:
+            return('failed')
+
+    if action == 'load':
+        try:
+            if os.path.getsize(filename) > 0:
+                with open(filename, 'r') as handle:
+                    ld = json.load(handle)
+                    return (ld)
+            else:
+                os.remove(filename)
+                return ("file not found")
+
+        except Exception as e:
+            return ("file not found")
+    else:
+        # Serializing json
+        json_object = json.dumps(data, indent=4)
+
+        # Writing to sample.json
+        with open(filename, "w") as handle:
+            handle.write(json_object)
             return ("saved")
 
 
@@ -149,8 +183,10 @@ def heatmap_generator():
         "Dec",
     ]
     years = (heatmap.index.tolist())
-    heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(axis=1)
-    heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(axis=1)
+    heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(
+        axis=1)
+    heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(
+        axis=1)
     heatmap_stats["POSITIVES"] = heatmap_stats[heatmap_stats[cols_months] > 0].count(
         axis=1
     )
@@ -163,7 +199,8 @@ def heatmap_generator():
     heatmap_stats["NEG_MEAN"] = heatmap_stats[heatmap_stats[cols_months] < 0].mean(
         axis=1
     )
-    heatmap_stats["MEAN"] = heatmap_stats[heatmap_stats[cols_months] != 0].mean(axis=1)
+    heatmap_stats["MEAN"] = heatmap_stats[heatmap_stats[cols_months] != 0].mean(
+        axis=1)
 
     return (heatmap, heatmap_stats, years, cols)
 
