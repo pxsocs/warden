@@ -7,11 +7,13 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup
 from utils import pickle_it, load_config
+from connections import tor_request
 
 import numpy as np
 
 
 class Specter():
+
     def __init__(self):
         config = load_config()
         # URL Lists
@@ -33,14 +35,15 @@ class Specter():
             'username': config['SPECTER']['specter_login'],
             'password': config['SPECTER']['specter_password']
         }
-        self.specter_reached = True
-        self.specter_auth = True
+        self.specter_reached = False
+        self.specter_auth = False
 
     def rescan_progress(self, wallet_alias, load=True, session=None):
         if wallet_alias is None:
             return None
         if load:
-            data = pickle_it(action='load', filename=f'specter_rescan_{wallet_alias}.pkl')
+            data = pickle_it(action='load',
+                             filename=f'specter_rescan_{wallet_alias}.pkl')
             if data != 'file not found':
                 return (data)
         try:
@@ -51,17 +54,19 @@ class Specter():
             data = response.json()
             session.close()
             # Save to pickle file
-            pickle_it(action='save', filename=f'specter_rescan_{wallet_alias}.pkl', data=data)
-            return(data)
+            pickle_it(action='save',
+                      filename=f'specter_rescan_{wallet_alias}.pkl',
+                      data=data)
+            return (data)
         except Exception as e:
-            return('[Specter Error] [rescan] {0}'.format(e))
+            return ('[Specter Error] [rescan] {0}'.format(e))
 
     def wallet_alias_list(self, load=True):
         try:
             wallets = self.home_parser(load=load)['alias_list']
-            return(wallets)
+            return (wallets)
         except Exception as e:
-            return('[Specter Error] [wallets] {0}'.format(e))
+            return ('[Specter Error] [wallets] {0}'.format(e))
 
     def post_request(self, url, payload):
         session = self.init_session()
@@ -75,21 +80,25 @@ class Specter():
             if "onion" in self.base_url:
                 config = load_config()
                 port = config['TOR'].get('port')
+                TOR = pickle_it('load', 'tor.pkl')
+                port = TOR['port']
+                if port is None or port == 'failed':
+                    port = 9050
+
                 session.proxies = {
                     "http": "socks5h://0.0.0.0:" + port,
                     "https": "socks5h://0.0.0.0:" + port,
                 }
-            response = session.post(
-                self.login_url,
-                data=self.login_payload,
-                timeout=60
-            )
+            response = session.post(self.login_url,
+                                    data=self.login_payload,
+                                    timeout=60,
+                                    verify=False)
             # Check if authorized
             if response.status_code == 401:
                 raise Exception(
                     'Unauthorized Login to Specter. Check Username and/or Password.'
                 )
-            return(session)
+            return (session)
 
     def refresh_txs(self, load=True):
         # Returns a dictionary with keys
@@ -106,9 +115,9 @@ class Specter():
             session.close()
 
             # Include last update_time
-            specter_data['last_update'] = datetime.now().strftime('%m/%d/%Y, %H:%M:%S')
+            specter_data['last_update'] = datetime.now().strftime(
+                '%m/%d/%Y, %H:%M:%S')
             specter_data['txlist'] = json.loads(specter_data['txlist'])
-
             '''
               Handling for multiple outputs, CoinJoin transactions
             '''
@@ -135,16 +144,16 @@ class Specter():
                         tx['fee'] = 0
 
             # Save to pickle file
-            pickle_it(action='save', filename='specter_txs.pkl', data=specter_data)
-            return(specter_data)
+            pickle_it(action='save',
+                      filename='specter_txs.pkl',
+                      data=specter_data)
+            return (specter_data)
 
         except requests.exceptions.Timeout as e:
-            return(
-                '[Specter Error] [refresh] Could not login to ' +
-                f'{self.base_url} <> Check address <> Error: {e}'
-            )
+            return ('[Specter Error] [refresh] Could not login to ' +
+                    f'{self.base_url} <> Check address <> Error: {e}')
         except Exception as e:
-            return('[Specter Error] [refresh] {0}'.format(e))
+            return ('[Specter Error] [refresh] {0}'.format(e))
 
     def wallet_info(self, wallet_alias, load=True):
         if wallet_alias is None:
@@ -166,9 +175,7 @@ class Specter():
         div_id = 'wallet_info_settings_tab'
         data = soup.find("div", {"id": div_id})
         if data is None:
-            metadata = {
-                'error': True
-            }
+            metadata = {'error': True}
             return metadata
         metadata['title'] = data.find('h2').get_text()
         if metadata['title'] == 'Devices':
@@ -183,7 +190,8 @@ class Specter():
             link = element['href']
             alias = list(filter(None, link.split('/')))[-1]
             device_info['url'] = self.base_url[:-1] + link
-            device_info['image'] = self.base_url[:-1] + element.find('img').get('src')
+            device_info['image'] = self.base_url[:-1] + element.find(
+                'img').get('src')
             tmp = element.get_text().split('\n')
             tmp = list(filter(None, tmp))
             device_info['name'] = tmp[0].lstrip()
@@ -191,7 +199,8 @@ class Specter():
             metadata['error'] = False
 
         metadata['rescan'] = self.rescan_progress(wallet_alias=wallet_alias,
-                                                  load=load, session=session)
+                                                  load=load,
+                                                  session=session)
 
         # Save to pickle file
         pickle_it(action='save',
@@ -201,8 +210,7 @@ class Specter():
 
     def home_parser(self, load=True):
         if load:
-            data = pickle_it(action='load',
-                             filename='specter_home.pkl')
+            data = pickle_it(action='load', filename='specter_home.pkl')
             if data != 'file not found':
                 return (data)
         url = self.base_url + 'about'
@@ -223,9 +231,8 @@ class Specter():
         soup = BeautifulSoup(page.text, 'html.parser')
         # Get Specter Version
         try:
-            metadata['version'] = (
-                soup.find(text=re.compile('Specter Version')).parent()[0].get_text()
-            )
+            metadata['version'] = (soup.find(
+                text=re.compile('Specter Version')).parent()[0].get_text())
         except Exception as e:
             metadata['version'] = f'Error: {e}'
         # Get Bitcoin Core Data
@@ -251,21 +258,23 @@ class Specter():
             bitcoin_core_data = {}
             for element in data:
                 cols = element.find_all('td')
-                bitcoin_core_data[cols[0].get_text().split(':')[0]] = cols[1].get_text()
+                bitcoin_core_data[cols[0].get_text().split(':')
+                                  [0]] = cols[1].get_text()
             metadata['bitcoin_core_data'] = bitcoin_core_data
             # Format blocks count
             try:
-                metadata['bitcoin_core_data']['Blocks count'] = ("{0:,.0f}".format(float(metadata['bitcoin_core_data']['Blocks count'])))
-                metadata['bitcoin_core_data']['Difficulty'] = ("{0:,.0f}".format(float(metadata['bitcoin_core_data']['Difficulty'])))
+                metadata['bitcoin_core_data']['Blocks count'] = (
+                    "{0:,.0f}".format(
+                        float(metadata['bitcoin_core_data']['Blocks count'])))
+                metadata['bitcoin_core_data']['Difficulty'] = (
+                    "{0:,.0f}".format(
+                        float(metadata['bitcoin_core_data']['Difficulty'])))
             except Exception:
                 pass
         except Exception as e:
             metadata['bitcoin_core_html'] = (
-                f"<span class='text-warning'>Error: {str(e)}</span>"
-            )
-            metadata['bitcoin_core_data'] = {
-                'error': str(e)
-            }
+                f"<span class='text-warning'>Error: {str(e)}</span>")
+            metadata['bitcoin_core_data'] = {'error': str(e)}
         # Get Wallet Names
         wallet_dict = {}
         wallet_alias = []
@@ -284,7 +293,8 @@ class Specter():
                     wallet_dict[alias] = {}
                     wallet_dict[alias]['url'] = self.base_url[:-1] + link
                     find_class = 'grow'
-                    wallet_info = element.findAll("div", {"class": find_class})[0]
+                    wallet_info = element.findAll("div",
+                                                  {"class": find_class})[0]
                     wallet_info = wallet_info.get_text().split('\n')
                     wallet_info = list(filter(None, wallet_info))
                     wallet_dict[alias]['name'] = wallet_info[0].lstrip()
@@ -296,9 +306,7 @@ class Specter():
             metadata['wallet_dict'] = wallet_dict
         except Exception as e:
             metadata['alias_list'] = None
-            metadata['wallet_dict'] = {
-                'error': str(e)
-            }
+            metadata['wallet_dict'] = {'error': str(e)}
         # Get Device Names
         device_dict = {}
         device_list = []
@@ -315,35 +323,40 @@ class Specter():
                     device_list.append(alias)
                     device_dict[alias] = {}
                     device_dict[alias]['url'] = self.base_url[:-1] + link
-                    device_dict[alias]['image'] = self.base_url[:-1] + element.find('img').get('src')
+                    device_dict[alias][
+                        'image'] = self.base_url[:-1] + element.find(
+                            'img').get('src')
                     device_info = element.get_text().split('\n')
-                    device_dict[alias]['name'] = list(filter(None, device_info))[0].lstrip()
-                    device_dict[alias]['keys'] = list(filter(None, device_info))[1]
+                    device_dict[alias]['name'] = list(filter(
+                        None, device_info))[0].lstrip()
+                    device_dict[alias]['keys'] = list(filter(
+                        None, device_info))[1]
                 except Exception:
                     pass
 
             metadata['device_list'] = device_list
             metadata['device_dict'] = device_dict
 
-            metadata['last_update'] = datetime.now().strftime('%m/%d/%Y, %H:%M:%S')
+            metadata['last_update'] = datetime.now().strftime(
+                '%m/%d/%Y, %H:%M:%S')
         except Exception as e:
             metadata['device_list'] = None
-            metadata['device_dict'] = {
-                'error': str(e)
-            }
+            metadata['device_dict'] = {'error': str(e)}
 
         # Save to pickle file
-        pickle_it(action='save',
-                  filename='specter_home.pkl',
-                  data=metadata)
+        pickle_it(action='save', filename='specter_home.pkl', data=metadata)
         return (metadata)
 
     # Tests & Status Methods
     # Can the URL be reached?
     def is_reachable(self):
         # Test if this url can be reached
-        result = requests.get(self.base_url)
-        return result.ok
+        try:
+            result = tor_request(self.base_url)
+            self.specter_reached = result.ok
+            return result.ok
+        except Exception:
+            return False
 
     # Is authentication ok with current credentials?
     def is_auth(self):
@@ -367,7 +380,8 @@ class Specter():
         # Check Node Health
         try:
             if self.home_parser()['bitcoin_core_is_syncing'] is True:
-                pickle_it("save", "specter_health.pkl", "Bitcoin Node Not Fully Synched")
+                pickle_it("save", "specter_health.pkl",
+                          "Bitcoin Node Not Fully Synched")
                 return False
             else:
                 pickle_it("save", "specter_health.pkl", "Running")

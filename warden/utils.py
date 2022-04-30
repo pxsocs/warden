@@ -4,7 +4,6 @@ import os
 import json
 import pickle
 
-
 from config import Config
 
 import mhp as mrh
@@ -24,7 +23,8 @@ def home_path():
 
 
 def create_config(config_file):
-    logging.warning("Config File not found. Getting default values and saving.")
+    logging.warning(
+        "Config File not found. Getting default values and saving.")
     # Get the default config and save into config.ini
     default_file = Config.default_config_file
 
@@ -34,7 +34,7 @@ def create_config(config_file):
     with open(config_file, 'w') as file:
         default_config.write(file)
 
-    return(default_config)
+    return (default_config)
 
 
 def update_config(config_file=Config.config_file):
@@ -58,9 +58,9 @@ def pickle_it(action='load', filename=None, data=None):
     if action == 'delete':
         try:
             os.remove(filename)
-            return('deleted')
+            return ('deleted')
         except Exception:
-            return('failed')
+            return ('failed')
 
     if action == 'load':
         try:
@@ -149,21 +149,20 @@ def heatmap_generator():
         "Dec",
     ]
     years = (heatmap.index.tolist())
-    heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(axis=1)
-    heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(axis=1)
-    heatmap_stats["POSITIVES"] = heatmap_stats[heatmap_stats[cols_months] > 0].count(
-        axis=1
-    )
-    heatmap_stats["NEGATIVES"] = heatmap_stats[heatmap_stats[cols_months] < 0].count(
-        axis=1
-    )
-    heatmap_stats["POS_MEAN"] = heatmap_stats[heatmap_stats[cols_months] > 0].mean(
-        axis=1
-    )
-    heatmap_stats["NEG_MEAN"] = heatmap_stats[heatmap_stats[cols_months] < 0].mean(
-        axis=1
-    )
-    heatmap_stats["MEAN"] = heatmap_stats[heatmap_stats[cols_months] != 0].mean(axis=1)
+    heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(
+        axis=1)
+    heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(
+        axis=1)
+    heatmap_stats["POSITIVES"] = heatmap_stats[
+        heatmap_stats[cols_months] > 0].count(axis=1)
+    heatmap_stats["NEGATIVES"] = heatmap_stats[
+        heatmap_stats[cols_months] < 0].count(axis=1)
+    heatmap_stats["POS_MEAN"] = heatmap_stats[
+        heatmap_stats[cols_months] > 0].mean(axis=1)
+    heatmap_stats["NEG_MEAN"] = heatmap_stats[
+        heatmap_stats[cols_months] < 0].mean(axis=1)
+    heatmap_stats["MEAN"] = heatmap_stats[
+        heatmap_stats[cols_months] != 0].mean(axis=1)
 
     return (heatmap, heatmap_stats, years, cols)
 
@@ -193,6 +192,15 @@ def runningInDocker():
 # Serialize only objects that are json compatible
 # This will exclude classes and methods
 def safe_serialize(obj):
+
     def default(o):
         return f"{type(o).__qualname__}"
+
     return json.dumps(obj, default=default)
+
+
+#  Check if a port at localhost is in use
+def is_port_in_use(port: int) -> bool:
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
