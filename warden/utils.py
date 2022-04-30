@@ -80,6 +80,39 @@ def pickle_it(action='load', filename=None, data=None):
             return ("saved")
 
 
+# Function to load and save data into json
+def json_it(action='load', filename=None, data=None):
+    filename = 'warden/' + filename
+    filename = os.path.join(home_path(), filename)
+    if action == 'delete':
+        try:
+            os.remove(filename)
+            return ('deleted')
+        except Exception:
+            return ('failed')
+
+    if action == 'load':
+        try:
+            if os.path.getsize(filename) > 0:
+                with open(filename, 'r') as handle:
+                    ld = json.load(handle)
+                    return (ld)
+            else:
+                os.remove(filename)
+                return ("file not found")
+
+        except Exception as e:
+            return ("file not found")
+    else:
+        # Serializing json
+        json_object = json.dumps(data, indent=4)
+
+        # Writing to sample.json
+        with open(filename, "w") as handle:
+            handle.write(json_object)
+            return ("saved")
+
+
 def fxsymbol(fx, output='symbol'):
     # Gets an FX 3 letter symbol and returns the HTML symbol
     # Sample outputs are:

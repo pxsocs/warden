@@ -68,8 +68,7 @@ def background_specter_health():
             app.message_handler.add_message(message)
 
     health_text = pickle_it('load', 'specter_health.pkl')
-    message = Message(category='Specter Server',
-                      message_txt=f"<span class='text-info'>Health Check Result: {health_text}</span>")
+
     app.message_handler.add_message(message)
 
 
