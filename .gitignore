@@ -17,6 +17,7 @@ api_keys.conf
 *.spec
 build/
 dist/
+.env
 *.icloud
 specter.json
 services.json
