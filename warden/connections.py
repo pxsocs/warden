@@ -48,7 +48,8 @@ def test_tor():
                     "difference": "{0:.2f}".format(post_proxy_ratio),
                     "status": True,
                     "port": PORT,
-                    "last_refresh": datetime.now().strftime('%d-%b-%Y %H:%M:%S')
+                    "last_refresh":
+                    datetime.now().strftime('%d-%b-%Y %H:%M:%S')
                 }
                 pickle_it('save', 'tor.pkl', response)
                 return response
@@ -115,11 +116,14 @@ def tor_request(url, tor_only=False, method="get", headers=None):
             }
             if method == "get":
                 if headers:
-                    request = session.get(url, timeout=20, headers=headers)
+                    request = session.get(url,
+                                          timeout=20,
+                                          headers=headers,
+                                          verify=False)
                 else:
-                    request = session.get(url, timeout=20)
+                    request = session.get(url, timeout=20, verify=False)
             if method == "post":
-                request = session.post(url, timeout=20)
+                request = session.post(url, timeout=20, verify=False)
 
             session.close()
         except (
@@ -143,8 +147,12 @@ def tor_request(url, tor_only=False, method="get", headers=None):
 
 
 # Check Local Network for nodes and services
-# Need to optimize this to run several threads instead of sequentially
 def scan_network():
+    # !!!!!!!!!!! Important
+    # Need to include a check for added onion addresses. Particularly
+    # for Speter Server included as an onion address. After that is verified
+    # will need to save that specter server details in a file and later load it.
+
     # Add WARden to services
     onion = pickle_it('load', 'onion_address.pkl')
     local_ip = pickle_it('load', 'local_ip_address.pkl')
@@ -190,7 +198,7 @@ def scan_network():
                     'last_time': epoch_time
                 }
             just_found.append(host)
-            return(host_found)
+            return (host_found)
         except Exception as e:
             return None
 
@@ -216,8 +224,8 @@ def scan_network():
                  (50001, 'Electrum Server'), (50002, 'Electrum Server'),
                  (3002, 'Bitcoin RPC Explorer'),
                  (3006, 'Mempool.space Explorer'),
-                 (3008, 'BlueWallet Lightning'),
-                 (5000, 'WARden Server')]
+                 (4080, 'Mempool.space Explorer'),
+                 (3008, 'BlueWallet Lightning'), (5000, 'WARden Server')]
 
     # Save the list above for later
     pickle_it('save', 'port_list.pkl', port_list)
@@ -278,19 +286,21 @@ def scan_network():
                     'service': service_name(port)
                 }
 
-            return(service_found)
+            return (service_found)
         except Exception:
             return None
 
     # Load services found
     services_found = pickle_it('load', 'services_found.pkl')
-    if services_found == 'file not found' or not isinstance(services_found, dict):
+    if services_found == 'file not found' or not isinstance(
+            services_found, dict):
         services_found = {}
 
     # Launch thread to check urls
     with concurrent.futures.ThreadPoolExecutor(30) as executor:
-        futures = [executor.submit(check_service_url, args)
-                   for args in check_list]
+        futures = [
+            executor.submit(check_service_url, args) for args in check_list
+        ]
         wait(futures, timeout=120, return_when=ALL_COMPLETED)
         for element in futures:
             if isinstance(element.result(), dict):
@@ -351,4 +361,4 @@ def url_parser(url):
     if url[-1] != '/':
         url += '/'
 
-    return(url)
+    return (url)

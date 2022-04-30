@@ -20,10 +20,10 @@ from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from pathlib import Path
+from diags import internet_connected
 from apscheduler.schedulers.background import BackgroundScheduler
 from ansi_management import (warning, success, error, info, clear_screen,
                              muted, yellow, blue)
-
 
 # Make sure current libraries are found in path
 current_path = os.path.abspath(os.path.dirname(__file__))
@@ -34,13 +34,15 @@ def create_app():
     # Config of Logging
     from config import Config
     formatter = "[%(asctime)s] {%(module)s:%(funcName)s:%(lineno)d} %(levelname)s in %(module)s: %(message)s"
-    logging.basicConfig(
-        handlers=[RotatingFileHandler(
-            filename=str(Config.debug_file),
-            mode='w', maxBytes=120000, backupCount=0)],
-        level=logging.INFO,
-        format=formatter,
-        datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.basicConfig(handlers=[
+        RotatingFileHandler(filename=str(Config.debug_file),
+                            mode='w',
+                            maxBytes=120000,
+                            backupCount=0)
+    ],
+                        level=logging.INFO,
+                        format=formatter,
+                        datefmt='%m/%d/%Y %I:%M:%S %p')
     logging.getLogger('apscheduler').setLevel(logging.CRITICAL)
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
     logging.info("Starting main program...")
@@ -53,8 +55,8 @@ def create_app():
 
 
 def create_tor():
-    from ansi_management import (warning, success, error, info, clear_screen, bold,
-                                 muted, yellow, blue)
+    from ansi_management import (warning, success, error, info, clear_screen,
+                                 bold, muted, yellow, blue)
     from config import Config
     # ----------------------------------------------
     #                 Test Tor
@@ -72,10 +74,7 @@ def create_tor():
             logging.error(error("Could not connect to Tor"))
             spinner.fail("💥 ")
             spinner.text = warning("    Tor NOT connected [ERROR]")
-            print(
-                error(
-                    "    Could not connect to Tor."
-                ))
+            print(error("    Could not connect to Tor."))
 
             print(
                 info(
@@ -83,9 +82,8 @@ def create_tor():
                 ))
 
             print(
-                info(
-                    "    [i] If you are running Linux try the command: "
-                ) + yellow('service tor start'))
+                info("    [i] If you are running Linux try the command: ") +
+                yellow('service tor start'))
             print(
                 info(
                     "    or download Tor at: https://www.torproject.org/download/"
@@ -110,15 +108,32 @@ def init_app(app):
     # --------------------------------------------
     config_file = Config.config_file
     app.warden_status = {}
+
+    # Check for internet connection
+    internet_ok = internet_connected()
+    if internet_ok is True:
+        print(success("✅ Internet Connection"))
+    else:
+        print(
+            error(
+                "[!] WARden needs internet connection. Check your connection.")
+        )
+        print(warning("[!] Exiting"))
+        exit()
+
     # Config
     config_settings = configparser.ConfigParser()
     if os.path.isfile(config_file):
         config_settings.read(config_file)
         app.warden_status['initial_setup'] = False
-        print(success("✅ Config Loaded from config.ini - edit it for customization"))
+        print(
+            success(
+                "✅ Config Loaded from config.ini - edit it for customization"))
     else:
-        print(error(
-            "  Config File could not be loaded, created a new one with default values..."))
+        print(
+            error(
+                "  Config File could not be loaded, created a new one with default values..."
+            ))
         create_config(config_file)
         config_settings.read(config_file)
         app.warden_status['initial_setup'] = True
@@ -234,9 +249,7 @@ def init_app(app):
                 tor_control_address = "127.0.0.1"
             app.controller = Controller.from_port(
                 address=tor_control_address,
-                port=int(tor_control_port)
-                if tor_control_port
-                else "default",
+                port=int(tor_control_port) if tor_control_port else "default",
             )
         except Exception:
             app.controller = None
@@ -483,8 +496,8 @@ def goodbye():
 
 def main(debug=False, reloader=False):
     from utils import (create_config, runningInDocker)
-    from ansi_management import (warning, success, error, info, clear_screen, bold,
-                                 muted, yellow, blue)
+    from ansi_management import (warning, success, error, info, clear_screen,
+                                 bold, muted, yellow, blue)
 
     # Make sure current libraries are found in path
     current_path = os.path.abspath(os.path.dirname(__file__))
@@ -498,8 +511,10 @@ def main(debug=False, reloader=False):
     print("")
 
     if runningInDocker():
-        print(success(
-            f"✅ Running inside docker container {emoji.emojize(':whale:')} Getting some James Bartley vibes..."))
+        print(
+            success(
+                f"✅ Running inside docker container {emoji.emojize(':whale:')} Getting some James Bartley vibes..."
+            ))
         print("")
 
     app = create_app()
@@ -559,7 +574,26 @@ def main(debug=False, reloader=False):
       {yellow('http://')}{yellow(get_local_ip())}{yellow(f':{port}/')}
                 """)
 
-    port = str(app.settings['SERVER'].getint('port'))
+    port = app.settings['SERVER'].getint('port')
+
+    # Check if this port is available
+    from utils import is_port_in_use
+    ports = [5001, 5002, 5003, 5004, 5005, 5006, 5007, 5008, 5009, 5010]
+    if is_port_in_use(port) is True:
+        # Ooops. Port in use... Let's try other ports...
+        for p in ports:
+            if is_port_in_use(p) is False:
+                print(
+                    warning(
+                        f"[i] Please note that port {str(port)} is in use."))
+                print(
+                    warning(
+                        f"[i] Port was automatically changed to {str(p)} which is free."
+                    ))
+                # Reassign port
+                port = p
+                app.settings['SERVER']['port'] = str(port)
+                break
 
     print(
         fg.brightgreen("""
@@ -591,7 +625,7 @@ def main(debug=False, reloader=False):
     app.run(debug=debug,
             threaded=True,
             host=app.settings['SERVER'].get('host'),
-            port=app.settings['SERVER'].getint('port'),
+            port=port,
             use_reloader=reloader)
 
     if app.settings['SERVER'].getboolean('onion_server'):

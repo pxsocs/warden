@@ -37,14 +37,16 @@ def internet_connected(host="8.8.8.8", port=53, timeout=3):
         connected = True
     except socket.error as ex:
         connected = False
-    pickle_it('save', 'diags/internet_connected.pkl', connected)
-    return(connected)
+    pickle_it('save', 'diags_internet_connected.pkl', connected)
+    return (connected)
+
 
 # Checks if ever setup
 
 
 def first_run():
     pass
+
 
 # CHECKS ON PORTFOLIO
 
@@ -61,8 +63,10 @@ def critical_alert(message):
 
 def full_diags():
     msg_handler = MessageHandler()
-    message = Message(category='Full Diagnosis',
-                      message_txt=f"<span class='text-info'>Kicking off full diagnostic</span>")
+    message = Message(
+        category='Full Diagnosis',
+        message_txt=
+        f"<span class='text-info'>Kicking off full diagnostic</span>")
     msg_handler.add_message(message)
 
     # Check if the diags path was ever created
@@ -88,13 +92,13 @@ Notes - these are checks that need to be implemented (in no specific order) + th
 8. Check if users in database [If not, demo mode]
 9. Check for upgrade [Upgrade & restart & install libraries (10)]
 10. Check for libraries (First time & upgrade)
-11. Check if running Onion hidden Server 
+11. Check if running Onion hidden Server
 12. Check for Nodes, services and health
 12. a. Check if nodes are synched; b. check latest block hash and compare
 13. Check if running inside Docker
 14. Check if Mempool.space is running locally at some service
 15. Check for wallet activity
-16. Check if can authenticate and Download Txs. from Specter 
+16. Check if can authenticate and Download Txs. from Specter
 17. Check if an NAV was created
 18. Check if enough historical data to generate NAV
 19. Check if database is present (warden.db)
