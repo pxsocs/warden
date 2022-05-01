@@ -1,3 +1,4 @@
+from copyreg import pickle
 import json
 import os
 import csv
@@ -12,9 +13,8 @@ from flask import flash, current_app
 from flask_login import current_user
 from pathlib import Path
 from specter_importer import Specter
-from pricing_engine.engine import (fx_rate,
-                                   price_ondate, fx_price_ondate, realtime_price,
-                                   historical_prices)
+from pricing_engine.engine import (fx_rate, price_ondate, fx_price_ondate,
+                                   realtime_price, historical_prices)
 from pricing_engine.cryptocompare import multiple_price_grab
 from warden_decorators import MWT, timing
 from utils import load_config
@@ -52,10 +52,14 @@ def check_server(address, port, timeout=10):
 
 # End Config Variables ------------------------------------------------
 
-
 # Get all transactions of specific wallet by using alias
 
-def get_specter_tx(wallet_alias, sort_by='time', idx=0, load=True, session=None):
+
+def get_specter_tx(wallet_alias,
+                   sort_by='time',
+                   idx=0,
+                   load=True,
+                   session=None):
     df = pd.DataFrame()
     wallet_list = current_app.specter.wallet_alias_list()
     if wallet_alias not in wallet_list:
@@ -104,6 +108,7 @@ def warden_metadata():
 
 # Transactions Engine --------------------------------------
 class Trades():
+
     def __init__(self):
         self.id = None
         self.user_id = "specter_user"
@@ -205,8 +210,8 @@ def specter_df(delete_files=False, sort_by='trade_date'):
     df['amount'] = df['trade_quantity']
 
     try:
-        df['cash_value'] = abs(df['trade_price']) * abs(df['trade_quantity']) * df[
-            'trade_multiplier']
+        df['cash_value'] = abs(df['trade_price']) * abs(
+            df['trade_quantity']) * df['trade_multiplier']
     except Exception:
         df['cash_value'] = 0
 
@@ -264,8 +269,9 @@ def specter_df(delete_files=False, sort_by='trade_date'):
         df_loaded['loaded'] = True
 
         # Find differences in old vs. new
-        df_check = pd.concat([df, df_loaded]).drop_duplicates(
-            subset='trade_blockchain_id', keep=False)
+        df_check = pd.concat([df, df_loaded
+                              ]).drop_duplicates(subset='trade_blockchain_id',
+                                                 keep=False)
 
         if not df_check.empty:
             # Let's find which checksums are different and compile a list - save this list
@@ -274,9 +280,12 @@ def specter_df(delete_files=False, sort_by='trade_date'):
             df_new = df_check[~df_check['loaded']]
 
             json_save = {
-                'changes_detected_on': datetime.now().strftime("%I:%M %p on %B %d, %Y"),
-                'deleted': df_old,
-                'added': df_new
+                'changes_detected_on':
+                datetime.now().strftime("%I:%M %p on %B %d, %Y"),
+                'deleted':
+                df_old,
+                'added':
+                df_new
             }
             # If activity is detected, don't delete the old df by saving new df over
             save_files = False
@@ -309,12 +318,12 @@ def find_fx(row, fx=None):
     # row.name is the date being passed
     # row['trade_currency'] is the base fx (the one where the trade was included)
     # Create an instance of PriceData:
-    price = fx_price_ondate(
-        current_app.settings['PORTFOLIO']['base_fx'], row['trade_currency'], row.name)
+    price = fx_price_ondate(current_app.settings['PORTFOLIO']['base_fx'],
+                            row['trade_currency'], row.name)
     return price
 
 
-@ MWT(timeout=20)
+@MWT(timeout=20)
 def transactions_fx():
     # Gets the transaction table and fills with fx information
     # Note that it uses the currency exchange for the date of transaction
@@ -398,6 +407,7 @@ def transactions_fx():
 
 # UTILS -----------------------------------
 
+
 # Better to use parseNumber most of the times...
 # Function to clean CSV fields - leave only digits and .
 def clean_float(text):
@@ -438,6 +448,7 @@ def cleandate(text):  # Function to clean Date fields
 
 
 # PORTFOLIO UTILITIES
+
 
 def positions():
     # Method to create a user's position table
@@ -483,7 +494,7 @@ def single_price(ticker):
     return (realtime_price(ticker)['price'], datetime.now())
 
 
-@ MWT(timeout=200)
+@MWT(timeout=200)
 def list_tickers():
     df = transactions_fx()
     # Now let's create our main dataframe with information for each ticker
@@ -530,10 +541,8 @@ def positions_dynamic():
             if ticker in ['GBTC', 'MSTR', 'TSLA', 'SQ']:
                 raise KeyError
             price = float(price)
-            high = float(multi_price["RAW"][ticker][
-                fx]["HIGHDAY"])
-            low = float(multi_price["RAW"][ticker][
-                fx]["LOWDAY"])
+            high = float(multi_price["RAW"][ticker][fx]["HIGHDAY"])
+            low = float(multi_price["RAW"][ticker][fx]["LOWDAY"])
             chg = multi_price["RAW"][ticker][fx]["CHANGEPCT24HOUR"]
             mktcap = multi_price["DISPLAY"][ticker][fx]["MKTCAP"]
             volume = multi_price["DISPLAY"][ticker][fx]["VOLUME24HOURTO"]
@@ -586,8 +595,9 @@ def positions_dynamic():
                 except Exception as e:
                     price = high = low = chg = mktcap = last_up_source = last_update = volume = 0
                     source = '-'
-                    logging.error(f"There was an error getting the price for {ticker}." +
-                                  f"Error: {e}")
+                    logging.error(
+                        f"There was an error getting the price for {ticker}." +
+                        f"Error: {e}")
 
         if ticker.upper() == 'BTC':
             nonlocal btc_price
@@ -614,8 +624,9 @@ def positions_dynamic():
     df['position_btc'] = df['price'] * df['trade_quantity'] / btc_price
 
     # Force some fields to float and clean
-    float_fields = ['price', '24h_high', '24h_low',
-                    '24h_change', 'mktcap', 'volume']
+    float_fields = [
+        'price', '24h_high', '24h_low', '24h_change', 'mktcap', 'volume'
+    ]
     for field in float_fields:
         df[field] = df[field].apply(clean_float)
 
@@ -661,7 +672,7 @@ def positions_dynamic():
         ('trade_fees_fx', 'D'): 'trade_fees_fx_D',
         ('trade_fees_fx', 'W'): 'trade_fees_fx_W'
     },
-        inplace=True)
+              inplace=True)
     # Need to add only some fields - strings can't be added for example
     columns_sum = [
         'cash_value_fx', 'trade_fees_fx', 'position_fx', 'allocation',
@@ -671,8 +682,8 @@ def positions_dynamic():
     for field in columns_sum:
         df.loc['Total', field] = df[field].sum()
     # Set the portfolio last update to be equal to the latest update in df
-    df.loc['Total', 'last_up_source'] = (
-        datetime.now()).strftime('%d-%b-%Y %H:%M:%S')
+    df.loc['Total',
+           'last_up_source'] = (datetime.now()).strftime('%d-%b-%Y %H:%M:%S')
     df['last_update'] = df['last_update'].astype(str)
     # Create a pie chart data in HighCharts format excluding small pos
     pie_data = []
@@ -686,7 +697,7 @@ def positions_dynamic():
     return (df, pie_data)
 
 
-@ MWT(timeout=10)
+@MWT(timeout=10)
 def generatenav(user=None, force=False, filter=None):
     if not user:
         user = current_user.username
@@ -778,14 +789,16 @@ def generatenav(user=None, force=False, filter=None):
 
             if prices.empty:
                 dailynav[id + '_price'] = 0
-                flash(
-                    f"Prices for ticker {id} could not be downloaded", "warning")
+                flash(f"Prices for ticker {id} could not be downloaded",
+                      "warning")
                 save_nav = False
                 raise ValueError(f"Ticker {id} had download issues")
 
             start_date_ticker = prices.index.min()
             if start_date_ticker > start_date:
-                flash(f"NAV table starts on {start_date.strftime('%b-%d-%y')} but the ticker {id} only has pricing data from {start_date_ticker.strftime('%b-%d-%y')}. This may lead to wrong calculations on past performance.", "warning")
+                flash(
+                    f"NAV table starts on {start_date.strftime('%b-%d-%y')} but the ticker {id} only has pricing data from {start_date_ticker.strftime('%b-%d-%y')}. This may lead to wrong calculations on past performance.",
+                    "warning")
 
             prices = prices.rename(columns={'close_converted': id + '_price'})
             prices = prices[id + '_price']
@@ -819,7 +832,7 @@ def generatenav(user=None, force=False, filter=None):
                 'cum_quant': id + '_pos',
                 'cash_value_fx': id + '_cash_value_fx'
             },
-                inplace=True)
+                           inplace=True)
             # merge
             tradedf.index = tradedf.index.astype('datetime64[ns]')
             dailynav = pd.merge(dailynav, tradedf, on='date', how='left')
@@ -937,8 +950,7 @@ def regenerate_nav():
     # Check if there any trades in the database. If not, skip.
     try:
         # Delete all pricing history
-        filename = os.path.join(home_path(),
-                                'warden/*.nav')
+        filename = os.path.join(home_path(), 'warden/*.nav')
         aa_files = glob.glob(filename)
         [os.remove(x) for x in aa_files]
         filename = os.path.join(home_path(), 'warden/*.nav')
@@ -956,7 +968,7 @@ def regenerate_nav():
         return
 
 
-@ MWT(timeout=60)
+@MWT(timeout=60)
 def cost_calculation(ticker, html_table=None):
     # This function calculates the cost basis assuming 3 different methods
     # FIFO, LIFO and avg. cost
@@ -965,6 +977,7 @@ def cost_calculation(ticker, html_table=None):
 
     # Gets all transactions in local currency terms
     df = transactions_fx()
+
     df = df[(df.trade_asset_ticker == ticker)]
 
     # Find current open position on asset
@@ -973,6 +986,9 @@ def cost_calculation(ticker, html_table=None):
     ]].sum()
 
     open_position = summary_table.sum()['trade_quantity']
+
+    # Replace Nan with empty string
+    df.trade_operation = df.trade_operation.fillna('')
 
     # Drop Deposits and Withdraws - keep only Buy and Sells
     if open_position > 0:
@@ -1151,7 +1167,7 @@ def tail(file, lines=20):
 def apply_and_concat(dataframe, field, func, column_names):
     return pd.concat((dataframe, dataframe[field].apply(
         lambda cell: pd.Series(func(cell), index=column_names))),
-        axis=1)
+                     axis=1)
 
 
 # ---------------- PANDAS HELPER FUNCTION --------------------------
@@ -1170,6 +1186,6 @@ def df_unpack(df, column, fillna=None):
             pd.DataFrame(
                 (d for idx, d in df[column].iteritems())).fillna(fillna)
         ],
-            axis=1)
+                        axis=1)
         del ret[column]
     return ret

@@ -1,13 +1,12 @@
 import logging
 from flask.helpers import get_flashed_messages
 from warden_decorators import MWT
-from flask import (Blueprint, redirect, render_template, abort,
-                   flash, session, request, current_app, url_for)
+from flask import (Blueprint, redirect, render_template, abort, flash, session,
+                   request, current_app, url_for)
 from flask_login import login_user, logout_user, current_user, login_required
-from warden_modules import (warden_metadata, positions,
-                            generatenav, specter_df,
-                            regenerate_nav,
-                            home_path, clean_float, transactions_fx)
+from warden_modules import (warden_metadata, positions, generatenav,
+                            specter_df, regenerate_nav, home_path, clean_float,
+                            transactions_fx)
 from pricing_engine.engine import fx_rate, historical_prices, realtime_price
 
 from forms import RegistrationForm, LoginForm, TradeForm
@@ -54,9 +53,9 @@ def before_request():
     # Ignore check for some pages - these are mostly methods that need
     # to run even in setup mode
     exclude_list = [
-        "warden.setup", "warden.specter_auth", "warden.login", "warden.register",
-        "warden.logout", "warden.show_broadcast", "warden.show_log", "warden.config_ini",
-        "warden.newtrade"
+        "warden.setup", "warden.specter_auth", "warden.login",
+        "warden.register", "warden.logout", "warden.show_broadcast",
+        "warden.show_log", "warden.config_ini", "warden.newtrade"
     ]
     if request.endpoint in exclude_list:
         return
@@ -76,15 +75,19 @@ def before_request():
     # Check if still downloading data, if so load files
     if current_app.downloading:
         # No need to test if still downloading txs
-        flash("Downloading from Specter. In the mean time, some transactions may be outdated or missing. Leave the app running to finish download.", "info")
+        flash(
+            "Downloading from Specter. In the mean time, some transactions may be outdated or missing. Leave the app running to finish download.",
+            "info")
 
     # Check that Specter is > 1.1.0 version
     # (this is the version where tx API was implemented)
     try:
         specter_version = str(current_app.specter.home_parser()['version'])
-        if version.parse(specter_version) < version.parse("1.1.0") and specter_version != "unknown":
+        if version.parse(specter_version) < version.parse(
+                "1.1.0") and specter_version != "unknown":
             flash(
-                f"Sorry, you need Specter version 1.1.0 or higher to connect to WARden. You are running version {specter_version}. Please upgrade.", "danger")
+                f"Sorry, you need Specter version 1.1.0 or higher to connect to WARden. You are running version {specter_version}. Please upgrade.",
+                "danger")
     # An error below means no file was ever created - probably needs setup
     except Exception:
         pass
@@ -107,8 +110,7 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         hash = generate_password_hash(form.password.data)
-        user = User(username=form.username.data,
-                    password=hash)
+        user = User(username=form.username.data, password=hash)
         current_app.db.session.add(user)
         current_app.db.session.commit()
         flash(f"Account created for {form.username.data}.", "success")
@@ -148,8 +150,8 @@ def logout():
 
 
 # Main page for WARden
-@ warden.route("/", methods=['GET'])
-@ warden.route("/warden", methods=['GET'])
+@warden.route("/", methods=['GET'])
+@warden.route("/warden", methods=['GET'])
 @login_required
 def warden_page():
     # For now pass only static positions, will update prices and other
@@ -157,6 +159,7 @@ def warden_page():
     # and refresh speed.
     # Get positions and prepare df for delivery
 
+    df = positions()
     try:
         df = positions()
     except Exception as e:
@@ -207,16 +210,17 @@ def warden_page():
     sorted_wallet_list = []
     try:
         for wallet in current_app.specter.wallet_alias_list():
-            wallet_df = meta['full_df'].loc[meta['full_df']
-                                            ['wallet_alias'] == wallet]
+            wallet_df = meta['full_df'].loc[meta['full_df']['wallet_alias'] ==
+                                            wallet]
             if wallet_df.empty:
                 balance = 0
             else:
                 balance = wallet_df['amount'].sum()
             sorted_wallet_list.append((wallet, balance))
 
-        sorted_wallet_list = sorted(
-            sorted_wallet_list, reverse=True, key=itemgetter(1))
+        sorted_wallet_list = sorted(sorted_wallet_list,
+                                    reverse=True,
+                                    key=itemgetter(1))
         sorted_wallet_list = [i[0] for i in sorted_wallet_list]
         wallets_exist = True
     except Exception as e:
@@ -244,7 +248,7 @@ def warden_page():
     return (render_template('warden/warden.html', **templateData))
 
 
-@ warden.route("/list_transactions", methods=['GET'])
+@warden.route("/list_transactions", methods=['GET'])
 @login_required
 def list_transactions():
     transactions = specter_df()
@@ -254,7 +258,7 @@ def list_transactions():
                            current_app=current_app)
 
 
-@ warden.route("/satoshi_quotes", methods=['GET'])
+@warden.route("/satoshi_quotes", methods=['GET'])
 @login_required
 def satoshi_quotes():
     return render_template("warden/satoshi_quotes.html",
@@ -308,10 +312,12 @@ def specter_auth():
 
         try:
             if int(status_code) < 400:
-                message = Message(category='Specter Connection',
-                                  message_txt='Pinging URL',
-                                  notes=f"{url}<br> ping <span class='text-success'>✅ Success</span>"
-                                  )
+                message = Message(
+                    category='Specter Connection',
+                    message_txt='Pinging URL',
+                    notes=
+                    f"{url}<br> ping <span class='text-success'>✅ Success</span>"
+                )
                 current_app.message_handler.add_message(message)
             else:
                 flash('Please check Specter URL (unreacheable)', 'danger')
@@ -353,19 +359,20 @@ def specter_auth():
 
 
 # Donation Thank you Page
-@ warden.route("/donate", methods=['GET'])
+@warden.route("/donate", methods=['GET'])
 @login_required
 def donate():
-    counter_file = os.path.join(home_path(),
-                                'warden/counter.json')
-    templateData = {"title": "Support this Software",
-                    "current_app": current_app}
+    counter_file = os.path.join(home_path(), 'warden/counter.json')
+    templateData = {
+        "title": "Support this Software",
+        "current_app": current_app
+    }
     return (render_template('warden/warden_thanks.html', **templateData))
 
 
 # Page with a single historical chart of NAV
 # Include portfolio value as well as CF_sumcum()
-@ warden.route("/navchart")
+@warden.route("/navchart")
 @login_required
 def navchart():
     data = generatenav()
@@ -399,25 +406,23 @@ def navchart():
                            current_app=current_app)
 
 
-@ warden.route("/heatmap")
+@warden.route("/heatmap")
 @login_required
 # Returns a monthly heatmap of returns and statistics
 def heatmap():
     heatmap_gen, heatmap_stats, years, cols = heatmap_generator()
 
-    return render_template(
-        "warden/heatmap.html",
-        title="Monthly Returns HeatMap",
-        heatmap=heatmap_gen,
-        heatmap_stats=heatmap_stats,
-        years=years,
-        cols=cols,
-        current_app=current_app,
-        current_user=fx_rate()
-    )
+    return render_template("warden/heatmap.html",
+                           title="Monthly Returns HeatMap",
+                           heatmap=heatmap_gen,
+                           heatmap_stats=heatmap_stats,
+                           years=years,
+                           cols=cols,
+                           current_app=current_app,
+                           current_user=fx_rate())
 
 
-@ warden.route("/volchart", methods=["GET", "POST"])
+@warden.route("/volchart", methods=["GET", "POST"])
 @login_required
 # Only returns the html - request for data is done through jQuery AJAX
 def volchart():
@@ -427,7 +432,7 @@ def volchart():
                            current_user=fx_rate())
 
 
-@ warden.route("/portfolio_compare", methods=["GET"])
+@warden.route("/portfolio_compare", methods=["GET"])
 @login_required
 def portfolio_compare():
     return render_template("warden/portfolio_compare.html",
@@ -476,13 +481,14 @@ def price_and_position():
         df_trades = df_trades[df_trades['trade_asset_ticker'] == ticker]
         if not df_trades.empty:
             df_trades = df_trades.sort_index(ascending=True)
-            df_trades['trade_quantity_cum'] = df_trades['trade_quantity'].cumsum()
+            df_trades['trade_quantity_cum'] = df_trades[
+                'trade_quantity'].cumsum()
             position_chart = df_trades[["trade_quantity_cum"]].copy()
             # dates need to be in Epoch time for Highcharts
             position_chart.index = position_chart.index.astype(
                 'datetime64[ns]')
-            position_chart.index = (
-                position_chart.index - datetime(1970, 1, 1)).total_seconds()
+            position_chart.index = (position_chart.index -
+                                    datetime(1970, 1, 1)).total_seconds()
             position_chart.index = position_chart.index * 1000
             position_chart.index = position_chart.index.astype(np.int64)
             position_chart = position_chart.to_dict()
@@ -512,6 +518,7 @@ def price_and_position():
                            GBTC_premium=GBTC_premium,
                            GBTC_fairvalue=GBTC_fairvalue)
 
+
 # Allocation History
 
 
@@ -525,31 +532,31 @@ def allocation_history():
 
 
 # Show debug info
-@ warden.route('/show_log')
+@warden.route('/show_log')
 @login_required
 def show_log():
     return render_template('warden/show_log.html',
                            title="Debug Viewer",
                            current_app=current_app,
-                           current_user=fx_rate()
-                           )
+                           current_user=fx_rate())
 
 
 # Show debug info
-@ warden.route('/show_broadcast')
+@warden.route('/show_broadcast')
 @login_required
 def show_broadcast():
     category = request.args.get("category")
-    return render_template('warden/show_broadcast.html',
-                           title="Message Broadcaster",
-                           current_app=current_app,
-                           current_user=fx_rate(),
-                           category=category,
-                           )
+    return render_template(
+        'warden/show_broadcast.html',
+        title="Message Broadcaster",
+        current_app=current_app,
+        current_user=fx_rate(),
+        category=category,
+    )
 
 
 # Show debug info
-@ warden.route('/config_ini', methods=['GET', 'POST'])
+@warden.route('/config_ini', methods=['GET', 'POST'])
 @login_required
 def config_ini():
     from config import Config
@@ -574,11 +581,11 @@ def config_ini():
                            current_app=current_app,
                            current_user=fx_rate(),
                            config_file=config_file,
-                           config_contents=config_contents
-                           )
+                           config_contents=config_contents)
 
 
 #   TRADES -----------------------------------------------
+
 
 @warden.route("/newtrade", methods=["GET", "POST"])
 @login_required
@@ -600,8 +607,9 @@ def newtrade():
                 qop = -1
             else:
                 qop = 0
-                flash("Trade Operation Error. Should be B for buy or S for sell.",
-                      "warning")
+                flash(
+                    "Trade Operation Error. Should be B for buy or S for sell.",
+                    "warning")
 
             # Calculate Trade's cash value
             cvfail = False
@@ -781,16 +789,13 @@ def edittransaction():
     form.trade_account.data = trade.trade_account
     form.trade_notes.data = trade.trade_notes
 
-    return render_template(
-        "warden/edittransaction.html",
-        title="Edit Transaction",
-        form=form,
-        trade=trade,
-        id=id,
-        current_app=current_app,
-        current_user=fx_rate()
-
-    )
+    return render_template("warden/edittransaction.html",
+                           title="Edit Transaction",
+                           form=form,
+                           trade=trade,
+                           id=id,
+                           current_app=current_app,
+                           current_user=fx_rate())
 
 
 @warden.route("/deltrade", methods=["GET"])
@@ -847,18 +852,16 @@ def delalltrades():
     else:
         return redirect(url_for("warden.warden_page"))
 
+
 # Shows Current Running Services
 
 
 @warden.route("/running_services", methods=["GET"])
 def running_services():
-    return render_template(
-        "warden/running_services.html",
-        title="Running Services and Status",
-        current_app=current_app,
-        current_user=fx_rate()
-
-    )
+    return render_template("warden/running_services.html",
+                           title="Running Services and Status",
+                           current_app=current_app,
+                           current_user=fx_rate())
 
 
 @warden.route("/drawdown", methods=["GET"])
@@ -878,8 +881,8 @@ def drawdown():
 # number of decimal places + a divisor
 
 
-@ jinja2.contextfilter
-@ warden.app_template_filter()
+@jinja2.contextfilter
+@warden.app_template_filter()
 def jformat(context, n, places, divisor=1):
     if n is None:
         return "-"
@@ -901,16 +904,16 @@ def jformat(context, n, places, divisor=1):
 
 
 # Jinja filter - epoch to time string
-@ jinja2.contextfilter
-@ warden.app_template_filter()
+@jinja2.contextfilter
+@warden.app_template_filter()
 def epoch(context, epoch):
     time_r = datetime.fromtimestamp(epoch).strftime("%m-%d-%Y (%H:%M)")
     return time_r
 
 
 # Jinja filter - fx details
-@ jinja2.contextfilter
-@ warden.app_template_filter()
+@jinja2.contextfilter
+@warden.app_template_filter()
 def fxsymbol(context, fx, output='symbol'):
     # Gets an FX 3 letter symbol and returns the HTML symbol
     # Sample outputs are:
@@ -934,15 +937,15 @@ def fxsymbol(context, fx, output='symbol'):
     return (out)
 
 
-@ jinja2.contextfilter
-@ warden.app_template_filter()
+@jinja2.contextfilter
+@warden.app_template_filter()
 def jencode(context, url):
     return urllib.parse.quote_plus(url)
 
 
 # Jinja filter - time to time_ago
-@ jinja2.contextfilter
-@ warden.app_template_filter()
+@jinja2.contextfilter
+@warden.app_template_filter()
 def time_ago(context, time=False):
     if type(time) is str:
         try:
