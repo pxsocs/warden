@@ -50,7 +50,7 @@ class Specter():
             url = self.base_url + f"wallets/wallet/{wallet_alias}/rescan_progress"
             if not session:
                 session = self.init_session()
-            response = session.get(url)
+            response = session.get(url, verify=False)
             data = response.json()
             session.close()
             # Save to pickle file
@@ -110,7 +110,9 @@ class Specter():
                     return (data)
 
             session = self.init_session()
-            response = session.post(self.tx_url, data=self.tx_payload)
+            response = session.post(self.tx_url,
+                                    data=self.tx_payload,
+                                    verify=False)
             specter_data = response.json()
             session.close()
 
@@ -167,7 +169,7 @@ class Specter():
         url = self.base_url + f'wallets/wallet/{wallet_alias}/settings/'
         metadata = {}
         session = self.init_session()
-        page = session.get(url)
+        page = session.get(url, verify=False)
         soup = BeautifulSoup(page.text, 'html.parser')
         session.close()
         metadata['url'] = url
@@ -218,7 +220,7 @@ class Specter():
         metadata = {}
         try:
             session = self.init_session()
-            page = session.get(url)
+            page = session.get(url, verify=False)
             session.close()
         except Exception as e:
             metadata['error'] = str(e)
@@ -352,7 +354,9 @@ class Specter():
     def is_reachable(self):
         # Test if this url can be reached
         try:
-            result = tor_request(self.base_url)
+            session = self.init_session()
+            result = session.get(self.base_url, verify=False)
+            session.close()
             self.specter_reached = result.ok
             return result.ok
         except Exception:
