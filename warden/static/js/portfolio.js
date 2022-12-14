@@ -29,7 +29,7 @@ $(document).ready(function () {
                 console.log(error);
                 alerts_html = $('#alerts').html();
                 $('#alerts').html(alerts_html + "<div class='small alert alert-danger alert-dismissible fade show' role='alert'>An error occured while refreshing data." +
-                    "<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button></div>")
+                    "<button type='button' class='close' data-bs-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button></div>")
             }
         });
     });
@@ -52,14 +52,14 @@ $(document).ready(function () {
 
     // Popover management
     // Default popover enabler from Bootstrap
-    $('[data-toggle="popover"]').popover()
+    $('[data-bs-toggle="popover"]').popover()
 
     // If clicked outside of popover, it closes
     $('.popover-dismiss').popover({
         trigger: 'focus'
     })
     // Start this function whenever a popup opens
-    $('[data-toggle="popover"]').on('shown.bs.popover', onPopoverHtmlLoad)
+    $('[data-bs-toggle="popover"]').on('shown.bs.popover', onPopoverHtmlLoad)
 
     $('.edit_tx_button').click(function () {
         this_var = $(this)
@@ -303,8 +303,8 @@ $(document).ready(function () {
 
                     `
 
-                this_var.attr('data-content', pop_html).data('bs.popover').setContent()
-                $('[data-toggle="popover"]').popover({
+                this_var.attr('data-bs-content', pop_html).data('bs.popover').setContent()
+                $('[data-bs-toggle="popover"]').popover({
 
                     html: true
                 })

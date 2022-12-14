@@ -1,9 +1,7 @@
-from flask import (Blueprint, flash,  request, current_app,
-                   jsonify, Response, redirect, url_for)
-from warden_modules import (warden_metadata,
-                            positions_dynamic,
-                            generatenav, specter_df,
-                            current_path, regenerate_nav,
+from flask import (Blueprint, flash, request, current_app, jsonify, Response,
+                   redirect, url_for)
+from warden_modules import (warden_metadata, positions_dynamic, generatenav,
+                            specter_df, current_path, regenerate_nav,
                             home_path, transactions_fx)
 from connections import tor_request, url_parser
 from pricing_engine.engine import price_ondate, historical_prices
@@ -26,7 +24,6 @@ import math
 import csv
 import requests
 import socket
-
 
 api = Blueprint('api', __name__)
 
@@ -87,6 +84,7 @@ def alert_activity():
 
 # API End Point checks for wallet activity
 
+
 # Gets a local pickle file and dumps - does not work with pandas df
 # Do not include extension pkl on argument
 @api.route("/get_pickle", methods=['GET'])
@@ -101,7 +99,8 @@ def get_pickle():
     filename += ".pkl"
     data_loader = pickle_it(action='load', filename=filename)
     if serialize is True:
-        return (json.dumps(data_loader, default=lambda o: '<not serializable>'))
+        return (json.dumps(data_loader,
+                           default=lambda o: '<not serializable>'))
     else:
         return (json.dumps(data_loader, default=str))
 
@@ -149,6 +148,7 @@ def testtor():
     from connections import test_tor
     return json.dumps(test_tor())
 
+
 #  API End point
 # Json for main page with realtime positions
 
@@ -184,13 +184,15 @@ def positions_json():
 # Returns current BTC price and FX rate for current user
 # This is the function used at the layout navbar to update BTC price
 # Please note that the default is to update every 20s (MWT(20) above)
-@ api.route("/realtime_btc", methods=["GET"])
+@api.route("/realtime_btc", methods=["GET"])
 @login_required
 def realtime_btc():
     try:
         fx_details = fx_rate()
-        fx_r = {'cross': fx_details['symbol'],
-                'fx_rate': fx_details['fx_rate']}
+        fx_r = {
+            'cross': fx_details['symbol'],
+            'fx_rate': fx_details['fx_rate']
+        }
         fx_r['btc_usd'] = realtime_price("BTC", fx='USD')['price']
         fx_r['btc_fx'] = fx_r['btc_usd'] * fx_r['fx_rate']
     except Exception as e:
@@ -408,6 +410,7 @@ def fiatchartdatajson():
     except Exception as e:
         return (json.dumps({"Error": str(e)}))
     return fiatchart
+
 
 # API end point - returns a json with BTC Fiat Price
 
@@ -674,24 +677,34 @@ def mempool_json():
             mp_fee = tor_request(url + 'api/v1/fees/recommended').text
 
         if 'Service Unavailable' in mp_fee:
-            return json.dumps({'mp_fee': '-',
-                               'mp_blocks': '-',
-                               'mp_url': url,
-                               'error': 'Mempool.space seems to be unavailable. Maybe node is still synching.'})
+            return json.dumps({
+                'mp_fee':
+                '-',
+                'mp_blocks':
+                '-',
+                'mp_url':
+                url,
+                'error':
+                'Mempool.space seems to be unavailable. Maybe node is still synching.'
+            })
         mp_blocks = tor_request(url + 'api/blocks').json()
 
-        return json.dumps({'mp_fee': mp_fee,
-                           'mp_blocks': mp_blocks,
-                           'mp_url': url,
-                           'error': None})
+        return json.dumps({
+            'mp_fee': mp_fee,
+            'mp_blocks': mp_blocks,
+            'mp_url': url,
+            'error': None
+        })
 
     except Exception as e:
         if url is None:
             url = 'Could not find url'
-        return json.dumps({'mp_fee': '-',
-                           'mp_blocks': '-',
-                           'mp_url': url,
-                           'error': f'Error: {e}'})
+        return json.dumps({
+            'mp_fee': '-',
+            'mp_blocks': '-',
+            'mp_url': url,
+            'error': f'Error: {e}'
+        })
 
 
 @api.route("/portfolio_compare_json", methods=["GET"])
@@ -936,6 +949,7 @@ def generatenav_json():
         nav = generatenav(current_user.username, force, filter)
         return nav.to_json()
 
+
 # Return the list of hosts found + the ones at standard list
 # Also used to include new hosts or delete old ones
 
@@ -974,10 +988,7 @@ def host_list():
     if request.method == "POST":
         url = request.form.get("new_url")
         url = url_parser(url)
-        hosts[url] = {
-            'ip': url,
-            'host': url,
-            'last_time': None}
+        hosts[url] = {'ip': url, 'host': url, 'last_time': None}
 
         pickle_it('save', 'hosts_found.pkl', hosts)
 
@@ -1074,8 +1085,8 @@ def drawdown_json():
     df["dup"] = df.duplicated(["modMax"])
 
     # Now, exclude the drawdowns that have overlapping data, keep only highest
-    df_group = df.groupby(["modMax"]).min().sort_values(
-        by="modDD", ascending=True)
+    df_group = df.groupby(["modMax"]).min().sort_values(by="modDD",
+                                                        ascending=True)
     # Trim to fit n_dd
     df_group = df_group.head(n_dd)
     # Format a dict for return
@@ -1087,24 +1098,19 @@ def drawdown_json():
         tmp_dict["start_date"] = row["end_date"].strftime("%Y-%m-%d")
         tmp_dict["end_value"] = row["close"]
         tmp_dict["recovery_date"] = (
-            df[df.modMax == index].tail(1).end_date[0].strftime("%Y-%m-%d")
-        )
-        tmp_dict["end_date"] = (
-            df[df.close == row["close"]].tail(
-                1).end_date[0].strftime("%Y-%m-%d")
-        )
-        tmp_dict["start_value"] = df[df.index ==
-                                     row["end_date"]].tail(1).close[0]
+            df[df.modMax == index].tail(1).end_date[0].strftime("%Y-%m-%d"))
+        tmp_dict["end_date"] = (df[df.close == row["close"]].tail(
+            1).end_date[0].strftime("%Y-%m-%d"))
+        tmp_dict["start_value"] = df[df.index == row["end_date"]].tail(
+            1).close[0]
         tmp_dict["days_to_recovery"] = (
-            df[df.modMax == index].tail(1).end_date[0] - row["end_date"]
-        ).days
+            df[df.modMax == index].tail(1).end_date[0] - row["end_date"]).days
         tmp_dict["days_to_bottom"] = (
-            df[df.close == row["close"]].tail(1).end_date[0] - row["end_date"]
-        ).days
+            df[df.close == row["close"]].tail(1).end_date[0] -
+            row["end_date"]).days
         tmp_dict["days_bottom_to_recovery"] = (
             df[df.modMax == index].tail(1).end_date[0] -
-            df[df.close == row["close"]].tail(1).end_date[0]
-        ).days
+            df[df.close == row["close"]].tail(1).end_date[0]).days
         return_list.append(tmp_dict)
 
     if chart:
@@ -1130,8 +1136,8 @@ def drawdown_json():
             # First the start date for all dd
             tmp_dict = {}
             start_date = datetime.strptime(item["start_date"], "%Y-%m-%d")
-            start_date = (start_date - datetime(1970, 1, 1)
-                          ).total_seconds() * 1000
+            start_date = (start_date -
+                          datetime(1970, 1, 1)).total_seconds() * 1000
             tmp_dict["x"] = start_date
             tmp_dict["title"] = "TOP"
             tmp_dict["text"] = "Start of drawdown"
@@ -1139,19 +1145,17 @@ def drawdown_json():
             # Now the bottom for all dd
             tmp_dict = {}
             end_date = datetime.strptime(item["end_date"], "%Y-%m-%d")
-            end_date = (end_date - datetime(1970, 1, 1)
-                        ).total_seconds() * 1000
+            end_date = (end_date - datetime(1970, 1, 1)).total_seconds() * 1000
             tmp_dict["x"] = end_date
             tmp_dict["title"] = "BOTTOM"
             tmp_dict["text"] = "Bottom of drawdown"
             flags.append(tmp_dict)
             # Now the bottom for all dd
             tmp_dict = {}
-            recovery_date = datetime.strptime(
-                item["recovery_date"], "%Y-%m-%d")
-            recovery_date = (
-                recovery_date - datetime(1970, 1, 1)
-            ).total_seconds() * 1000
+            recovery_date = datetime.strptime(item["recovery_date"],
+                                              "%Y-%m-%d")
+            recovery_date = (recovery_date -
+                             datetime(1970, 1, 1)).total_seconds() * 1000
             tmp_dict["x"] = recovery_date
             tmp_dict["title"] = "RECOVERED"
             tmp_dict["text"] = "End of drawdown Cycle"
@@ -1180,9 +1184,9 @@ def drawdown_json():
             tmp_dict["label"]["rotation"] = 90
             tmp_dict["label"]["align"] = "center"
             tmp_dict["label"]["textAlign"] = "left"
-            tmp_dict["label"]["text"] = (
-                "Lasted " + str(round(recovery_days, 0)) + " days"
-            )
+            tmp_dict["label"]["text"] = ("Lasted " +
+                                         str(round(recovery_days, 0)) +
+                                         " days")
             tmp_dict["label"]["style"] = {}
             tmp_dict["label"]["style"]["color"] = "white"
             tmp_dict["label"]["style"]["fontWeight"] = "bold"
@@ -1191,20 +1195,19 @@ def drawdown_json():
             tmp_dict["to"] = recovery_date
             plot_bands.append(tmp_dict)
 
-        return jsonify(
-            {
-                "chart_data": data['close'],
-                "messages": "OK",
-                "chart_flags": flags,
-                "plot_bands": plot_bands,
-                "days": {
-                    "recovery": total_recovery_days,
-                    "drawdown": total_drawdown_days,
-                    "trending": total_days - total_drawdown_days - total_recovery_days,
-                    "non_trending": total_drawdown_days + total_recovery_days,
-                    "total": total_days,
-                },
-            }
-        )
+        return jsonify({
+            "chart_data": data['close'],
+            "messages": "OK",
+            "chart_flags": flags,
+            "plot_bands": plot_bands,
+            "days": {
+                "recovery": total_recovery_days,
+                "drawdown": total_drawdown_days,
+                "trending":
+                total_days - total_drawdown_days - total_recovery_days,
+                "non_trending": total_drawdown_days + total_recovery_days,
+                "total": total_days,
+            },
+        })
 
     return simplejson.dumps(return_list)

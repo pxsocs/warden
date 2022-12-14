@@ -2,51 +2,59 @@
 <html lang="en">
 <link rel="icon" href="{{url_for('warden.static', filename='images/favicon-bitcoin.ico')}}" class="invert">
 
-<head>
-    <!-- Style Sheets -->
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-    <!-- Fon Awesome -->
-    <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/font-awesome/css/all.css')}}">
-    <!-- Tags Input -->
-    <link rel="stylesheet"
-        href="{{url_for('warden.static', filename='dependencies/bootstrap-tagsinput/bootstrap-tagsinput.css')}}">
-    <!-- JQuery UI -->
-    <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/jquery/themes/flicker.css')}}">
+<head>
+    <meta charset="UTF-8" />
+
+    {% if title %}
+    <title>WARden | {{ title }}</title>
+    {% else %}
+    <title>WARden</title>
+    {% endif %}
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{{url_for('static', filename='images/favicon-bitcoin.ico')}}"
+    />
+
+    <!-- BOOTSTRAP -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+
+    <!-- LOCAL theme CSS -->
+    <!-- LOCAL CSS -->
     <link rel="stylesheet" href="{{url_for('warden.static', filename='css/warden_main.css')}}">
     <link rel="stylesheet" type="text/css" href="{{url_for('warden.static', filename='css/warden_layout.css')}}">
 
-    <!-- End Style Sheets -->
+
+    <link
+      rel="stylesheet"
+      href="{{url_for('static', filename='dependencies/font-awesome/css/all.css')}}"
+    />
 
 
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- JQUERY -->
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"
+    ></script>
 
-    {% if title %}
-    <title>The WARden | {{ title }}</title>
-    {% else %}
-    <title>The WARden</title>
-    {% endif %}
-</head>
+
+    <!-- Utilities - APP -->
+    <script src="{{url_for('static', filename='js/utils.js')}}"></script>
+
+
+
+  </head>
+
+
+
 
 <body>
-    <!-- JavaScript Loaders -->
-    <!-- JQuery -->
-    <script src="{{url_for('warden.static', filename='dependencies/jquery/jquery-3.4.1.js')}}"></script>
-
-    <script src="{{url_for('warden.static', filename='dependencies/popper/tooltip.js')}}">
-    </script>
-    <!-- Bootstrap -->
-    <script src="{{url_for('warden.static', filename='dependencies/jquery-ui/jquery-ui.js')}}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-        crossorigin="anonymous"></script>
-    <script
-        src="{{url_for('warden.static', filename='dependencies/bootstrap-tagsinput/bootstrap-tagsinput.js')}}"></script>
-
-    <!-- END JavaScript Loaders -->
 
     <header>
         <nav class="navbar navbar-dark bg-steel navbar-expand-lg navbar-font justify-content-end">
@@ -63,7 +71,7 @@
                     </button>
                     <button id="status" type="button"
                         class="btn btn-sm statusbox text-white dropdown-toggle dropdown-toggle-split"
-                        data-toggle="dropdown">
+                        data-bs-toggle="dropdown">
                     </button>
                     <div class="dropdown-menu scrollable-menu dropdown-menu-right text-muted">
                         <span>
@@ -159,7 +167,7 @@
                     </button>
                     <button id="list_fx" type="button"
                         class="btn btn-sm statusbox text-white dropdown-toggle dropdown-toggle-split"
-                        data-toggle="dropdown">
+                        data-bs-toggle="dropdown">
                     </button>
                     <div class="dropdown-menu scrollable-menu dropdown-menu-right">
                         <span id='fx_sel'>
@@ -182,7 +190,7 @@
 
                 <!-- TRANSACTIONS MENU + SUBMENUS -->
                 <li>
-                    <a data-toggle="collapse" href="#collapse_transactions" role="button" aria-expanded="true"
+                    <a data-bs-toggle="collapse" href="#collapse_transactions" role="button" aria-expanded="true"
                         aria-controls="collapse_transactions">
                         <i class="fas fa-coins fa-lg"></i>
                         &nbsp;&nbsp;&nbsp;&nbsp;Portfolio
@@ -215,7 +223,7 @@
                 </div>
 
                 <li>
-                    <a data-toggle="collapse" href="#collapse_trades" role="button" aria-expanded="true"
+                    <a data-bs-toggle="collapse" href="#collapse_trades" role="button" aria-expanded="true"
                         aria-controls="collapse_trades">
                         <i class="fas fa-coins fa-lg"></i>
                         &nbsp;&nbsp;&nbsp;&nbsp;Transactions
@@ -234,14 +242,14 @@
                     <a class="sidebar-subitem" id="downloadcsv" href="{{ url_for('csv_routes.exportcsv') }}"><i
                             class="fas fa-download fa-lg"></i>&nbsp;&nbsp;Download transactions</a>
 
-                    <a class="sidebar-subitem fa-lg" href="{{ url_for('csv_routes.csvtemplate') }}"><i
+                    <a class="sidebar-subitem" href="{{ url_for('csv_routes.csvtemplate') }}"><i
                             class="fas fa-book fa-lg"></i>&nbsp;&nbsp;CSV file instructions</a>
 
                 </div>
 
 
                 <li>
-                    <a data-toggle="collapse" href="#collapse_specter" role="button" aria-expanded="true"
+                    <a data-bs-toggle="collapse" href="#collapse_specter" role="button" aria-expanded="true"
                         aria-controls="collapse_specter">
                         <i class="fas fa-users-cog fa-lg"></i>
                         &nbsp;&nbsp;&nbsp;&nbsp;Specter Server
@@ -264,7 +272,7 @@
 
 
         <li>
-            <a data-toggle="collapse" href="#collapse_settings" role="button" aria-expanded="true"
+            <a data-bs-toggle="collapse" href="#collapse_settings" role="button" aria-expanded="true"
                 aria-controls="collapse_transactions">
                 <i class="fas fa-users-cog fa-lg"></i>
                 &nbsp;&nbsp;&nbsp;&nbsp;System
@@ -389,10 +397,7 @@
                 </div>
 
                 <div class="col-sm-4 text-center">
-                    <i class="fab fa-bitcoin fa-lg text-white"></i>
-                    Not Your Keys, Not Your Coins
-                    <i class="fab fa-bitcoin fa-lg text-white"></i>
-                    Si vis pacem, para bellum
+                    Not Your Keys, Not Your Coins&nbsp;&nbsp;
                     <i class="fab fa-bitcoin fa-lg text-white"></i>
                 </div>
 
@@ -408,15 +413,10 @@
 
         <!-- END OF WRAPPER -->
 
-
+    {%block modals%} {%endblock%}
 
     </body>
 
 
-    {%block modals%}
-
-    {%endblock%}
-
-    <script src="{{url_for('warden.static', filename='js/warden_layout.js')}}"></script>
 
 </html>

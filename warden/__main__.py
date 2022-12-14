@@ -622,6 +622,13 @@ def main(debug=False, reloader=False):
 
     """)
 
+    # Try to launch webbrowser and open the url
+    try:
+        import webbrowser
+        webbrowser.open('http://localhost:' + str(port) + '/')
+    except Exception:
+        pass
+
     app.run(debug=debug,
             threaded=True,
             host=app.settings['SERVER'].get('host'),

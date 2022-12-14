@@ -56,7 +56,7 @@
             <td class='text-center'>
               {%if value['provider_info']['field_dict']['apikey']%}
               <button type="button" class="btn btn-sm btn-info" data-offset=-200 data-trigger="focus"
-                data-placement="right" data-toggle="popover" title="API Key"
+                data-placement="right" data-bs-toggle="popover" title="API Key"
                 data-content="{{value['provider_info']['field_dict']['apikey']}}">
                 <i class="fas fa-key"></i>
               </button>
@@ -66,7 +66,7 @@
             <td class='text-center'>
               {%if value['provider_info']['errors']%}
               <button type="button" class="btn btn-sm btn-danger" data-offset=-200 data-trigger="focus"
-                data-placement="right" data-toggle="popover" title="API Key"
+                data-placement="right" data-bs-toggle="popover" title="API Key"
                 data-content="{{value['provider_info']['errors']}}">
                 <i class="fas fa-exclamation-circle"></i>
               </button>
@@ -90,7 +90,7 @@
             <td class='text-center'>
               {%if value['price_data']['errors']%}
               <button type="button" class="btn btn-sm btn-danger" data-offset=-200 data-trigger="focus"
-                data-placement="right" data-toggle="popover" title="API Key"
+                data-placement="right" data-bs-toggle="popover" title="API Key"
                 data-content="{{value['price_data']['errors']}}">
                 <i class="fas fa-exclamation-circle"></i>
               </button>
@@ -104,7 +104,7 @@
               {%if (value['realtime']['price'] != None) and ((value['realtime']['price'] | length) > 20)%}
 
               <button type="button" class="btn btn-sm btn-success" data-offset=-200 data-trigger="focus"
-                data-placement="right" data-toggle="popover" title="Realtime data returned"
+                data-placement="right" data-bs-toggle="popover" title="Realtime data returned"
                 data-content="{{value['realtime']['price']}}">
                 <i class="fas fa-info-circle"></i>
               </button>
@@ -117,7 +117,7 @@
             <td class='text-center'>
               {%if value['realtime']['error']%}
               <button type="button" class="btn btn-sm btn-danger" data-offset=-200 data-trigger="focus"
-                data-placement="right" data-toggle="popover" title="API Key"
+                data-placement="right" data-bs-toggle="popover" title="API Key"
                 data-content="{{value['realtime']['error']}}">
                 <i class="fas fa-exclamation-circle"></i>
               </button>
@@ -138,7 +138,7 @@
 
 <script>
   $(function () {
-    $('[data-toggle="popover"]').popover()
+    $('[data-bs-toggle="popover"]').popover()
   });
 </script>
 

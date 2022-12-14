@@ -13,9 +13,10 @@ from flask import (Blueprint, flash, redirect, render_template, request,
 from flask_login import current_user, login_required
 
 from models import Trades, AccountInfo
-from forms import ImportCSV
+from forms import ImportCSV, TradeForm
 from utils import home_path, pickle_it
 from warden_modules import transactions_fx, clean_float
+from pricing_engine.engine import fx_rate
 
 csv_routes = Blueprint('csv_routes', __name__)
 
@@ -24,7 +25,7 @@ def cleancsvfile(file):
     df = pd.read_csv(file)
     count = df.count()[0] + 1
     df.to_csv(file, index=False)
-    return(count)
+    return (count)
 
 
 @csv_routes.route("/exportcsv")
@@ -35,16 +36,21 @@ def exportcsv():
         user_id=current_user.username).order_by(Trades.trade_date)
 
     if transactions.count() == 0:
-        return render_template("empty_txs.html")
+        form = TradeForm()
+        form.trade_currency.data = current_app.fx['code']
+        form.trade_date.data = datetime.utcnow()
+        return render_template("warden/empty_txs.html",
+                               title="Empty Transaction List",
+                               current_app=current_app,
+                               current_user=fx_rate(),
+                               form=form)
 
     filename = (current_user.username + "_" +
                 datetime.now().strftime("%Y%m%d") + ".")
     filepath = os.path.join(home_path(), filename)
     df = transactions_fx()
-    compression_opts = dict(method='zip',
-                            archive_name=filename + 'csv')
-    df.to_csv(filepath + 'zip', index=True,
-              compression=compression_opts)
+    compression_opts = dict(method='zip', archive_name=filename + 'csv')
+    df.to_csv(filepath + 'zip', index=True, compression=compression_opts)
 
     return send_file(filepath + 'zip', as_attachment=True)
 
@@ -69,35 +75,31 @@ def importcsv():
                     csv_reader = csv.DictReader(csv_reader)
                     csvfile = form.csvfile.data
 
-                return render_template(
-                    "warden/importcsv.html",
-                    title="Import CSV File",
-                    form=form,
-                    csv=csv_reader,
-                    csvfile=csvfile,
-                    filename=filename,
-                    current_app=current_app,
-                    row_count=row_count
-                )
+                return render_template("warden/importcsv.html",
+                                       title="Import CSV File",
+                                       form=form,
+                                       csv=csv_reader,
+                                       csvfile=csvfile,
+                                       filename=filename,
+                                       current_app=current_app,
+                                       row_count=row_count)
 
     if request.method == "GET":
         filename = request.args.get("f")
         if filename:
             df = pd.read_csv(filename)
             # Clean the dataframe
-            df.columns = ['trade_date',
-                          'trade_account',
-                          'trade_operation',
-                          'trade_asset_ticker',
-                          'trade_quantity',
-                          'trade_price',
-                          'trade_fees',
-                          'cash_value',
-                          'trade_notes',
-                          'trade_blockchain_id']
+            df.columns = [
+                'trade_date', 'trade_account', 'trade_operation',
+                'trade_asset_ticker', 'trade_quantity', 'trade_price',
+                'trade_fees', 'cash_value', 'trade_notes',
+                'trade_blockchain_id'
+            ]
 
             # Make sure these are float numbers
-            floaters = ['trade_quantity', 'trade_price', 'trade_fees', 'cash_value']
+            floaters = [
+                'trade_quantity', 'trade_price', 'trade_fees', 'cash_value'
+            ]
             for element in floaters:
                 df[element].apply(clean_float)
 
@@ -107,7 +109,9 @@ def importcsv():
             # Accept only B / S on operation, sanitize
             df['trade_operation'] = df['trade_operation'].str.upper()
             df['trade_operation'] = df['trade_operation'].str.replace(' ', '')
-            df.drop(df[(df.trade_operation != 'B') & (df.trade_operation != 'S')].index, inplace=True)
+            df.drop(df[(df.trade_operation != 'B')
+                       & (df.trade_operation != 'S')].index,
+                    inplace=True)
 
             # Make sure there is a cash value
             df.loc[df["cash_value"].isnull(), 'cash_value'] = (
@@ -115,7 +119,8 @@ def importcsv():
 
             df['trade_asset_ticker'] = df['trade_asset_ticker'].str.upper()
             # Remove spaces on tickers
-            df['trade_asset_ticker'] = df['trade_asset_ticker'].str.replace(' ', '')
+            df['trade_asset_ticker'] = df['trade_asset_ticker'].str.replace(
+                ' ', '')
 
             df['trade_currency'] = current_app.settings['PORTFOLIO']['base_fx']
             df['trade_inputon'] = datetime.utcnow()
@@ -125,7 +130,10 @@ def importcsv():
             trade_account_list = df['trade_account'].unique().tolist()
 
             # Import DF into database
-            df.to_sql(name='trades', con=current_app.db.engine, if_exists='append', index=False)
+            df.to_sql(name='trades',
+                      con=current_app.db.engine,
+                      if_exists='append',
+                      index=False)
 
             #  Accounts
             accounts = AccountInfo.query.filter_by(
@@ -135,8 +143,7 @@ def importcsv():
             # Include the new accounts in account list
             for account in trade_account_list:
                 # Check if current account is in list, if not, include
-                curacc = accounts.filter_by(
-                    account_longname=account).first()
+                curacc = accounts.filter_by(account_longname=account).first()
 
                 if not curacc:
                     account = AccountInfo(user_id=current_user.username,
@@ -144,7 +151,9 @@ def importcsv():
                     current_app.db.session.add(account)
                     current_app.db.session.commit()
 
-            flash("Imported CSV Successfully. NAV and Portfolio will update soon.", "success")
+            flash(
+                "Imported CSV Successfully. NAV and Portfolio will update soon.",
+                "success")
             return redirect(url_for("warden.warden_page"))
 
     return render_template("warden/importcsv.html",

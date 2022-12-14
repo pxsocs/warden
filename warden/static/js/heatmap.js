@@ -50,7 +50,7 @@ function run_ajax() {
         },
         error: function (xhr, status, error) {
             $('#alerts').html("<div class='small alert alert-danger alert-dismissible fade show' role='alert'>An error occured while refreshing data. Check the ticker and try again." +
-                "<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button></div>")
+                "<button type='button' class='close' data-bs-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button></div>")
             console.log(status);
         }
     });

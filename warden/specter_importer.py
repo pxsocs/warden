@@ -8,6 +8,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from utils import pickle_it, load_config
 from connections import tor_request
+from flask_login import current_user
 
 import numpy as np
 
@@ -105,7 +106,9 @@ class Specter():
         # dict_keys(['pageCount', 'txlist', 'last_update'])
         try:
             if load:
-                data = pickle_it(action='load', filename='specter_txs.pkl')
+                data = pickle_it(
+                    action='load',
+                    filename=f'specter_txs_{current_user.username}.pkl')
                 if data != 'file not found':
                     return (data)
 
@@ -147,7 +150,7 @@ class Specter():
 
             # Save to pickle file
             pickle_it(action='save',
-                      filename='specter_txs.pkl',
+                      filename=f'specter_txs_{current_user.username}.pkl',
                       data=specter_data)
             return (specter_data)
 
@@ -370,8 +373,23 @@ class Specter():
         except Exception:
             return False
 
+    def is_inside_umbrel(self):
+        # Specific Check for Specter hosted inside an Umbrel server
+        # Currently not working and not supported
+        searcher = "We\'re sorry but Umbrel"
+        url = self.base_url + 'about'
+        session = self.init_session()
+        page = session.get(url, verify=False)
+        session.close()
+        txt = page.text
+        if searcher in txt:
+            return True
+        else:
+            return False
+
     # Check if Specter is currently connected to a node
     def is_healthy(self):
+        # Check if the node is reachable
         reach = self.is_reachable()
         if reach is False:
             pickle_it("save", "specter_health.pkl", "Unreacheable")

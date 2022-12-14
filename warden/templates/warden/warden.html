@@ -17,7 +17,7 @@
 
         <tbody>
             <tr>
-                <td class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
+                <td class="border-bottom hinumber" data-bs-toggle="tooltip" data-placement="top"
                     title="Market Value in {{current_app.fx['symbol']}}">
                     <span id="pvalue">
                         <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
@@ -35,14 +35,14 @@
                         height="30"></img>
                 </td>
                 <td></td>
-                <td class="border-bottom hinumber text-right" data-toggle="tooltip" data-placement="top"
+                <td class="border-bottom hinumber text-right" data-bs-toggle="tooltip" data-placement="top"
                     title="Market Value in BTC">
                     <span id="pvaluebtc">
                         <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                             height="30"></img>
                     </span>
                 </td>
-                <td class="border-bottom hinumber text-right" data-toggle="tooltip" data-placement="top"
+                <td class="border-bottom hinumber text-right" data-bs-toggle="tooltip" data-placement="top"
                     title="Market Value in Sats">
                     <span id="pvaluesats">
                         <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
@@ -80,13 +80,13 @@
         <tbody>
             <tr>
 
-                <td id='latest_btc_price' class="text-center border-bottom hinumbersmall" data-toggle="tooltip"
+                <td id='latest_btc_price' class="text-center border-bottom hinumbersmall" data-bs-toggle="tooltip"
                     data-placement="top" title="Bitcoin's Latest Price">
                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                         height="30"></img>
                 </td>
 
-                <td id='latest_btc_block' class="text-center border-bottom hinumbersmall small" data-toggle="tooltip"
+                <td id='latest_btc_block' class="text-center border-bottom hinumbersmall small" data-bs-toggle="tooltip"
                     data-placement="top" title="Bitcoin's Latest Block">
                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                         height="30"></img>
@@ -143,7 +143,7 @@
                             Ticker
                         </th>
 
-                        <th class="text-right" data-toggle="tooltip" data-placement="top" title="in number of coins">
+                        <th class="text-right" data-bs-toggle="tooltip" data-placement="top" title="in number of coins">
                             Quantity
                         </th>
 
@@ -431,7 +431,7 @@
                     {%endif%}
 
                     {%if not wallet_df.empty%}
-                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet}}"
+                    <tr class='text-right' data-bs-toggle="collapse" data-target="#txs_{{wallet}}"
                         class="accordion-toggle">
                         <td>
                             <i class="far fa-plus-square"></i>
@@ -471,7 +471,7 @@
                         {%endif%}
                     </tr>
 
-                    <tr data-toggle="collapse" data-target="#txs_{{wallet}}" class="accordion-toggle">
+                    <tr data-bs-toggle="collapse" data-target="#txs_{{wallet}}" class="accordion-toggle">
                         <td colspan="10" class="hiddenRow">
                             <div id="txs_{{wallet}}" class="accordian-body collapse" style='padding-top: 15px;'>
                                 <div class="alert alert-secondary" role="alert">Transactions&nbsp;<i
@@ -483,19 +483,19 @@
                                     <thead class="thead-light">
                                         <tr class='text-right'>
                                             <th></th>
-                                            <th class='text-left' data-toggle="tooltip" data-placement="top"
+                                            <th class='text-left' data-bs-toggle="tooltip" data-placement="top"
                                                 title="Transaction Date">Date</th>
-                                            <th class='text-left' data-toggle="tooltip" data-placement="top"
+                                            <th class='text-left' data-bs-toggle="tooltip" data-placement="top"
                                                 title="Specter Label"> Label </th>
                                             <th> Address </th>
                                             <th> TX id </th>
                                             <th> Confirmations </th>
                                             <th> Amount (&#8383)</th>
-                                            <th data-toggle="tooltip" data-placement="top" title="Transaction Price"> ₿
+                                            <th data-bs-toggle="tooltip" data-placement="top" title="Transaction Price"> ₿
                                                 ({{current_app.fx['symbol']}})</th>
                                             <th> Cash ({{current_app.fx['symbol']}})</th>
                                             <th> Fees ({{current_app.fx['symbol']}})</th>
-                                            <th class='text-center' data-toggle="tooltip" data-placement="top"
+                                            <th class='text-center' data-bs-toggle="tooltip" data-placement="top"
                                                 title="Change this transactions details. Note: will not change Specter data.">
                                                 Edit </th>
                                         </tr>
@@ -558,7 +558,7 @@
                                                 {{tx[1]['trade_fees'] | jformat(2)}}
                                             </td>
                                             <td class='text-center edit_tx_button' data-txid="{{tx[1]['txid']}}"
-                                                data-toggle="tooltip" data-placement="right"
+                                                data-bs-toggle="tooltip" data-placement="right"
                                                 title="Click to edit this transaction details" style="cursor: pointer;">
                                                 <i class=" far fa-edit"></i>
                                             </td>
@@ -574,9 +574,9 @@
                         </td>
                     </tr>
                     {%else%}
-                    <tr class='text-right' data-toggle="collapse" data-target="#txs_{{wallet}}"
+                    <tr class='text-right' data-bs-toggle="collapse" data-target="#txs_{{wallet}}"
                         class="accordion-toggle">
-                        <td data-toggle="tooltip" data-placement="right" title="No Transactions Found for this Wallet">
+                        <td data-bs-toggle="tooltip" data-placement="right" title="No Transactions Found for this Wallet">
                             <i class="fas fa-exclamation-circle"></i>
                         </td>
                         <td class='text-left'>
@@ -713,7 +713,7 @@
                             <td class="text-right align-middle">
                                 <span id="{{position}}_be_calculator_FIFO">
                                     <a style="color: lightslategray; position: relative; cursor: pointer;" tabindex="0"
-                                        data-toggle="popover" class="cost_popover" data-trigger="focus"
+                                        data-bs-toggle="popover" class="cost_popover" data-trigger="focus"
                                         data-accounting='LIFO' title="Cost calculations for {{position}}"
                                         data-placement="bottom" data-content="<span class='text-center'><img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width='30'
                                     height='30'></img></span>" data-html="true" data-ticker={{position}}>
@@ -1170,21 +1170,21 @@
                     <tbody>
                         <tr>
 
-                            <td id='fastest_fee' class="text-left border-bottom hinumbersmall" data-toggle="tooltip"
+                            <td id='fastest_fee' class="text-left border-bottom hinumbersmall" data-bs-toggle="tooltip"
                                 data-placement="top"
                                 title="If you are in a rush, this is how much you need to pay in fees to have fast confirmation time">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
 
-                            <td id='30min_fee' class="text-center border-bottom hinumbersmall" data-toggle="tooltip"
+                            <td id='30min_fee' class="text-center border-bottom hinumbersmall" data-bs-toggle="tooltip"
                                 data-placement="top"
                                 title="This is how much you need to pay to get your transaction confirmed in 30 min (estimate)">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
 
-                            <td id='1hr_fee' class="text-right border-bottom hinumbersmall" data-toggle="tooltip"
+                            <td id='1hr_fee' class="text-right border-bottom hinumbersmall" data-bs-toggle="tooltip"
                                 data-placement="top"
                                 title="This is how much you need to pay to get your transaction confirmed in 60 min (estimate)">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
@@ -1359,7 +1359,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="exampleModalLabel">Cost basis calculation for open positions</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -1390,7 +1390,7 @@
 
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

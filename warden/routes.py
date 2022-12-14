@@ -129,7 +129,8 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        if user and check_password_hash(user.password, form.password.data):
+        if user is not None and check_password_hash(user.password,
+                                                    form.password.data):
             login_user(user, remember=True)
             flash(f"Login Successful. Welcome {user}.", "success")
             next_page = request.args.get("next")  # get the original page
@@ -166,10 +167,20 @@ def warden_page():
         flash(f"Error getting transactions: {e}", "danger")
         return redirect(url_for("warden.newtrade"))
 
-    if df.index.name != 'trade_asset_ticker':
-        df.set_index('trade_asset_ticker', inplace=True)
-    df = df[df['is_currency'] == 0].sort_index(ascending=True)
-    df = df.to_dict(orient='index')
+    if not df.empty:
+        if df.index.name != 'trade_asset_ticker':
+            df.set_index('trade_asset_ticker', inplace=True)
+        df = df[df['is_currency'] == 0].sort_index(ascending=True)
+        df = df.to_dict(orient='index')
+    else:
+        form = TradeForm()
+        form.trade_currency.data = current_app.fx['code']
+        form.trade_date.data = datetime.utcnow()
+        return (render_template('warden/empty_txs.html',
+                                title='No Transactions Found',
+                                form=form,
+                                current_user=fx_rate(),
+                                current_app=current_app))
 
     # Create a custody DF
     transactions = transactions_fx()
@@ -896,6 +907,8 @@ def jformat(context, n, places, divisor=1):
             return "-"
         except TypeError:
             return (n)
+        except Exception:
+            return "#error"
         try:
             form_string = "{0:,.{prec}f}".format(n, prec=places)
             return form_string
