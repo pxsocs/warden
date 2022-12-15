@@ -1,14 +1,14 @@
 from flask import (Blueprint, flash, request, current_app, jsonify, Response,
                    redirect, url_for)
-from warden_modules import (warden_metadata, positions_dynamic, generatenav,
-                            specter_df, current_path, regenerate_nav,
-                            home_path, transactions_fx)
+from backend.warden_modules import (warden_metadata, positions_dynamic,
+                                    generatenav, specter_df, current_path,
+                                    regenerate_nav, home_path, transactions_fx)
 from connections import tor_request, url_parser
 from pricing_engine.engine import price_ondate, historical_prices
 from flask_login import login_required, current_user
 from random import randrange
 from pricing_engine.engine import fx_rate, realtime_price
-from utils import heatmap_generator, pickle_it, safe_serialize
+from backend.utils import heatmap_generator, pickle_it, safe_serialize
 from models import Trades, AccountInfo, TickerInfo
 from datetime import datetime, timedelta
 from dateutil import parser
@@ -849,7 +849,7 @@ def progress_log():
     else:
         lines = 200
     from config import Config
-    from warden_modules import tail
+    from backend.warden_modules import tail
     debug = Config.debug_file
     data = tail(debug, lines)
     # Filter if needed

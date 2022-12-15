@@ -3,8 +3,8 @@
 
 import unittest
 
-from utils import load_config
-from warden_modules import current_path, home_path, specter_df
+from backend.utils import load_config
+from backend.warden_modules import current_path, home_path, specter_df
 
 import pandas as pd
 

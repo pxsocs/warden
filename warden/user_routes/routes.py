@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash
 
 from forms import RegistrationForm, UpdateAccountForm
 from models import User, AccountInfo, Trades
-from utils import update_config
+from backend.utils import update_config
 
 user_routes = Blueprint('user_routes', __name__)
 
@@ -36,12 +36,12 @@ def initial_setup():
         form = RegistrationForm()
         if form.validate_on_submit():
             hash = generate_password_hash(form.password.data)
-            user = User(username=form.username.data,
-                        password=hash)
+            user = User(username=form.username.data, password=hash)
             current_app.db.session.add(user)
             current_app.db.session.commit()
             login_user(user, remember=True)
-            flash(f"Account created for {form.username.data}. User Logged in.", "success")
+            flash(f"Account created for {form.username.data}. User Logged in.",
+                  "success")
             return redirect("/initial_setup?page=3&setup=True")
 
         return render_template("warden/register.html",
@@ -76,7 +76,9 @@ def initial_setup():
         # Maybe Specter is already running?
         try:
             if current_app.specter.home_parser()['alias_list'] != []:
-                flash(f"Succesfuly connected to Specter Server at {current_app.specter.base_url}")
+                flash(
+                    f"Succesfuly connected to Specter Server at {current_app.specter.base_url}"
+                )
         except Exception:
             pass
 
@@ -93,10 +95,12 @@ def account():
             user = User.query.filter_by(username=current_user.username).first()
             user.password = hash
             current_app.db.session.commit()
-            flash(f"Account password updated for user {current_user.username}", "success")
+            flash(f"Account password updated for user {current_user.username}",
+                  "success")
             return redirect(url_for("warden.warden_page"))
 
-        flash("Password Change Failed. Something went wrong. Try Again.", "danger")
+        flash("Password Change Failed. Something went wrong. Try Again.",
+              "danger")
 
     return render_template("warden/account.html",
                            title="Account",
@@ -113,9 +117,10 @@ def tor_services():
         update_config()
         from stem.control import Controller
         from urllib.parse import urlparse
-        current_app.tor_port = current_app.settings['SERVER'].getint('onion_port')
+        current_app.tor_port = current_app.settings['SERVER'].getint(
+            'onion_port')
         current_app.port = current_app.settings['SERVER'].getint('port')
-        from warden_modules import home_path
+        from backend.warden_modules import home_path
         toraddr_file = os.path.join(home_path(), "onion.txt")
         current_app.save_tor_address_to = toraddr_file
         proxy_url = "socks5h://localhost:9050"
@@ -126,16 +131,16 @@ def tor_services():
                 tor_control_address = "127.0.0.1"
             current_app.controller = Controller.from_port(
                 address=tor_control_address,
-                port=int(tor_control_port)
-                if tor_control_port
-                else "default",
+                port=int(tor_control_port) if tor_control_port else "default",
             )
         except Exception:
             current_app.controller = None
         from tor import start_hidden_service
         start_hidden_service(current_app)
 
-        flash(f"Started Tor Hidden Services at {current_app.tor_service_id}.onion", "success")
+        flash(
+            f"Started Tor Hidden Services at {current_app.tor_service_id}.onion",
+            "success")
     if action == 'stop':
         current_app.settings['SERVER']['onion_server'] = 'False'
         update_config()
