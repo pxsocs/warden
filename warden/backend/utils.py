@@ -1,20 +1,18 @@
-import logging
-import configparser
 import os
 import json
 import pickle
 from datetime import datetime
-from config import Config, home_path
 
-import mhp as mrh
+import backend.mhp as mrh
 
 
 # Function to load and save data into pickles
 def pickle_it(action='load', filename=None, data=None):
+    from backend.config import home_dir
     if filename is not None:
-        filename = os.path.join(home_path(), filename)
+        filename = os.path.join(home_dir, filename)
     else:
-        filename = os.path.join(home_path(), filename)
+        filename = os.path.join(home_dir, filename)
 
     # list all pkl files at directory
     if action == 'list':
@@ -56,7 +54,8 @@ def pickle_it(action='load', filename=None, data=None):
 
 # Function to load and save data into json
 def json_it(action='load', filename=None, data=None):
-    filename = os.path.join(home_path(), filename)
+    from backend.config import home_dir
+    filename = os.path.join(home_dir, filename)
     if action == 'delete':
         try:
             os.remove(filename)
@@ -96,8 +95,8 @@ def fxsymbol(fx, output='symbol'):
     # "rounding": 0,
     # "code": "EUR",
     # "name_plural": "euros"
-    from backend.warden_modules import current_path
-    filename = os.path.join(current_path(), 'static/json_files/currency.json')
+    from backend.config import basedir
+    filename = os.path.join(basedir, 'static/json_files/currency.json')
     with open(filename) as fx_json:
         fx_list = json.load(fx_json)
     try:

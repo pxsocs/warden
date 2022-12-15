@@ -1,16 +1,13 @@
-from connections import tor_request, url_parser
+from connections.connections import tor_request, url_parser
 from bs4 import BeautifulSoup
 
-
-SERVICES = ['Umbrel Dashboard', 'Ride the Lightning',
-            'Specter Server', 'Samourai Server Dojo',
-            'Electrum Server', 'Electrum Server',
-            'Bitcoin RPC Explorer',
-            'Mempool.space Explorer',
-            'BlueWallet Lightning',
-            'WARden Server',  'Pi-Hole',
-            'VSCode Server', 'Gitea',
-            'Nextcloud', "Home Assistant"]
+SERVICES = [
+    'Umbrel Dashboard', 'Ride the Lightning', 'Specter Server',
+    'Samourai Server Dojo', 'Electrum Server', 'Electrum Server',
+    'Bitcoin RPC Explorer', 'Mempool.space Explorer', 'BlueWallet Lightning',
+    'WARden Server', 'Pi-Hole', 'VSCode Server', 'Gitea', 'Nextcloud',
+    "Home Assistant"
+]
 
 
 def url_text(url):
@@ -19,7 +16,7 @@ def url_text(url):
         txt = page.text
     except Exception:
         txt = None
-    return(txt)
+    return (txt)
 
 
 def autodetect(url):
@@ -35,7 +32,7 @@ def search_in_txt(txt, search_terms):
     for term in search_terms:
         if term not in txt:
             found = False
-    return(found)
+    return (found)
 
 
 # --------------------------------------------------------

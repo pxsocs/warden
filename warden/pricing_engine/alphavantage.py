@@ -3,10 +3,10 @@ from pathlib import Path
 import requests
 import os
 from pricing_engine.engine import apikey
-from connections import tor_request
+from connections.connections import tor_request
 import pandas as pd
-from backend.warden_modules import current_path
-from warden_decorators import MWT
+from backend.config import basedir
+from backend.decorators import MWT
 from flask import flash
 # docs
 # https://www.alphavantage.co/documentation/
@@ -272,7 +272,7 @@ def asset_list(term=None):
     if term is None:
         term = ""
     # Alphavantage Currency List - CSV
-    filename = os.path.join(current_path(),
+    filename = os.path.join(basedir,
                             'static/csv_files/physical_currency_list.csv')
     with open(filename, newline='') as csvfile:
         reader = csv.reader(csvfile)
@@ -284,7 +284,7 @@ def asset_list(term=None):
                     'provider': 'aa_fx'
                 })
     # Alphavantage Digital Currency list
-    filename = os.path.join(current_path(),
+    filename = os.path.join(basedir,
                             'static/csv_files/digital_currency_list.csv')
     with open(filename, newline='') as csvfile:
         reader = csv.reader(csvfile)

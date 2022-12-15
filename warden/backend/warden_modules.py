@@ -12,26 +12,14 @@ from datetime import datetime, timedelta
 from flask import flash, current_app
 from flask_login import current_user
 from pathlib import Path
-from specter_importer import Specter
+from specter.specter_importer import Specter
 from pricing_engine.engine import (fx_rate, price_ondate, fx_price_ondate,
                                    realtime_price, historical_prices)
 from pricing_engine.cryptocompare import multiple_price_grab
-from warden_decorators import MWT, timing
-from backend.utils import load_config
+from backend.decorators import MWT, timing
+from backend.config import home_dir
 from dateutil import parser
-from parseNumbers import parseNumber
-
-
-# Returns the current application path
-def current_path():
-    application_path = os.path.dirname(os.path.abspath(__file__))
-    return (application_path)
-
-
-# Returns the home path
-def home_path():
-    home = str(Path.home())
-    return (home)
+from backend.parseNumbers import parseNumber
 
 
 # ------------------------------------
@@ -466,6 +454,7 @@ def list_tickers():
 
 
 def positions_dynamic():
+    from backend.config import load_config
     fx = load_config()['PORTFOLIO']['base_fx']
     # This method is the realtime updater for the front page. It gets the
     # position information from positions above and returns a dataframe
@@ -680,7 +669,7 @@ def generatenav(user=None, force=False, filter=None):
     # Unless force is true, then a rebuild is done regardless
     # Local files are  saved under a hash of username.
     filename = "warden/" + user + FX + ".nav"
-    filename = os.path.join(home_path(), filename)
+    filename = os.path.join(home_dir, filename)
     if force:
         # Since this function can be run as a thread, it's safer to delete
         # the current NAV file if it exists. This avoids other tasks reading
@@ -884,7 +873,7 @@ def generatenav(user=None, force=False, filter=None):
     # Save NAV Locally as Pickle
     if save_nav:
         filename = "warden/" + user + FX + ".nav"
-        filename = os.path.join(home_path(), filename)
+        filename = os.path.join(home_dir, filename)
         # makesure file path exists
         try:
             os.makedirs(os.path.dirname(filename))
@@ -912,10 +901,10 @@ def regenerate_nav():
     # Check if there any trades in the database. If not, skip.
     try:
         # Delete all pricing history
-        filename = os.path.join(home_path(), 'warden/*.nav')
+        filename = os.path.join(home_dir, 'warden/*.nav')
         aa_files = glob.glob(filename)
         [os.remove(x) for x in aa_files]
-        filename = os.path.join(home_path(), 'warden/*.nav')
+        filename = os.path.join(home_dir, 'warden/*.nav')
         nav_files = glob.glob(filename)
         [os.remove(x) for x in nav_files]
         # Clear memory, cache
@@ -1073,7 +1062,9 @@ def cost_calculation(ticker, html_table=None):
 
 
 def fx_list():
-    filename = os.path.join(current_path(),
+    import __main__
+    basedir = os.path.abspath(os.path.dirname(__main__.__file__))
+    filename = os.path.join(basedir,
                             'static/csv_files/physical_currency_list.csv')
     with open(filename, 'r') as csvfile:
         reader = csv.reader(csvfile)

@@ -7,17 +7,19 @@ from pathlib import Path
 home = Path.home()
 # make directory to store all private data at /home/.warden
 # /root/.warden/
-home_path = os.path.join(home, '.warden/')
+home_dir = os.path.join(home, '.warden/')
+
+import __main__
+
+basedir = os.path.abspath(os.path.dirname(__main__.__file__))
 # Check if the home directory exists, if not create it
 try:
-    os.mkdir(home_path)
+    os.mkdir(home_dir)
 except Exception:
     pass
 
 
 def create_config():
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    home_dir = os.path.join(home_path, 'warden')
 
     default_config_file = os.path.join(basedir,
                                        'static/config/config_default.ini')
@@ -36,8 +38,8 @@ def create_config():
 
 # Config class for Application Factory
 class Config:
-    home_dir = os.path.join(home_path, 'warden')
-    basedir = os.path.abspath(os.path.dirname(__file__))
+    import __main__
+    basedir = os.path.abspath(os.path.dirname(__main__.__file__))
 
     # Check if secret key exists, if not create it
     from backend.utils import pickle_it
@@ -63,8 +65,10 @@ class Config:
 
     # Check if config file exists
     file_config_file = Path(config_file)
-    if not file_config_file.is_file():
+    if not file_config_file.is_file() or os.stat(
+            file_config_file).st_size == 0:
         # File does not exist, create config file
+        print("[i] Config.ini not found. Creating config file from default...")
         create_config()
 
     # Used for notifications --- FUTURE FEATURE

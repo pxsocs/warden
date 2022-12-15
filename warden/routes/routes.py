@@ -1,23 +1,24 @@
 import logging
 from flask.helpers import get_flashed_messages
-from warden_decorators import MWT
+from backend.decorators import MWT
 from flask import (Blueprint, redirect, render_template, abort, flash, session,
                    request, current_app, url_for)
 from flask_login import login_user, logout_user, current_user, login_required
+from backend.config import home_dir, update_config
 from backend.warden_modules import (warden_metadata, positions, generatenav,
-                                    specter_df, regenerate_nav, home_path,
-                                    clean_float, transactions_fx)
+                                    specter_df, regenerate_nav,
+                                    transactions_fx)
 from pricing_engine.engine import fx_rate, historical_prices, realtime_price
 
-from forms import RegistrationForm, LoginForm, TradeForm
+from forms.forms import RegistrationForm, LoginForm, TradeForm
 
 from werkzeug.security import check_password_hash, generate_password_hash
-from models import User, AccountInfo, Trades
-from backend.utils import update_config, heatmap_generator, pickle_it
+from models.models import User, AccountInfo, Trades
+from backend.utils import heatmap_generator, pickle_it, clean_float
 from operator import itemgetter
 from packaging import version
-from connections import tor_request, url_parser
-from specter_importer import Specter
+from connections.connections import tor_request, url_parser
+from specter.specter_importer import Specter
 
 from datetime import datetime
 import jinja2
@@ -373,7 +374,7 @@ def specter_auth():
 @warden.route("/donate", methods=['GET'])
 @login_required
 def donate():
-    counter_file = os.path.join(home_path(), 'warden/counter.json')
+    counter_file = os.path.join(home_dir, 'counter.json')
     templateData = {
         "title": "Support this Software",
         "current_app": current_app
@@ -507,7 +508,7 @@ def price_and_position():
 
     if ticker == 'GBTC':
         from pricing_engine.engine import GBTC_premium
-        from parseNumbers import parseNumber
+        from backend.parseNumbers import parseNumber
         GBTC_price = parseNumber(realtime_data['price'])
         GBTC_fairvalue, GBTC_premium = GBTC_premium(GBTC_price)
     else:
@@ -939,9 +940,8 @@ def fxsymbol(context, fx, output='symbol'):
     # "code": "EUR",
     # "name_plural": "euros"
     try:
-        from thewarden.users.utils import current_path
-        filename = os.path.join(current_path(),
-                                'static/json_files/currency.json')
+        from backend.config import basedir
+        filename = os.path.join(basedir, 'static/json_files/currency.json')
         with open(filename) as fx_json:
             fx_list = json.load(fx_json, encoding='utf-8')
         out = fx_list[fx][output]

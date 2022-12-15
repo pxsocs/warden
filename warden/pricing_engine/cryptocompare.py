@@ -2,9 +2,9 @@ from datetime import datetime
 import logging
 import requests
 from pricing_engine.engine import apikey
-from connections import tor_request
+from connections.connections import tor_request
 import pandas as pd
-from warden_decorators import MWT
+from backend.decorators import MWT
 
 # Docs
 # https://min-api.cryptocompare.com/documentation
@@ -134,14 +134,13 @@ def asset_list(term=None):
         result = tor_request(url).json()
         result = result['Data']
         for key, value in result.items():
-            if term.upper() in value['Symbol'].upper() or term.upper() in value['FullName'].upper().upper():
-                master_list.append(
-                    {
-                        'symbol': value['Symbol'],
-                        'name': value['FullName'],
-                        'provider': 'cc_digital'
-                    }
-                )
+            if term.upper() in value['Symbol'].upper() or term.upper(
+            ) in value['FullName'].upper().upper():
+                master_list.append({
+                    'symbol': value['Symbol'],
+                    'name': value['FullName'],
+                    'provider': 'cc_digital'
+                })
     except Exception:
         pass
 

@@ -1,29 +1,24 @@
-from flask.globals import current_app
 from yaspin import yaspin
 import logging
-import subprocess
 import configparser
 import os
 import sys
 import atexit
 import warnings
-import socket
 import emoji
-import time
-import sqlite3
 import requests
 from logging.handlers import RotatingFileHandler
 from packaging import version
 from ansi.colour import fg
 from flask import Flask
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from pathlib import Path
 from connections.connections import internet_connected
 from apscheduler.schedulers.background import BackgroundScheduler
-from ansi_management import (warning, success, error, info, clear_screen,
-                             muted, yellow, blue)
+from backend.ansi_management import (warning, success, error, info,
+                                     clear_screen, muted, yellow, blue)
 
 
 def create_app():
@@ -64,7 +59,7 @@ def create_tor():
     #                 Test Tor
     # ----------------------------------------------
     with yaspin(text="Testing Tor", color="cyan") as spinner:
-        from connections import test_tor
+        from connections.connections import test_tor
         tor = test_tor()
         if tor['status']:
             logging.info(success("Tor Available"))
@@ -113,18 +108,8 @@ def init_app(app):
     # app.settings['PORTFOLIO']['RENEW_NAV']
     config_file = Config.config_file
     config_settings = configparser.ConfigParser()
+    config_settings.read(config_file)
     app.settings = config_settings
-
-    # Create instance of SQLAlchemy database
-    # --------------------------------------------
-    app.db = SQLAlchemy()
-    app.db.init_app(app)
-    # Import models so tables are created
-    # It's important to import all models here even if not used.
-    # Importing forces the creation of tables.
-    from models import Trades, User, AccountInfo, TickerInfo, SpecterInfo
-    # Create all tables
-    app.db.create_all()
 
     # Create instance of FLASK LOGIN Manager
     # --------------------------------------------
@@ -136,6 +121,17 @@ def init_app(app):
     # Sets strong session protection to avoid sessions being stolen
     app.login_manager.session_protection = "strong"
     app.login_manager.init_app(app)
+
+    # Create instance of SQLAlchemy database
+    # --------------------------------------------
+    app.db = SQLAlchemy()
+    app.db.init_app(app)
+    # Import models so tables are created
+    # It's important to import all models here even if not used.
+    # Importing forces the creation of tables.
+    from models.models import Trades, User, AccountInfo, TickerInfo, SpecterInfo
+    # Create all tables
+    app.db.create_all()
 
     # Create empty instance of messagehandler
     # --------------------------------------------
@@ -178,11 +174,11 @@ def init_app(app):
 
     # Prepare Flask Blueprints & Register
     # --------------------------------------------
-    from routes import warden
-    from errors.handlers import errors
-    from api.routes import api
-    from csv_routes.routes import csv_routes
-    from user_routes.routes import user_routes
+    from routes.routes import warden
+    from routes.errors.handlers import errors
+    from routes.api.routes import api
+    from routes.csv.routes import csv_routes
+    from routes.user.routes import user_routes
     app.register_blueprint(warden)
     app.register_blueprint(errors)
     app.register_blueprint(api)
@@ -233,8 +229,8 @@ def launch_hidden_services(app):
     from urllib.parse import urlparse
     app.tor_port = app.settings['SERVER'].getint('onion_port')
     app.port = app.settings['SERVER'].getint('port')
-    from backend.config import home_path
-    toraddr_file = os.path.join(home_path(), "onion.txt")
+    from backend.config import home_dir
+    toraddr_file = os.path.join(home_dir, "onion.txt")
     app.save_tor_address_to = toraddr_file
     proxy_url = "socks5h://localhost:9050"
     tor_control_port = ""
@@ -255,7 +251,7 @@ def launch_hidden_services(app):
 
 def check_version(app):
     from backend.config import Config
-    from connections import tor_request
+    from connections.connections import tor_request
     print("")
     # Load version from local version file
     try:
@@ -280,10 +276,14 @@ def check_version(app):
         parsed_version = version.parse(current_version)
         app.warden_status['needs_upgrade'] = False
         if parsed_github > parsed_version:
-            print(warning("  [i] Upgrade Available"))
+            print(warning("[i] Upgrade Available"))
             app.warden_status['needs_upgrade'] = True
         if parsed_github == parsed_version:
-            print(success("✅ You are running the latest version"))
+            print(success("[ok] You are running the latest version"))
+        else:
+            print(
+                success(
+                    "[i] The Local Version is newer than the remote version."))
 
     except Exception as e:
         # Could not retrieve github version
@@ -479,21 +479,23 @@ def main(debug, reloader):
     # Make sure current libraries are found in path
     current_path = os.path.abspath(os.path.dirname(__file__))
     sys.path.append(current_path)
+    from backend.config import basedir
+    sys.path.append(basedir)
 
     # Welcome Message
     print("")
     print("")
-    print(yellow("Welcome to the WARden <> Launching Application ..."))
+    print(success("[i] Welcome to the WARden <> Launching Application ..."))
     print("")
 
     # Check for internet connection- Crucial Check
     internet_ok = internet_connected()
     if internet_ok is True:
-        print(success("✅ Internet Connection"))
+        print(success("✅ Internet Connected"))
     else:
         print(
             error(
-                "[!] WARden needs internet connection to run. Check your connection."
+                "[!] WARden needs an internet connection to run. Check your connection."
             ))
         print(warning("[!] Exiting"))
         exit()
@@ -540,8 +542,8 @@ def main(debug, reloader):
       Open your browser and navigate to one of these addresses:
       {yellow('http://localhost:' + str(port) + '/')}
       {yellow('http://127.0.0.1:' + str(port) + '/')}
-      {local_network_string()}
-      {onion_string()}
+      {local_network_string(app)}
+      {onion_string(app)}
     ----------------------------------------------------------------
                          CTRL + C to quit server
     ----------------------------------------------------------------

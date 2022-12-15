@@ -1,19 +1,20 @@
 from flask import (Blueprint, flash, request, current_app, jsonify, Response,
                    redirect, url_for)
 from backend.warden_modules import (warden_metadata, positions_dynamic,
-                                    generatenav, specter_df, current_path,
-                                    regenerate_nav, home_path, transactions_fx)
-from connections import tor_request, url_parser
+                                    generatenav, specter_df, regenerate_nav,
+                                    transactions_fx)
+from connections.connections import tor_request, url_parser
+from backend.config import basedir
 from pricing_engine.engine import price_ondate, historical_prices
 from flask_login import login_required, current_user
 from random import randrange
 from pricing_engine.engine import fx_rate, realtime_price
 from backend.utils import heatmap_generator, pickle_it, safe_serialize
-from models import Trades, AccountInfo, TickerInfo
+from models.models import Trades, AccountInfo, TickerInfo
 from datetime import datetime, timedelta
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
-import mhp as mrh
+import backend.mhp as mrh
 import simplejson
 import logging
 import pandas as pd
@@ -145,7 +146,7 @@ def metadata_json():
 @api.route("/testtor", methods=["GET"])
 @login_required
 def testtor():
-    from connections import test_tor
+    from connections.connections import test_tor
     return json.dumps(test_tor())
 
 
@@ -468,7 +469,8 @@ def getprice_ondate():
 # Searches the list both inside the key as well as value of dict
 def fx_list():
     fx_dict = {}
-    filename = os.path.join(current_path(),
+
+    filename = os.path.join(basedir,
                             'static/csv_files/physical_currency_list.csv')
     with open(filename, newline='') as csvfile:
         reader = csv.reader(csvfile)
@@ -628,7 +630,7 @@ def histvol():
 
     if ticker:
         filename = "thewarden/historical_data/" + ticker + ".json"
-        filename = os.path.join(current_path(), filename)
+        filename = os.path.join(basedir, filename)
 
         try:
             with open(filename) as data_file:

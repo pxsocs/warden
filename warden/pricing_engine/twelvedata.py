@@ -1,9 +1,9 @@
 from datetime import datetime
 import requests
 from pricing_engine.engine import apikey
-from connections import tor_request
+from connections.connections import tor_request
 import pandas as pd
-from warden_decorators import MWT
+from backend.decorators import MWT
 
 # Docs
 # https://twelvedata.com/docs
@@ -119,10 +119,7 @@ def historical(ticker, parsed=True):
     if parsed:
         try:
             df = pd.DataFrame.from_records(data['values'])
-            df = df.rename(
-                columns={
-                    'datetime': 'date'
-                })
+            df = df.rename(columns={'datetime': 'date'})
             df.set_index('date', inplace=True)
             df_save = df[['close', 'open', 'high', 'low', 'volume']]
         except Exception:
@@ -139,15 +136,13 @@ def asset_list(term=None):
         url = f'https://api.twelvedata.com/symbol_search?symbol={term}'
         result = requests.get(url).json()
         for item in result['data']:
-            master_list.append(
-                {
-                    'symbol': item['symbol'],
-                    'name': item['instrument_name'],
-                    'provider': '12Data',
-                    'notes': item['exchange'],
-                    'fx': item['currency']
-                }
-            )
+            master_list.append({
+                'symbol': item['symbol'],
+                'name': item['instrument_name'],
+                'provider': '12Data',
+                'notes': item['exchange'],
+                'fx': item['currency']
+            })
     except Exception:
         pass
 

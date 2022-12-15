@@ -5,7 +5,7 @@
 Create an empty class instance:
 
 ```python
-from specter_importer import Specter
+from specter.specter_importer import Specter
 specter = Specter()
 ```
 

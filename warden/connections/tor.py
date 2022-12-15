@@ -2,16 +2,16 @@
 
 import os
 from stem.control import Controller
-from backend.warden_modules import home_path
-from ansi_management import (warning, success, error, info, clear_screen, bold,
-                             muted, yellow, blue)
+from backend.config import home_dir
+from backend.ansi_management import (warning, success, error, info,
+                                     clear_screen, bold, muted, yellow, blue)
 
 
 def start_hidden_service(app):
     if app.controller is None:
         return
     app.controller.reconnect()
-    key_path = os.path.abspath(os.path.join(home_path(), ".tor_service_key"))
+    key_path = os.path.abspath(os.path.join(home_dir, ".tor_service_key"))
 
     app.tor_service_id = None
 

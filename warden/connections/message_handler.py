@@ -14,7 +14,8 @@ import random
 from datetime import datetime
 from pathlib import Path
 from backend.utils import pickle_it
-from ansi_management import time_ago
+from backend.ansi_management import time_ago
+from backend.config import home_dir
 import json
 
 
@@ -41,8 +42,6 @@ class Message():
 class MessageHandler():
 
     def __init__(self):
-        home_path = Path.home()
-        home_dir = os.path.join(home_path, 'warden')
         self.filename = 'message_handler.pkl'
         self.filepath = os.path.join(home_dir, self.filename)
         self.messages = self.loader()

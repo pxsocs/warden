@@ -6,8 +6,8 @@ import re
 from datetime import datetime
 
 from bs4 import BeautifulSoup
-from backend.utils import pickle_it, load_config
-from connections import tor_request
+from backend.utils import pickle_it
+from connections.connections import tor_request
 from flask_login import current_user
 
 import numpy as np
@@ -16,6 +16,7 @@ import numpy as np
 class Specter():
 
     def __init__(self):
+        from backend.config import load_config
         config = load_config()
         # URL Lists
         self.base_url = config['SPECTER']['specter_url']

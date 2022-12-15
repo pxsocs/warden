@@ -7,7 +7,6 @@ import time
 import logging
 from functools import wraps
 from glob import glob
-from backend.utils import home_path
 
 from backend.utils import pickle_it
 

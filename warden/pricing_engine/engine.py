@@ -1,16 +1,17 @@
 import requests
-from backend.utils import load_config, fxsymbol, pickle_it
+from backend.utils import fxsymbol, pickle_it
 import pandas as pd
 import os
 import logging
 from datetime import datetime
 from dateutil import parser
-from warden_decorators import MWT
-from parseNumbers import parseNumber
+from backend.decorators import MWT
+from backend.parseNumbers import parseNumber
 
 
 @MWT(timeout=10)
 def apikey(source, required=True):
+    from backend.config import load_config
     # Check if a cryptocompare key is stored at home directory
     if source == 'cryptocompare':
         from backend.utils import pickle_it
@@ -95,8 +96,8 @@ def historical_prices(ticker, fx='USD', source=None):
         # Try to load file if exists
         filename = (ticker + "_" + fx + ".price")
         # Check if file was updated today
-        from backend.warden_modules import home_path
-        file_check = os.path.join(home_path(), 'warden/' + filename)
+        from backend.config import home_dir
+        file_check = os.path.join(home_dir, filename)
         # Try to read from file and check how recent it is
         try:
             today = datetime.now().date()
@@ -183,6 +184,7 @@ def realtime_price(ticker, fx=None, source=None, parsed=True):
             'source':
         }
     '''
+    from backend.config import load_config
     if fx is None:
         config = load_config()
         fx = config['PORTFOLIO']['base_fx']
@@ -253,6 +255,7 @@ def GBTC_premium(price):
 
 @MWT(timeout=200)
 def fx_rate():
+    from backend.config import load_config
     config = load_config()
     fx = config['PORTFOLIO']['base_fx']
 

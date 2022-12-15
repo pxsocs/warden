@@ -3,8 +3,9 @@
 
 import unittest
 
-from backend.utils import load_config
-from backend.warden_modules import current_path, home_path, specter_df
+from backend.utils import home_dir
+from backend.warden_modules import specter_df
+from backend.config import basedir
 
 import pandas as pd
 
@@ -13,10 +14,10 @@ class TestPricing(unittest.TestCase):
 
     def test_paths(self):
         print("Checking that current and home paths can be returned...")
-        print(f"Current Path: {current_path()}")
-        print(f"Home Path: {home_path()}")
-        self.assertIsNotNone(current_path())
-        self.assertIsNotNone(home_path())
+        print(f"Current Path: {basedir}")
+        print(f"Home Path: {home_dir}")
+        self.assertIsNotNone(basedir)
+        self.assertIsNotNone(home_dir)
 
     def test_specter_txs(self):
         print("Testing Specter Transactions...")

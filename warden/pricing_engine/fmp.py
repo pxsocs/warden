@@ -1,9 +1,9 @@
 from datetime import datetime
 import requests
 from pricing_engine.engine import apikey
-from connections import tor_request
+from connections.connections import tor_request
 import pandas as pd
-from warden_decorators import MWT
+from backend.decorators import MWT
 
 # Docs
 # https://financialmodelingprep.com/developer/docs/#Stock-Price
@@ -136,15 +136,13 @@ def asset_list(term=None):
         url = f'https://financialmodelingprep.com/api/v3/search?query={term}&limit=10&apikey=d44fb36a0c62da8ff9b1b40b47802000'
         result = tor_request(url).json()
         for item in result:
-            master_list.append(
-                {
-                    'symbol': item['symbol'],
-                    'name': item['name'],
-                    'provider': 'fp_stock',
-                    'notes': item['exchangeShortName'],
-                    'fx': item['currency']
-                }
-            )
+            master_list.append({
+                'symbol': item['symbol'],
+                'name': item['name'],
+                'provider': 'fp_stock',
+                'notes': item['exchangeShortName'],
+                'fx': item['currency']
+            })
     except Exception:
         pass
 

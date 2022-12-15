@@ -5,7 +5,7 @@ from unittest.mock import patch
 import requests
 from config import Config
 import configparser
-from specter_importer import Specter
+from specter.specter_importer import Specter
 
 
 class TestSpecter(unittest.TestCase):

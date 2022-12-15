@@ -5,9 +5,9 @@ from flask import (Blueprint, flash, redirect, render_template, request,
 from flask_login import current_user, login_required, login_user
 from werkzeug.security import generate_password_hash
 
-from forms import RegistrationForm, UpdateAccountForm
-from models import User, AccountInfo, Trades
-from backend.utils import update_config
+from forms.forms import RegistrationForm, UpdateAccountForm
+from models.models import User, AccountInfo, Trades
+from backend.config import update_config
 
 user_routes = Blueprint('user_routes', __name__)
 
@@ -120,8 +120,8 @@ def tor_services():
         current_app.tor_port = current_app.settings['SERVER'].getint(
             'onion_port')
         current_app.port = current_app.settings['SERVER'].getint('port')
-        from backend.warden_modules import home_path
-        toraddr_file = os.path.join(home_path(), "onion.txt")
+        from backend.config import home_dir
+        toraddr_file = os.path.join(home_dir, "onion.txt")
         current_app.save_tor_address_to = toraddr_file
         proxy_url = "socks5h://localhost:9050"
         tor_control_port = ""
@@ -135,7 +135,7 @@ def tor_services():
             )
         except Exception:
             current_app.controller = None
-        from tor import start_hidden_service
+        from connections.tor import start_hidden_service
         start_hidden_service(current_app)
 
         flash(

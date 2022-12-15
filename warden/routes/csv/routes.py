@@ -12,10 +12,11 @@ from flask import (Blueprint, flash, redirect, render_template, request,
                    send_file, url_for, current_app)
 from flask_login import current_user, login_required
 
-from models import Trades, AccountInfo
-from forms import ImportCSV, TradeForm
-from backend.utils import home_path, pickle_it
-from backend.warden_modules import transactions_fx, clean_float
+from models.models import Trades, AccountInfo
+from forms.forms import ImportCSV, TradeForm
+from backend.utils import clean_float
+from backend.config import home_dir
+from backend.warden_modules import transactions_fx
 from pricing_engine.engine import fx_rate
 
 csv_routes = Blueprint('csv_routes', __name__)
@@ -47,7 +48,7 @@ def exportcsv():
 
     filename = (current_user.username + "_" +
                 datetime.now().strftime("%Y%m%d") + ".")
-    filepath = os.path.join(home_path(), filename)
+    filepath = os.path.join(home_dir, filename)
     df = transactions_fx()
     compression_opts = dict(method='zip', archive_name=filename + 'csv')
     df.to_csv(filepath + 'zip', index=True, compression=compression_opts)
@@ -68,7 +69,7 @@ def importcsv():
             if form.submit.data:
                 if form.csvfile.data:
                     filename = form.csvfile.data.filename
-                    filename = os.path.join(home_path(), filename)
+                    filename = os.path.join(home_dir, filename)
                     form.csvfile.data.save(filename)
                     row_count = cleancsvfile(filename)
                     csv_reader = open(filename, "r", encoding="utf-8")

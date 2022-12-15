@@ -1,2 +1,0 @@
-python3 setup.py sdist bdist_wheel
-python3 -m twine upload dist/alphazeta.warden-0.5.3* --skip-existing

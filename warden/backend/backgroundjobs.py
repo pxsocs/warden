@@ -5,11 +5,11 @@ import time
 from flask import flash
 from flask import current_app as app
 from backend.warden_modules import regenerate_nav
-from specter_importer import Specter
-from config import Config
+from specter.specter_importer import Specter
+from backend.config import Config
 from backend.utils import fxsymbol, pickle_it
 from datetime import datetime
-from message_handler import Message
+from connections.message_handler import Message
 
 # Searches local network for an instance of Mempool Space to avoid using
 # the open net version
