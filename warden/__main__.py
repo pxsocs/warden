@@ -18,11 +18,6 @@ if __name__ == '__main__':
     # Create App and Start Flask Server
     # --------------------------------
     app = main(debug=debug, reloader=reloader)
-    # Check port and host
-
-    app.run(debug=True,
-            host=app.settings['SERVER'].get('host'),
-            port=app.settings['SERVER'].getint('port'))
 
     # Run after exiting Flask Server
     # --------------------------------

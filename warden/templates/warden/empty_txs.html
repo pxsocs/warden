@@ -1,26 +1,40 @@
 {% extends "warden/warden_layout.html" %} {% block content %}
-
 <div class="container" style="padding-top: 50px">
-  <div class="row">
-    <div class="col-sm-12">
-      <h4 class="text-warning">No Transactions Found</h4>
-      <small>
-        You can start by <a href="/newtrade">including a new transaction </a>.
-      </small>
-
-      <br />
-      <p class="text-left">
-        <i class="fas fa-file-import"></i>&nbsp;Alternatively, you can manually
-        <a href="/importcsv">import a csv file with your transactions</a>.
-      </p>
-
-      <p>
-        <i class="fas fa-ghost"></i>&nbsp;Or try
-        <a href="/specter_auth">connecting to Specter Server</a> to
-        automatically get wallet transactions.
-      </p>
+    <div class="row">
+        <div class="col-sm-12">
+            <h3 class="">
+                <i class="fa-solid fa-file-invoice-dollar fa-lg text-muted"></i>
+                &nbsp;&nbsp;
+                No Transactions Found
+            </h3>
+            <hr>
+            <h5>
+                <span class="next-arrow">
+                    <i class="fa-solid fa-circle-arrow-right fa-lg text-dark"></i>
+                </span>
+                &nbsp;&nbsp;
+                <a href="/newtrade">Start Here</a>
+                to include a transaction to your portfolio or
+            </h5>
+            <br>
+            <hr>
+            <h4>You can also include transactions by:</h4>
+            <br>
+            <brr>
+                <h5>
+                    <i class="fa-solid fa-file-import fa-lg text-success"></i>
+                    &nbsp;&nbsp;
+                    <a href="/importcsv">importing</a>
+                    a CSV file with full transaction history
+                </h5>
+                <br>
+                <h5>
+                    <i class="fa-solid fa-ghost fa-lg text-danger"></i>
+                    &nbsp;&nbsp;
+                    <a href="/specter_auth">connecting</a>
+                    to a Specter Server
+                </h5>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
-
-{% endblock content %}
+    {% endblock content %}

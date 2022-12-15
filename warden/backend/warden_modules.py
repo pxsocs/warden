@@ -342,9 +342,6 @@ def transactions_fx():
     df = df.append(df_sql, sort=False)
 
     if df.empty:
-        flash(
-            f"No Transactions Found. Include a transaction to start tracking portfolio.",
-            "warning")
         logging.warning(
             "Transactions_FX - No txs found - using Demo Portfolio")
         # sample_trade = {

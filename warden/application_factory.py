@@ -185,6 +185,11 @@ def init_app(app):
     app.register_blueprint(csv_routes)
     app.register_blueprint(user_routes)
 
+    # Get FX information into application configuration
+    default_fx = app.settings['PORTFOLIO']['base_fx']
+    from backend.utils import fxsymbol
+    app.fx = app.fx = fxsymbol(default_fx, 'all')
+
     # Specter Server Setup
     # Prepare app to receive Specter Server info
     # For the first load, just get a saved file if available
@@ -473,9 +478,6 @@ def local_network_string(app):
 
 
 def main(debug, reloader):
-    from backend.ansi_management import (warning, success, error, info,
-                                         clear_screen, bold, muted, yellow,
-                                         blue)
     # Make sure current libraries are found in path
     current_path = os.path.abspath(os.path.dirname(__file__))
     sys.path.append(current_path)
@@ -542,8 +544,8 @@ def main(debug, reloader):
       Open your browser and navigate to one of these addresses:
       {yellow('http://localhost:' + str(port) + '/')}
       {yellow('http://127.0.0.1:' + str(port) + '/')}
-      {local_network_string(app)}
-      {onion_string(app)}
+        {local_network_string(app)}
+        {onion_string(app)}
     ----------------------------------------------------------------
                          CTRL + C to quit server
     ----------------------------------------------------------------

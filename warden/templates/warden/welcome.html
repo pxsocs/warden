@@ -1,50 +1,137 @@
+<!-- BOOTSTRAP -->
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
+    crossorigin="anonymous"
+>
+<link rel="stylesheet" href="{{url_for('static', filename='dependencies/font-awesome/css/all.css')}}">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="{{url_for('warden.static', filename='css/welcome.css')}}">
 <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/font-awesome/css/all.css')}}">
-
 <title>The WARDen | Welcome</title>
 <link rel="icon" href="{{url_for('warden.static', filename='images/favicon-bitcoin.ico')}}" class="invert">
-
 <div id="container">
-    <section class="showcase" class='slide_div_out'>
+    <section class="showcase" class="slide_div_out">
         <div class="video-container">
             <video src="{{url_for('warden.static', filename='videos/EarthMoonZoom.mov')}}" autoplay muted></video>
         </div>
         <div class="content">
             <h1>Welcome to the WARden</h1>
-            <h2>Portfolio Analytics</h2>
-            <h4 style='color: rgb(224, 224, 224);'>Open Source | Private | Sovereign</h4>
-            <a href="/initial_setup?page=2" class="btn">Get Started</a>
+            <h3>Portfolio Analytics</h3>
+            <h4 style="color: rgb(224, 224, 224);">Open Source | Private | Sovereign</h4>
+            <a href="#login_form" class="btn">Get Started</a>
+        </div>
+    </section>
+    <section class="showcase" class="slide_div_out">
+        <div class="row" id="login_form">
+            <h3>Welcome to the WARden</h3>
+            <hr>
+            <div class="col-md-6">
+                <div class="col-md-12">
+                    <div class="text-start">
+                        <h5>
+                            <span class="next-arrow">
+                                <i class="fa-solid fa-circle-arrow-right fa-lg text-info"></i>
+                            </span>
+                            &nbsp;&nbsp;
+                        Create an Account
+                        </h5>
+                        <form class="align-items-center" method="POST" action="">
+                            <!-- Important to include the below for added security -->
+                            {{ form.hidden_tag() }}
+                            <fieldset class="form-group" style="padding-top: 20px;">
+                                <div class="form-group">
+                                    {% if form.username.errors %}
+                                {{ form.username(class="form-control form-control-lg is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.username.errors %}
+                                        <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                        {{ form.username(class="form-control form-control-lg") }}
+                        {% endif %}
+                                </div>
+                                <div class="form-group" style="padding-top: 40px;">
+                                    {% if form.password.errors %}
+                        {{ form.password(class="form-control form-control-lg is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.password.errors %}
+                                        <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                        {{ form.password(class="form-control form-control-lg") }}
+                        {% endif %}
+                                </div>
+                                <div class="form-group" style="padding-top: 10px;">
+                                    {% if form.confirm_password.errors %}
+                        {{ form.confirm_password(class="form-control form-control-lg is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.confirm_password.errors %}
+                                        <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                        {{ form.confirm_password(class="form-control form-control-lg") }}
+                        {% endif %}
+                                </div>
+                            </fieldset>
+                            <div class="form-group">
+                                <div class="d-grid gap-2">
+                                    {{ form.submit(class="btn btn-lg btn-outline-success")}}
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="col-md-12">
+                    <div class="text-start">
+                        <h4 style="padding-top: 10px;">
+                            <i class="fa-solid fa-gamepad fa-lg text-secondary"></i>
+                            &nbsp;&nbsp;
+                        Take control of your portfolio data
+                        </h4>
+                        <p style="color:darkgray; padding-bottom: 40px;">
+                            Track performance and run analytics locally in your computer.
+                        </p>
+                        <h4>
+                            <i class="fa-solid fa-user-secret fa-lg text-secondary"></i>
+                            &nbsp;&nbsp;
+                        Privacy
+                        </h4>
+                        <p style="color:darkgray; padding-bottom: 40px;">
+                            Most portfolio tracking tools ask for personal information and may track your IP
+        and other information.
+                            </br>
+                            </br>
+                            Even those who say they don't, may have
+        log files at their systems that track your IP and could easily be linked to your data.
+                        </p>
+                        <h4>
+                            <i class="fa-solid fa-envelope-open-text fa-lg text-secondary"></i>
+                            &nbsp;&nbsp;
+                        Open Source
+                        </h4>
+                        <p style="color:darkgray; padding-bottom: 40px;">
+                            This is an Open Source project.
+                            </br>
+                            </br>
+                            We believe Open Source is the future of development for Bitcoin. There is no other way when transparency and
+        privacy are critical. Code is available to be distributed, audited, modified, forked...
+                            </br>
+                            </br>
+                            <a class="text-white" href="https://github.com/pxsocs/warden">
+                                <i class="fab fa-github"></i>
+                                Check out the GitHub Page
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 </div>
-
-<section id="about">
-    <h2>
-        Stop leaking your portfolio data
-    </h2>
-    <p style='color:darkgray;'>
-        Track performance and run analytics locally in your computer.
-    </p>
-
-    <h2>Privacy</h2>
-    <p style='color:darkgray;'>
-        Most portfolio tracking tools ask for personal information and may track your IP
-        and other information. </br></br>Our experience is that even those who say they don't, may have
-        log files at their systems that do track your IP and could be easily linked to your data.
-    </p>
-
-    <h2>Open Source</h2>
-    <p style='color:darkgray;'>
-        This is an Open Source project</br></br>
-        We believe Open Source is the future of development for bitcoin. There is no other way when transparency and
-        privacy are critical.</br></br>
-        <code style='color: darkgreen;'>The code is not compiled so it's easy to audit</code>
-        </br>
-        </br>
-        <a href='https://github.com/pxsocs/warden'>
-            <i class="fab fa-github"></i>
-            Check out the GitHub Page</a>
-    </p>
-
-
-</section>

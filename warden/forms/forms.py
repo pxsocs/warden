@@ -23,7 +23,7 @@ class RegistrationForm(FlaskForm):
         "Confirm Password",
         validators=[DataRequired(), EqualTo("password")],
         render_kw={"placeholder": "Confirm Password"})
-    submit = SubmitField("Create Login")
+    submit = SubmitField("create an account")
 
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()

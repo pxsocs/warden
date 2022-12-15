@@ -11,10 +11,9 @@ from backend.utils import fxsymbol, pickle_it
 from datetime import datetime
 from connections.message_handler import Message
 
+
 # Searches local network for an instance of Mempool Space to avoid using
 # the open net version
-
-
 def background_mempool_seeker():
     # Will return a value if a server was found in the last 3 minutes
     EXPIRY = 180

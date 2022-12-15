@@ -73,26 +73,6 @@ def before_request():
     # Save this in Flask session
     session['status'] = json.dumps(meta)
 
-    # Check if still downloading data, if so load files
-    if current_app.downloading:
-        # No need to test if still downloading txs
-        flash(
-            "Downloading from Specter. In the mean time, some transactions may be outdated or missing. Leave the app running to finish download.",
-            "info")
-
-    # Check that Specter is > 1.1.0 version
-    # (this is the version where tx API was implemented)
-    try:
-        specter_version = str(current_app.specter.home_parser()['version'])
-        if version.parse(specter_version) < version.parse(
-                "1.1.0") and specter_version != "unknown":
-            flash(
-                f"Sorry, you need Specter version 1.1.0 or higher to connect to WARden. You are running version {specter_version}. Please upgrade.",
-                "danger")
-    # An error below means no file was ever created - probably needs setup
-    except Exception:
-        pass
-
 
 @warden.after_request
 def after_request_func(response):
@@ -175,7 +155,7 @@ def warden_page():
         df = df.to_dict(orient='index')
     else:
         form = TradeForm()
-        form.trade_currency.data = current_app.fx['code']
+        form.trade_currency.data = current_app.settings['PORTFOLIO']['base_fx']
         form.trade_date.data = datetime.utcnow()
         return (render_template('warden/empty_txs.html',
                                 title='No Transactions Found',
@@ -284,7 +264,7 @@ def satoshi_quotes():
 def update_fx():
     fx = request.args.get("code")
     current_app.settings['PORTFOLIO']['base_fx'] = fx
-    update_config()
+    update_config(current_app)
     from backend.utils import fxsymbol as fxs
     current_app.fx = fxs(fx, 'all')
     regenerate_nav()
@@ -360,7 +340,7 @@ def specter_auth():
             'username')
         current_app.settings['SPECTER']['specter_password'] = request.form.get(
             'password')
-        update_config()
+        update_config(current_app)
 
         current_app.specter = Specter()
         current_app.specter.refresh_txs(load=False)

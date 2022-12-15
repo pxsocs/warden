@@ -86,14 +86,16 @@ class Config:
     SCHEDULER_API_ENABLED = True
 
 
-def update_config(app, config_file=Config.config_file):
+def update_config(app):
     logging.info("Updating Config file")
+    config_file = Config.config_file
     with open(config_file, 'w') as file:
         app.settings.write(file)
 
 
-def load_config(config_file=Config.config_file):
+def load_config():
     # Load Config
+    config_file = Config.config_file
     CONFIG = configparser.ConfigParser()
     CONFIG.read(config_file)
     return (CONFIG)
