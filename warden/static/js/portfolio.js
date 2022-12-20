@@ -416,6 +416,7 @@ function update_mempool() {
                 time_ago_0 = timeDifference(currentTimeStamp, data['mp_blocks'][0]['timestamp'] * 1000)
                 $('#time_0').html(time_ago_0);
                 $('#height_0').html(formatNumber(data['mp_blocks'][0]['height'], 0, ''));
+                $('#latest_btc_block').html(formatNumber(data['mp_blocks'][0]['height'], 0, ''));
                 $('#txs_0').html(formatNumber(data['mp_blocks'][0]['tx_count'], 0, ''));
                 $('#size_0').html(formatNumber(data['mp_blocks'][0]['size'] / 1000, 0, '', ' MB'));
                 // Block 1
@@ -606,7 +607,6 @@ function getNodeInfo() {
         url: '/specter',
         dataType: 'json',
         success: function (data) {
-            $('#latest_btc_block').html(data['bitcoin_core_data']['Blocks count']);
             $('#current_block').html(data['bitcoin_core_data']['Blocks count']);
             $('#size_on_disk').html(data['bitcoin_core_data']['Size on disk']);
             $('#difficulty').html(data['bitcoin_core_data']['Difficulty']);

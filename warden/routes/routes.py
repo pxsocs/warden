@@ -220,8 +220,8 @@ def warden_page():
         logging.error(e)
         wallets_exist = False
 
-    from api.routes import alert_activity
-    if not current_app.downloading:
+    from routes.api.routes import alert_activity
+    if current_app.warden_status['downloading_specter_txs'] is False:
         activity = alert_activity()
     else:
         activity = False
@@ -285,7 +285,7 @@ def specter_auth():
         return (render_template('warden/specter_auth.html', **templateData))
 
     if request.method == 'POST':
-        from message_handler import Message
+        from connections.message_handler import Message
         current_app.message_handler.clean_category('Specter Connection')
         url = request.form.get('url')
         url = url_parser(url)
@@ -334,7 +334,7 @@ def specter_auth():
             flash(f'Error logging in to Specter: {e}', 'danger')
             return redirect(url_for('warden.specter_auth'))
 
-        current_app.downloading = True
+        current_app.warden_status['downloading_specter_txs'] = True
         current_app.settings['SPECTER']['specter_url'] = url
         current_app.settings['SPECTER']['specter_login'] = request.form.get(
             'username')

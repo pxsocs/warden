@@ -1073,7 +1073,7 @@
                                 src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img> </td>
                     </tr>
-                    {%if current_app.downloading%}
+                    {%if current_app.warden_status['downloading_specter_txs']%}
                     <tr>
                         <td></td>
                         <td class="text-right text-danger">Downloading transactions...</td>

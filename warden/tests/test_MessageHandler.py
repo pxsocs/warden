@@ -4,7 +4,7 @@
 import unittest
 import os
 import json
-from message_handler import Message, MessageHandler
+from connections.message_handler import Message, MessageHandler
 
 
 class TestMessageHandler(unittest.TestCase):
@@ -44,9 +44,9 @@ class TestMessageHandler(unittest.TestCase):
         self.assertIn(self.message_2, self.messagehandler.messages)
         # test Json w/ filter, reloads and checks contents
         json_tst = json.loads(
-            self.messagehandler.to_json(category=self.message_1.category)
-        )
-        self.assertEqual(json_tst[0]['message_txt'], self.message_1.message_txt)
+            self.messagehandler.to_json(category=self.message_1.category))
+        self.assertEqual(json_tst[0]['message_txt'],
+                         self.message_1.message_txt)
         # Remove msg1
         self.messagehandler.pop_message(self.message_1)
         # Check that it's not there

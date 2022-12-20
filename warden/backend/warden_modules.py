@@ -20,6 +20,7 @@ from backend.decorators import MWT, timing
 from backend.config import home_dir
 from dateutil import parser
 from backend.parseNumbers import parseNumber
+from backend.utils import clean_float
 
 
 # ------------------------------------

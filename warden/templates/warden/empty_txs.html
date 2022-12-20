@@ -3,10 +3,12 @@
     <div class="row">
         <div class="col-sm-12">
             <h3 class="">
-                <i class="fa-solid fa-file-invoice-dollar fa-lg text-muted"></i>
-                &nbsp;&nbsp;
-                No Transactions Found
+                Your portfolio is empty
+                <span class="text-warning">
+                    <strong>{ }</strong>
+                </span>
             </h3>
+            <small>No Transactions Found</small>
             <hr>
             <h5>
                 <span class="next-arrow">
@@ -14,27 +16,24 @@
                 </span>
                 &nbsp;&nbsp;
                 <a href="/newtrade">Start Here</a>
-                to include a transaction to your portfolio or
+                to include a transaction to your portfolio
             </h5>
             <br>
-            <hr>
-            <h4>You can also include transactions by:</h4>
+            <p>You can also include transactions by:</p>
+            <h5>
+                <i class="fa-solid fa-file-import fa-lg text-muted"></i>
+                &nbsp;&nbsp;
+                <a href="/importcsv">importing</a>
+                a CSV file with full transaction history
+            </h5>
             <br>
-            <brr>
-                <h5>
-                    <i class="fa-solid fa-file-import fa-lg text-success"></i>
-                    &nbsp;&nbsp;
-                    <a href="/importcsv">importing</a>
-                    a CSV file with full transaction history
-                </h5>
-                <br>
-                <h5>
-                    <i class="fa-solid fa-ghost fa-lg text-danger"></i>
-                    &nbsp;&nbsp;
-                    <a href="/specter_auth">connecting</a>
-                    to a Specter Server
-                </h5>
-            </div>
+            <h5>
+                <i class="fa-solid fa-ghost fa-lg text-muted"></i>
+                &nbsp;&nbsp;
+                <a href="/specter_auth">connecting</a>
+                to a Specter Server
+            </h5>
         </div>
     </div>
-    {% endblock content %}
+</div>
+{% endblock content %}

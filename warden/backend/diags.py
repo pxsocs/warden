@@ -4,7 +4,7 @@ import os
 import socket
 
 from backend.utils import pickle_it
-from message_handler import MessageHandler, Message
+from connections.message_handler import MessageHandler, Message
 
 
 # WARden diagnostics and health methods

@@ -68,7 +68,7 @@ def satoshi_quotes_json():
 def alert_activity():
     alerts = False
     # Don't send any alerts as activity still being downloaded
-    if current_app.downloading:
+    if current_app.warden_status['downloading_specter_txs']:
         return alerts
     ack_file = 'txs_diff.pkl'
     try:
