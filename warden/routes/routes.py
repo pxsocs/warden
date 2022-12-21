@@ -551,7 +551,7 @@ def show_broadcast():
 @warden.route('/config_ini', methods=['GET', 'POST'])
 @login_required
 def config_ini():
-    from config import Config
+    from backend.config import Config
     config_file = Config.config_file
     if not os.path.isfile(config_file):
         flash('Config File not Found. Restart the app.', 'danger')

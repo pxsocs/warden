@@ -1,5 +1,4 @@
 from datetime import datetime
-from pathlib import Path
 import requests
 import os
 from pricing_engine.engine import apikey
@@ -7,7 +6,6 @@ from connections.connections import tor_request
 import pandas as pd
 from backend.config import basedir
 from backend.decorators import MWT
-from flask import flash
 # docs
 # https://www.alphavantage.co/documentation/
 
@@ -205,9 +203,7 @@ def historical(ticker,
         #         "4. close": "1.2072"
         #     },
 
-    response = tor_request(url=globalURL)
-    if response.status_code == 403:
-        response = requests.get(globalURL)
+    response = requests.get(globalURL)
 
     data = response.json()
 
@@ -237,6 +233,9 @@ def historical(ticker,
                     })
                 df_save = df[['close', 'open', 'high', 'low']]
                 df_save.index.names = ['date']
+                df_save['source'] = 'Alphavantage Digital Currency'
+                df_save['url'] = globalURL
+
             except Exception:
                 df_save = pd.DataFrame()
             return (df_save)
@@ -259,6 +258,8 @@ def historical(ticker,
                     })
                 df_save = df[['close', 'open', 'high', 'low']]
                 df_save.index.names = ['date']
+                df_save['source'] = 'Alphavantage Time Series'
+                df_save['url'] = globalURL
             except Exception:
                 df_save = pd.DataFrame()
             return (df_save)
@@ -283,19 +284,7 @@ def asset_list(term=None):
                     'name': row[1],
                     'provider': 'aa_fx'
                 })
-    # Alphavantage Digital Currency list
-    filename = os.path.join(basedir,
-                            'static/csv_files/digital_currency_list.csv')
-    with open(filename, newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            if term.upper() in row[0].upper() or term.upper() in row[1].upper(
-            ):
-                master_list.append({
-                    'symbol': row[0],
-                    'name': row[1],
-                    'provider': 'aa_digital'
-                })
+
     # Alphavantage Stock Search EndPoint
     try:
         url = 'https://www.alphavantage.co/query?function=SYMBOL_SEARCH'
@@ -319,3 +308,10 @@ def asset_list(term=None):
     except Exception:
         pass
     return (master_list)
+
+
+def get_company_info(ticker):
+    url = 'https://www.alphavantage.co/query?function=OVERVIEW&symbol=' + ticker
+    url += '&apikey=' + api
+    result = requests.get(url).json()
+    return (result)

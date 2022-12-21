@@ -100,14 +100,14 @@ function handle_ajax_data(data) {
 
     // First the Portfolio Data
     var html_table = "  <tr class='table-success'> \
-                        <td class='text-left'> NAV</td>\
+                        <td class='text-start'> NAV</td>\
                         <td class='text-center redgreen'>" + (data.table.NAV.return * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "%</td>\
                         <td class='text-center'> - </td>\
                         <td class='text-center'>" + (data.table.NAV.ann_std_dev * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "%</td>\
                         <td class='text-center redgreen'>" + (data.table.NAV.return / data.table.NAV.ann_std_dev).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "</td>\
                         <td class='text-center redgreen'>" + (data.table.NAV.avg_return * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "%</td>\
-                        <td class='text-right'>" + (data.table.NAV.start).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "</td>\
-                        <td class='text-right'>" + (data.table.NAV.end).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "</td>\
+                        <td class='text-end'>" + (data.table.NAV.start).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "</td>\
+                        <td class='text-end'>" + (data.table.NAV.end).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "</td>\
                     </tr>";
 
 
@@ -116,14 +116,14 @@ function handle_ajax_data(data) {
         if (value == "ok") {
             html_table = html_table +
                 "  <tr> \
-                        <td class='text-left'>"+ key_x + "</td>\
+                        <td class='text-start'>"+ key_x + "</td>\
                         <td class='text-center redgreen'>" + (data.table[key_x]['return'] * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "%</td>\
                         <td class='text-center redgreen'>" + (data.table[key_x]['comp2nav'] * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + " %</td>\
                         <td class='text-center'>" + (data.table[key_x]['ann_std_dev'] * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "%</td>\
                         <td class='text-center redgreen'>" + (data.table[key_x]['return'] / data.table[key_x]['ann_std_dev']).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "</td>\
                         <td class='text-center redgreen'>" + (data.table[key_x]['avg_return'] * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "%</td>\
-                        <td class='text-right'>" + (data.table[key_x]['start']).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "</td>\
-                        <td class='text-right'>" + (data.table[key_x]['end']).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "</td>\
+                        <td class='text-end'>" + (data.table[key_x]['start']).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "</td>\
+                        <td class='text-end'>" + (data.table[key_x]['end']).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "</td>\
                     </tr>";
         };
     });

@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import patch
 import requests
-from config import Config
+from backend.config import Config
 import configparser
 from specter.specter_importer import Specter
 

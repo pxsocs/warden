@@ -8,7 +8,7 @@
       <div class="input-group-sm mb-3">
         <div class="input-group-prepend">
           <span class="input-group-text" id="basic-addon1">Ticker to Test </span>
-          <input type="text" id="ticker" class="form-control text-right" value="BTC" aria-describedby="basic-addon1">
+          <input type="text" id="ticker" class="form-control text-end" value="BTC" aria-describedby="basic-addon1">
         </div>
       </div>
     </div>
@@ -20,7 +20,7 @@
       <table class="table tableFixHead">
         <thead class='thead-dark'>
           <tr>
-            <th class='text-left'>Provider ID</th>
+            <th class='text-start'>Provider ID</th>
             <th class='text-center'>API Call</th>
             <th class='text-center'>API Docs</th>
             <th class='text-center'>API Key</th>
@@ -56,8 +56,8 @@
             <td class='text-center'>
               {%if value['provider_info']['field_dict']['apikey']%}
               <button type="button" class="btn btn-sm btn-info" data-offset=-200 data-trigger="focus"
-                data-placement="right" data-bs-toggle="popover" title="API Key"
-                data-content="{{value['provider_info']['field_dict']['apikey']}}">
+                data-bs-placement="right" data-bs-toggle="popover" title="API Key"
+                data-bs-content="{{value['provider_info']['field_dict']['apikey']}}">
                 <i class="fas fa-key"></i>
               </button>
               {%endif%}
@@ -66,8 +66,8 @@
             <td class='text-center'>
               {%if value['provider_info']['errors']%}
               <button type="button" class="btn btn-sm btn-danger" data-offset=-200 data-trigger="focus"
-                data-placement="right" data-bs-toggle="popover" title="API Key"
-                data-content="{{value['provider_info']['errors']}}">
+                data-bs-placement="right" data-bs-toggle="popover" title="API Key"
+                data-bs-content="{{value['provider_info']['errors']}}">
                 <i class="fas fa-exclamation-circle"></i>
               </button>
               {%endif%}
@@ -90,8 +90,8 @@
             <td class='text-center'>
               {%if value['price_data']['errors']%}
               <button type="button" class="btn btn-sm btn-danger" data-offset=-200 data-trigger="focus"
-                data-placement="right" data-bs-toggle="popover" title="API Key"
-                data-content="{{value['price_data']['errors']}}">
+                data-bs-placement="right" data-bs-toggle="popover" title="API Key"
+                data-bs-content="{{value['price_data']['errors']}}">
                 <i class="fas fa-exclamation-circle"></i>
               </button>
               {%endif%}
@@ -104,8 +104,8 @@
               {%if (value['realtime']['price'] != None) and ((value['realtime']['price'] | length) > 20)%}
 
               <button type="button" class="btn btn-sm btn-success" data-offset=-200 data-trigger="focus"
-                data-placement="right" data-bs-toggle="popover" title="Realtime data returned"
-                data-content="{{value['realtime']['price']}}">
+                data-bs-placement="right" data-bs-toggle="popover" title="Realtime data returned"
+                data-bs-content="{{value['realtime']['price']}}">
                 <i class="fas fa-info-circle"></i>
               </button>
 
@@ -117,8 +117,8 @@
             <td class='text-center'>
               {%if value['realtime']['error']%}
               <button type="button" class="btn btn-sm btn-danger" data-offset=-200 data-trigger="focus"
-                data-placement="right" data-bs-toggle="popover" title="API Key"
-                data-content="{{value['realtime']['error']}}">
+                data-bs-placement="right" data-bs-toggle="popover" title="API Key"
+                data-bs-content="{{value['realtime']['error']}}">
                 <i class="fas fa-exclamation-circle"></i>
               </button>
               {%endif%}

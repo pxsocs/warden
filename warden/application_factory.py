@@ -39,7 +39,7 @@ def create_app():
 
     # Change some config messages Levels (to avoid excessive logging)
     logging.getLogger('apscheduler').setLevel(logging.CRITICAL)
-    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    # logging.getLogger('werkzeug').setLevel(logging.ERROR)
     # Ignores warnings
     warnings.filterwarnings('ignore')
 

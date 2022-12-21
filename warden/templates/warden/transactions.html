@@ -1,92 +1,83 @@
 {% extends "warden/warden_layout.html" %} {% block content %}
-
 <h5>Specter Server Transaction History</h5>
-
 <div class="row">
-  <div class="col-sm-12">
-    <table id="transactionstable" class="table table-sm table-striped">
-      <thead>
-        <tr>
-          <th></th>
-          <th class="small" scope="col">Date</th>
-          <th class="small text-right" scope="col">Ticker</th>
-          <th class="small text-right" scope="col">Operation</th>
-          <th class="small text-right" scope="col">Quantity</th>
-
-          <th class="small text-right">Price</th>
-          <th class="small text-right">fx</th>
-          <th class="small text-right">Fees</th>
-          <th class="small text-right">Account</th>
-          <th class="small text-right">Address</th>
-          <th class="small text-right">TXid</th>
-          <th class="small text-right">Confirmations</th>
-        </tr>
-      </thead>
-      <tbody id="transactions">
-        {% for transaction in transactions.iterrows() %}
-        <tr id="id{{transaction[1].txid}}">
-          <td>
-            {%if transaction[1]['category'] == 'receive'%}
-            <span class="text-success">
-              <i class="far fa-arrow-alt-circle-down"></i>
-            </span>
-            {%elif transaction[1]['category'] == 'send'%}
-            <span class="text-danger">
-              <i class="far fa-arrow-alt-circle-up"></i>
-            </span>
-            {%endif%}
-          </td>
-          <td class="align-middle text-left small" scope="row">
-            {{transaction[1].trade_date}}
-          </td>
-          <td class="align-middle text-right" scope="row">
-            {{transaction[1].trade_asset_ticker}}
-          </td>
-          <td class="align-middle text-right small" scope="row">
-            {{transaction[1].category}}
-          </td>
-          <td class="align-middle text-right" scope="row">
-            {{transaction[1].trade_quantity | jformat(6)}}
-          </td>
-          <td class="align-middle text-right" scope="row">
-            {{transaction[1].trade_price | jformat(2)}}
-          </td>
-          <td class="align-middle text-right small" scope="row">
-            {{transaction[1].trade_currency}}
-          </td>
-
-          <td class="align-middle text-right small" scope="row">
-            {{transaction[1].trade_fees | jformat(2)}}
-          </td>
-          <td class="align-middle text-right" scope="row">
-            {{transaction[1].trade_account}}
-          </td>
-          <td class="text-right">
-
-            <!-- Handling for multiple outputs -->
-            {% if transaction[1]['address'][0]|length > 1 %}
+    <div class="col-sm-12">
+        <table id="transactionstable" class="table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th class="small" scope="col">Date</th>
+                    <th class="small text-end" scope="col">Ticker</th>
+                    <th class="small text-end" scope="col">Operation</th>
+                    <th class="small text-end" scope="col">Quantity</th>
+                    <th class="small text-end">Price</th>
+                    <th class="small text-end">fx</th>
+                    <th class="small text-end">Fees</th>
+                    <th class="small text-end">Account</th>
+                    <th class="small text-end">Address</th>
+                    <th class="small text-end">TXid</th>
+                    <th class="small text-end">Confirmations</th>
+                </tr>
+            </thead>
+            <tbody id="transactions">
+                {% for transaction in transactions.iterrows() %}
+                <tr id="id{{transaction[1].txid}}">
+                    <td>
+                        {%if transaction[1]['category'] == 'receive'%}
+                        <span class="text-success">
+                            <i class="far fa-arrow-alt-circle-down"></i>
+                        </span>
+                        {%elif transaction[1]['category'] == 'send'%}
+                        <span class="text-danger">
+                            <i class="far fa-arrow-alt-circle-up"></i>
+                        </span>
+                        {%endif%}
+                    </td>
+                    <td class="align-middle text-start small" scope="row">
+                        {{transaction[1].trade_date}}
+                    </td>
+                    <td class="align-middle text-end" scope="row">
+                        {{transaction[1].trade_asset_ticker}}
+                    </td>
+                    <td class="align-middle text-end small" scope="row">
+                        {{transaction[1].category}}
+                    </td>
+                    <td class="align-middle text-end" scope="row">
+                        {{transaction[1].trade_quantity | jformat(6)}}
+                    </td>
+                    <td class="align-middle text-end" scope="row">
+                        {{transaction[1].trade_price | jformat(2)}}
+                    </td>
+                    <td class="align-middle text-end small" scope="row">
+                        {{transaction[1].trade_currency}}
+                    </td>
+                    <td class="align-middle text-end small" scope="row">
+                        {{transaction[1].trade_fees | jformat(2)}}
+                    </td>
+                    <td class="align-middle text-end" scope="row">
+                        {{transaction[1].trade_account}}
+                    </td>
+                    <td class="text-end">
+                        <!-- Handling for multiple outputs -->
+                        {% if transaction[1]['address'][0]|length > 1 %}
                 {% for address in transaction[1]['address'] %}
-                    {{address[0:3]}}...{{address[-4:-1]}}<br>
-                {% endfor %}
+                    {{address[0:3]}}...{{address[-4:-1]}}
+                        <br>
+                        {% endfor %}
             {% else %}
                 {{transaction[1]['address'][0:3]}}...{{transaction[1]['address'][-4:-1]}}
             {% endif %}
-
-          </td>
-          <td class="text-right">
-
-            {{transaction[1]['txid'][0:3]}}...{{transaction[1]['txid'][-4:-1]}}
-
-          </td>
-          <td class="text-right">
-            {{transaction[1]['confirmations'] | jformat(0)}}
-          </td>
-
-          {% endfor %}
-        </tr>
-      </tbody>
-    </table>
-  </div>
+                    </td>
+                    <td class="text-end">
+                        {{transaction[1]['txid'][0:3]}}...{{transaction[1]['txid'][-4:-1]}}
+                    </td>
+                    <td class="text-end">
+                        {{transaction[1]['confirmations'] | jformat(0)}}
+                    </td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
-
 {% endblock content %}

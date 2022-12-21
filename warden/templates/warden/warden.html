@@ -17,32 +17,32 @@
 
         <tbody>
             <tr>
-                <td class="border-bottom hinumber" data-bs-toggle="tooltip" data-placement="top"
+                <td class="border-bottom hinumber" data-bs-toggle="tooltip" data-bs-placement="top"
                     title="Market Value in {{current_app.fx['symbol']}}">
                     <span id="pvalue">
                         <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                             height="30"></img>
                     </span>
                 </td>
-                <td id="chg1" class="redgreen border-bottom hinumber text-right">
+                <td id="chg1" class="redgreen border-bottom hinumber text-end">
                     <span id="">
                         <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                             height="30"></img>
                     </span>
                 </td>
-                <td id="chg2" class="redgreen border-bottom hinumber text-right">
+                <td id="chg2" class="redgreen border-bottom hinumber text-end">
                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                         height="30"></img>
                 </td>
                 <td></td>
-                <td class="border-bottom hinumber text-right" data-bs-toggle="tooltip" data-placement="top"
+                <td class="border-bottom hinumber text-end" data-bs-toggle="tooltip" data-bs-placement="top"
                     title="Market Value in BTC">
                     <span id="pvaluebtc">
                         <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                             height="30"></img>
                     </span>
                 </td>
-                <td class="border-bottom hinumber text-right" data-bs-toggle="tooltip" data-placement="top"
+                <td class="border-bottom hinumber text-end" data-bs-toggle="tooltip" data-bs-placement="top"
                     title="Market Value in Sats">
                     <span id="pvaluesats">
                         <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
@@ -51,21 +51,21 @@
                 </td>
             </tr>
             <tr>
-                <td class="small text-left">
+                <td class="small text-start">
                     portfolio value
                 </td>
-                <td class="small text-right">
+                <td class="small text-end">
                     24hr change
                 </td>
-                <td class="small text-right">
+                <td class="small text-end">
                     24hr change
                 </td>
                 <td>
                 </td>
-                <td class="small text-right">
+                <td class="small text-end">
                     portfolio value
                 </td>
-                <td class="small text-right">
+                <td class="small text-end">
                     portfolio value
                 </td>
 
@@ -76,23 +76,23 @@
 
 <!-- Portfolio Summary Bar at top -->
 <div class="col-sm-4 align-right">
-    <table id="time" class="table-condensed table-right text-right">
+    <table id="time" class="table-condensed table-right text-end">
         <tbody>
             <tr>
 
                 <td id='latest_btc_price' class="text-center border-bottom hinumbersmall" data-bs-toggle="tooltip"
-                    data-placement="top" title="Bitcoin's Latest Price">
+                    data-bs-placement="top" title="Bitcoin's Latest Price">
                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                         height="30"></img>
                 </td>
 
                 <td id='latest_btc_block' class="text-center border-bottom hinumbersmall small" data-bs-toggle="tooltip"
-                    data-placement="top" title="Bitcoin's Latest Block">
+                    data-bs-placement="top" title="Bitcoin's Latest Block">
                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                         height="30"></img>
                 </td>
 
-                <td class="border-bottom hinumbersmall text-right small">
+                <td class="border-bottom hinumbersmall text-end small">
                     <span id="lstupd">
                         <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                             height="30"></img>
@@ -111,7 +111,7 @@
                     &#8383 Block Height
                 </td>
 
-                <td class="small text-right">
+                <td class="small text-end">
                     last update
                 </td>
 
@@ -143,27 +143,27 @@
                             Ticker
                         </th>
 
-                        <th class="text-right" data-bs-toggle="tooltip" data-placement="top" title="in number of coins">
+                        <th class="text-end" data-bs-toggle="tooltip" data-bs-placement="top" title="in number of coins">
                             Quantity
                         </th>
 
-                        <th class="text-right">
+                        <th class="text-end">
                             Latest Price ({{current_app.fx['symbol']}})
                         </th>
 
-                        <th class="text-right small">
+                        <th class="text-end small">
                             24hr Chg
                         </th>
                         <th>
 
                         </th>
-                        <th class="text-right">
+                        <th class="text-end">
                             Balance ({{current_app.fx['symbol']}})
                         </th>
-                        <th class="text-right">
+                        <th class="text-end">
                             Balance (₿)
                         </th>
-                        <th class="text-right small">
+                        <th class="text-end small">
                             % of total
                         </th>
 
@@ -182,12 +182,12 @@
 
                         </th>
 
-                        <td class="text-right align-middle">
+                        <td class="text-end align-middle">
                             {{(portfolio_data[position]['trade_quantity'] | jformat(4))}}
 
                         </td>
 
-                        <td class="text-right align-middle hinumbersmall">
+                        <td class="text-end align-middle hinumbersmall">
                             <strong>
                                 <span id="{{position}}_price">
                                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
@@ -196,7 +196,7 @@
                             </strong>
                         </td>
 
-                        <td class="text-right small align-middle redgreen">
+                        <td class="text-end small align-middle redgreen">
                             <span id="{{position}}_24hchg">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
@@ -209,21 +209,21 @@
 
                         </td>
 
-                        <td class="text-right align-middle">
+                        <td class="text-end align-middle">
                             <span id="{{position}}_position">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
                         </td>
 
-                        <td class="text-right align-middle">
+                        <td class="text-end align-middle">
                             <span id="{{position}}_btc_position">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
                             </span>
                         </td>
 
-                        <td class="text-right small align-middle">
+                        <td class="text-end small align-middle">
                             <span id="{{position}}_allocation">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
@@ -307,14 +307,14 @@
             <h6 class='text-danger'>Some Addresses have zero balance or are missing since the previous checkpoint</h6>
             <table class="table table-sm small-text">
                 <thead class="thead-light">
-                    <tr class='text-left'>
+                    <tr class='text-start'>
                         <th>
                             Wallet
                         </th>
-                        <th class='text-right'>
+                        <th class='text-end'>
                             TxID
                         </th>
-                        <th class='text-right'>
+                        <th class='text-end'>
                             Previous Balance
                         </th>
                     </tr>
@@ -322,13 +322,13 @@
                 <tbody>
                     {%for element in warden_metadata['old_new_df_old'].iterrows()%}
                     <tr>
-                        <td class='text-left'>
+                        <td class='text-start'>
                             {{element[1]['trade_account']}}
                         </td>
-                        <td class='text-right'>
+                        <td class='text-end'>
                             {{element[1]['trade_blockchain_id'][0:3]}}..{{element[1]['trade_blockchain_id'][-4:-1]}}
                         </td>
-                        <td class='text-right'>
+                        <td class='text-end'>
                             {{element[1]['amount'] | jformat(4)}}
                         </td>
                     </tr>
@@ -343,17 +343,17 @@
             <h6 class='text-success'>New Addresses were found since the previous checkpoint</h6>
             <table class="table table-sm small-text">
                 <thead class="thead-light">
-                    <tr class='text-left'>
+                    <tr class='text-start'>
                         <th>
                             Wallet
                         </th>
-                        <th class='text-right'>
+                        <th class='text-end'>
                             TxID
                         </th>
-                        <th class='text-right'>
+                        <th class='text-end'>
                             Confirmations
                         </th>
-                        <th class='text-right'>
+                        <th class='text-end'>
                             New Balance
                         </th>
                     </tr>
@@ -361,18 +361,18 @@
                 <tbody>
                     {%for element in warden_metadata['old_new_df_new'].iterrows()%}
                     <tr>
-                        <td class='text-left'>
+                        <td class='text-start'>
                             {{element[1]['trade_account']}}
                         </td>
-                        <td class='text-right'>
+                        <td class='text-end'>
 
                             {{element[1]['trade_blockchain_id'][0:3]}}..{{element[1]['trade_blockchain_id'][-4:-1]}}
 
                         </td>
-                        <td class='text-right'>
+                        <td class='text-end'>
                             {{element[1]['confirmations'] | jformat(0)}}
                         </td>
-                        <td class='text-right'>
+                        <td class='text-end'>
                             {{element[1]['amount'] | jformat(4)}}
                         </td>
 
@@ -400,9 +400,9 @@
 
             <table id="positionstable" class="table table-sm small-text" style="border-collapse:collapse;">
                 <thead class="thead-light">
-                    <tr class='text-right'>
+                    <tr class='text-end'>
                         <th></th>
-                        <th class='text-left'> Name </th>
+                        <th class='text-start'> Name </th>
                         <th> Device(s) </th>
                         <th> Balance </th>
                         <th> # </th>
@@ -431,12 +431,12 @@
                     {%endif%}
 
                     {%if not wallet_df.empty%}
-                    <tr class='text-right' data-bs-toggle="collapse" data-target="#txs_{{wallet}}"
+                    <tr class='text-end' data-bs-toggle="collapse" data-target="#txs_{{wallet}}"
                         class="accordion-toggle">
                         <td>
                             <i class="far fa-plus-square"></i>
                         </td>
-                        <td class='text-left'>
+                        <td class='text-start'>
                             {{current_app.specter.home_parser(load=true)['wallet_dict'][wallet]['name']}}
                         </td>
                         <td>
@@ -446,10 +446,10 @@
                             {%endfor%}
 
                         </td>
-                        <td class='text-right'>
+                        <td class='text-end'>
                             {{wallet_df['amount'].sum() | jformat(4)}}
                         </td>
-                        <td class='text-right'>
+                        <td class='text-end'>
                             {{wallet_df['amount'].count() | jformat(0)}}
                         </td>
                         <td>
@@ -481,21 +481,21 @@
                                 <table id="positionstable" class="table table-sm small-text"
                                     style="border-collapse:collapse;">
                                     <thead class="thead-light">
-                                        <tr class='text-right'>
+                                        <tr class='text-end'>
                                             <th></th>
-                                            <th class='text-left' data-bs-toggle="tooltip" data-placement="top"
+                                            <th class='text-start' data-bs-toggle="tooltip" data-bs-placement="top"
                                                 title="Transaction Date">Date</th>
-                                            <th class='text-left' data-bs-toggle="tooltip" data-placement="top"
+                                            <th class='text-start' data-bs-toggle="tooltip" data-bs-placement="top"
                                                 title="Specter Label"> Label </th>
                                             <th> Address </th>
                                             <th> TX id </th>
                                             <th> Confirmations </th>
                                             <th> Amount (&#8383)</th>
-                                            <th data-bs-toggle="tooltip" data-placement="top" title="Transaction Price"> ₿
+                                            <th data-bs-toggle="tooltip" data-bs-placement="top" title="Transaction Price"> ₿
                                                 ({{current_app.fx['symbol']}})</th>
                                             <th> Cash ({{current_app.fx['symbol']}})</th>
                                             <th> Fees ({{current_app.fx['symbol']}})</th>
-                                            <th class='text-center' data-bs-toggle="tooltip" data-placement="top"
+                                            <th class='text-center' data-bs-toggle="tooltip" data-bs-placement="top"
                                                 title="Change this transactions details. Note: will not change Specter data.">
                                                 Edit </th>
                                         </tr>
@@ -525,40 +525,40 @@
                                                 </span>
                                                 {%endif%}
                                             </td>
-                                            <td class='text-left'>
+                                            <td class='text-start'>
                                                 {% if message == ''%}
                                                 {{tx[1]['trade_date']}}
                                                 {%else%}
                                                 {{message}}
                                                 {%endif%}
                                             </td>
-                                            <td class='text-left'>
+                                            <td class='text-start'>
                                                 {{tx[1]['label']}}
                                             </td>
-                                            <td class='text-right'>
+                                            <td class='text-end'>
 
                                                 {{tx[1]['address'][0:3]}}...{{tx[1]['address'][-4:-1]}}
                                             </td>
-                                            <td class='text-right'>
+                                            <td class='text-end'>
                                                 {{tx[1]['txid'][0:3]}}...{{tx[1]['txid'][-4:-1]}}
                                             </td>
-                                            <td class='text-right'>
+                                            <td class='text-end'>
                                                 {{tx[1]['confirmations'] | jformat(0)}}
                                             </td>
-                                            <td class='text-right'>
+                                            <td class='text-end'>
                                                 {{tx[1]['amount'] | jformat(4)}}
                                             </td>
-                                            <td class='text-right'>
+                                            <td class='text-end'>
                                                 {{tx[1]['trade_price'] | jformat(2)}}
                                             </td>
-                                            <td class='text-right'>
+                                            <td class='text-end'>
                                                 {{tx[1]['cash_value'] | jformat(2)}}
                                             </td>
-                                            <td class='text-right'>
+                                            <td class='text-end'>
                                                 {{tx[1]['trade_fees'] | jformat(2)}}
                                             </td>
                                             <td class='text-center edit_tx_button' data-txid="{{tx[1]['txid']}}"
-                                                data-bs-toggle="tooltip" data-placement="right"
+                                                data-bs-toggle="tooltip" data-bs-placement="right"
                                                 title="Click to edit this transaction details" style="cursor: pointer;">
                                                 <i class=" far fa-edit"></i>
                                             </td>
@@ -574,12 +574,12 @@
                         </td>
                     </tr>
                     {%else%}
-                    <tr class='text-right' data-bs-toggle="collapse" data-target="#txs_{{wallet}}"
+                    <tr class='text-end' data-bs-toggle="collapse" data-target="#txs_{{wallet}}"
                         class="accordion-toggle">
-                        <td data-bs-toggle="tooltip" data-placement="right" title="No Transactions Found for this Wallet">
+                        <td data-bs-toggle="tooltip" data-bs-placement="right" title="No Transactions Found for this Wallet">
                             <i class="fas fa-exclamation-circle"></i>
                         </td>
-                        <td class='text-left'>
+                        <td class='text-start'>
                             {{current_app.specter.home_parser()['wallet_dict'][wallet]['name']}}
                         </td>
                         <td>
@@ -590,10 +590,10 @@
                             {%endif%}
 
                         </td>
-                        <td class='text-right'>
+                        <td class='text-end'>
                             --
                         </td>
-                        <td class='text-right'>
+                        <td class='text-end'>
                             --
                         </td>
                         <td>
@@ -640,20 +640,20 @@
                                 Ticker
                             </th>
 
-                            <th class="text-right">
+                            <th class="text-end">
                                 Balance
                             </th>
 
-                            <th class="text-right">
+                            <th class="text-end">
                                 Fees
                             </th>
-                            <th class="text-right">
+                            <th class="text-end">
                                 Total PnL
                             </th>
-                            <th class="text-right">
+                            <th class="text-end">
                                 Breakeven
                             </th>
-                            <th class="text-right">
+                            <th class="text-end">
                                 change from Breakeven
                             </th>
                             <th>
@@ -674,7 +674,7 @@
                                 </a>
                             </th>
 
-                            <td class="text-right align-middle">
+                            <td class="text-end align-middle">
                                 <span id="{{position}}_F_position">
                                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
@@ -683,7 +683,7 @@
                             </td>
 
 
-                            <td class="text-right align-middle">
+                            <td class="text-end align-middle">
                                 <span id="{{position}}_F_trade_fees_fx">
                                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
@@ -691,32 +691,32 @@
 
                             </td>
 
-                            <td class="text-right align-middle redgreen">
+                            <td class="text-end align-middle redgreen">
                                 <span id="{{position}}_F_pnl_net">
                                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
 
                             </td>
-                            <td class="text-right align-middle">
+                            <td class="text-end align-middle">
                                 <span id="{{position}}_F_breakeven">
                                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
                             </td>
-                            <td class="text-right align-middle">
+                            <td class="text-end align-middle">
                                 <span id="{{position}}_perc_breakeven">
                                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
                             </td>
-                            <td class="text-right align-middle">
+                            <td class="text-end align-middle">
                                 <span id="{{position}}_be_calculator_FIFO">
                                     <a style="color: lightslategray; position: relative; cursor: pointer;" tabindex="0"
                                         data-bs-toggle="popover" class="cost_popover" data-trigger="focus"
                                         data-accounting='LIFO' title="Cost calculations for {{position}}"
-                                        data-placement="bottom" data-content="<span class='text-center'><img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width='30'
-                                    height='30'></img></span>" data-html="true" data-ticker={{position}}>
+                                        data-bs-placement="bottom" data-bs-content="<span class='text-center'><img src='{{url_for('warden.static', filename='images/loading_small.gif')}}' width='30'
+                                    height='30'></img></span>" data-bs-html="true" data-ticker={{position}}>
                                         <i class="fas fa-calculator"></i>
                                     </a>
                                 </span>
@@ -728,7 +728,7 @@
                         <tr id="tickerTOTAL" class="table-dark">
                             <th class="align-middle" scope="row">TOTAL</th>
 
-                            <td class="text-right align-middle">
+                            <td class="text-end align-middle">
                                 <span id="F_total">
                                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
@@ -736,24 +736,24 @@
 
                             </td>
 
-                            <td class="text-right align-middle">
+                            <td class="text-end align-middle">
                                 <span id="F_fees">
                                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
                             </td>
 
-                            <td class="text-right align-middle">
+                            <td class="text-end align-middle">
                                 <span id="F_pnl">
                                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
                                         width="30" height="30"></img>
                                 </span>
                             </td>
-                            <td class="text-right small align-middle">
+                            <td class="text-end small align-middle">
                             </td>
-                            <td class="text-right small align-middle">
+                            <td class="text-end small align-middle">
                             </td>
-                            <td class="text-right small align-middle">
+                            <td class="text-end small align-middle">
                             </td>
                         </tr>
 
@@ -773,28 +773,28 @@
                             Ticker
                         </th>
 
-                        <th class="text-right">
+                        <th class="text-end">
                             Price ({{current_app.fx['symbol']}})
                         </th>
 
-                        <th class="text-right small">
+                        <th class="text-end small">
                             24hr Chg
                         </th>
                         <th class="text-center small">
                             24hr Price Range
                         </th>
-                        <th class="text-right small">
+                        <th class="text-end small">
                             24hr Volume
                         </th>
-                        <th class="text-right small">
+                        <th class="text-end small">
                             Mkt Cap
                         </th>
 
-                        <th class="text-right small">
+                        <th class="text-end small">
                             Last Update
                         </th>
 
-                        <th class="text-right small">
+                        <th class="text-end small">
                             Source
                         </th>
 
@@ -816,7 +816,7 @@
                             </a>
                         </th>
 
-                        <td class="text-right align-middle hinumbersmall">
+                        <td class="text-end align-middle hinumbersmall">
                             <strong>
                                 <span id="{{position}}_mkt_price">
                                     <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}"
@@ -827,7 +827,7 @@
                             </strong>
                         </td>
 
-                        <td class="text-right align-middle small redgreen">
+                        <td class="text-end align-middle small redgreen">
                             <span id="{{position}}_24h_change">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
@@ -843,7 +843,7 @@
                         </td>
 
 
-                        <td class="text-right align-middle small">
+                        <td class="text-end align-middle small">
                             <span id="{{position}}_volume">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
@@ -851,7 +851,7 @@
                         </td>
 
 
-                        <td class="text-right align-middle small">
+                        <td class="text-end align-middle small">
                             <span id="{{position}}_mktcap">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
@@ -859,7 +859,7 @@
 
                         </td>
 
-                        <td class="text-right align-middle small">
+                        <td class="text-end align-middle small">
                             <span id="{{position}}_lastupdate">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
@@ -867,7 +867,7 @@
                         </td>
 
 
-                        <td class="text-right align-middle small">
+                        <td class="text-end align-middle small">
                             <span id="{{position}}_source">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                     height="30"></img>
@@ -909,7 +909,7 @@
                 <tbody>
                     {%for ticker in custody_df.index.unique(level='trade_asset_ticker').to_list()%}
                     <tr>
-                        <th class='text-left'>
+                        <th class='text-start'>
                             {{ticker}}
                         </th>
                         {%for custodian in custody_df.index.unique(level='trade_account').to_list()%}
@@ -965,22 +965,22 @@
                 <tbody>
                     <tr>
                         <td>Current NAV</td>
-                        <td id='end_nav' class="text-right"> <img src="{{url_for('warden.static',
+                        <td id='end_nav' class="text-end"> <img src="{{url_for('warden.static',
                                 filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Highest NAV</td>
-                        <td id='max_nav' class="text-right"> <img src="{{url_for('warden.static',
+                        <td id='max_nav' class="text-end"> <img src="{{url_for('warden.static',
                                 filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Lowest NAV</td>
-                        <td id='min_nav' class="text-right"> <img src="{{url_for('warden.static',
+                        <td id='min_nav' class="text-end"> <img src="{{url_for('warden.static',
                                 filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Portfolio Value</td>
-                        <td class="text-right">
+                        <td class="text-end">
                             {{current_app.fx['symbol']}}
                             <span id='end_portvalue'> <img src="{{url_for('warden.static',
                                     filename='images/loading_small.gif')}}" width="30" height="30"></img>
@@ -990,7 +990,7 @@
 
                     <tr>
                         <td>Highest Value</td>
-                        <td class="text-right">
+                        <td class="text-end">
                             {{current_app.fx['symbol']}}
                             <span id='max_portvalue'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
@@ -1006,33 +1006,33 @@
 
                     <tr>
                         <td>Since last 'close'</td>
-                        <td id='return_1d' class="text-right redgreen"> <img src="{{url_for('warden.static',
+                        <td id='return_1d' class="text-end redgreen"> <img src="{{url_for('warden.static',
                                 filename='images/loading_small.gif')}}" width="30" height="30">
                             </img> </td>
                     </tr>
                     <tr>
                         <td>1 week</td>
-                        <td id='return_1wk' class="text-right redgreen"> <img src="{{url_for('warden.static',
+                        <td id='return_1wk' class="text-end redgreen"> <img src="{{url_for('warden.static',
                                 filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>30 days</td>
-                        <td id='return_30d' class="text-right redgreen"> <img src="{{url_for('warden.static',
+                        <td id='return_30d' class="text-end redgreen"> <img src="{{url_for('warden.static',
                                 filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>90 days</td>
-                        <td id='return_90d' class="text-right redgreen"> <img src="{{url_for('warden.static',
+                        <td id='return_90d' class="text-end redgreen"> <img src="{{url_for('warden.static',
                                 filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Since ATH</td>
-                        <td id='return_ATH' class="text-right redgreen"> <img src="{{url_for('warden.static',
+                        <td id='return_ATH' class="text-end redgreen"> <img src="{{url_for('warden.static',
                                 filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Since inception</td>
-                        <td id='return_SI' class="text-right redgreen"> <img src="{{url_for('warden.static',
+                        <td id='return_SI' class="text-end redgreen"> <img src="{{url_for('warden.static',
                                 filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
 
@@ -1056,7 +1056,7 @@
                 <tbody>
                     <tr>
                         <td>Status</td>
-                        <td id='specter_health' class="text-right">
+                        <td id='specter_health' class="text-end">
                             <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img>
                         </td>
@@ -1064,19 +1064,19 @@
 
                     <tr>
                         <td>Last Data Refresh</td>
-                        <td id='specter_refresh' class="text-right"> <img src="{{url_for('warden.static',
+                        <td id='specter_refresh' class="text-end"> <img src="{{url_for('warden.static',
                                 filename='images/loading_small.gif')}}" width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td></td>
-                        <td id='specter_refresh_ago' class="text-right"> <img
+                        <td id='specter_refresh_ago' class="text-end"> <img
                                 src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img> </td>
                     </tr>
                     {%if current_app.warden_status['downloading_specter_txs']%}
                     <tr>
                         <td></td>
-                        <td class="text-right text-danger">Downloading transactions...</td>
+                        <td class="text-end text-danger">Downloading transactions...</td>
                     </tr>
                     {%endif%}
 
@@ -1096,7 +1096,7 @@
 
                     <tr>
                         <td>Latest Block</td>
-                        <td id='current_block' class="text-right"> <img src="{{url_for('warden.static',
+                        <td id='current_block' class="text-end"> <img src="{{url_for('warden.static',
                                 filename='images/loading_small.gif')}}"" width=" 30" height="30"></img>
                         </td>
                     </tr>
@@ -1104,42 +1104,42 @@
 
                     <tr>
                         <td>Size on Disk</td>
-                        <td id='size_on_disk' class="text-right">
+                        <td id='size_on_disk' class="text-end">
                             <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img>
                         </td>
                     </tr>
                     <tr>
                         <td>Difficulty</td>
-                        <td id='difficulty' class="text-right">
+                        <td id='difficulty' class="text-end">
                             <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img>
                         </td>
                     </tr>
                     <tr>
                         <td>Bitcoin Core Version</td>
-                        <td id='core_version' class="text-right">
+                        <td id='core_version' class="text-end">
                             <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img>
                         </td>
                     </tr>
                     <tr>
                         <td>Connection Count</td>
-                        <td id='connection_count' class="text-right">
+                        <td id='connection_count' class="text-end">
                             <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img>
                         </td>
                     </tr>
                     <tr>
                         <td>Mempool Size</td>
-                        <td id='mempool_size' class="text-right">
+                        <td id='mempool_size' class="text-end">
                             <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img>
                         </td>
                     </tr>
                     <tr>
                         <td>Node Uptime</td>
-                        <td id='uptime' class="text-right">
+                        <td id='uptime' class="text-end">
                             <img src="{{url_for('warden.static', filename='images/loading_small.gif')}}" width="30"
                                 height="30"></img>
                         </td>
@@ -1166,26 +1166,26 @@
 
                 <h6 style='padding-top: 10px;'>Fee Estimates</h6>
 
-                <table id="time" class="table-condensed table-right text-right">
+                <table id="time" class="table-condensed table-right text-end">
                     <tbody>
                         <tr>
 
-                            <td id='fastest_fee' class="text-left border-bottom hinumbersmall" data-bs-toggle="tooltip"
-                                data-placement="top"
+                            <td id='fastest_fee' class="text-start border-bottom hinumbersmall" data-bs-toggle="tooltip"
+                                data-bs-placement="top"
                                 title="If you are in a rush, this is how much you need to pay in fees to have fast confirmation time">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
 
                             <td id='30min_fee' class="text-center border-bottom hinumbersmall" data-bs-toggle="tooltip"
-                                data-placement="top"
+                                data-bs-placement="top"
                                 title="This is how much you need to pay to get your transaction confirmed in 30 min (estimate)">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
 
-                            <td id='1hr_fee' class="text-right border-bottom hinumbersmall" data-bs-toggle="tooltip"
-                                data-placement="top"
+                            <td id='1hr_fee' class="text-end border-bottom hinumbersmall" data-bs-toggle="tooltip"
+                                data-bs-placement="top"
                                 title="This is how much you need to pay to get your transaction confirmed in 60 min (estimate)">
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
@@ -1194,7 +1194,7 @@
 
                         </tr>
                         <tr>
-                            <td class="small text-left">
+                            <td class="small text-start">
                                 Fastest Fee
                             </td>
 
@@ -1202,7 +1202,7 @@
                                 30 min Fee
                             </td>
 
-                            <td class="small text-right">
+                            <td class="small text-end">
                                 1 hour Fee
                             </td>
 
@@ -1217,13 +1217,13 @@
                             <th class='text-center'>
                                 Time
                             </th>
-                            <td class='text-right'>
+                            <td class='text-end'>
                                 Block
                             </td>
-                            <td class='text-right'>
+                            <td class='text-end'>
                                 # Txs
                             </td>
-                            <td class='text-right'>
+                            <td class='text-end'>
                                 Size
                             </td>
 
@@ -1233,15 +1233,15 @@
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </th>
-                            <td class='text-right' id='height_0'>
+                            <td class='text-end' id='height_0'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
-                            <td class='text-right' id='txs_0'>
+                            <td class='text-end' id='txs_0'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
-                            <td class='text-right' id='size_0'>
+                            <td class='text-end' id='size_0'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
@@ -1252,15 +1252,15 @@
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </th>
-                            <td class='text-right' id='height_1'>
+                            <td class='text-end' id='height_1'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
-                            <td class='text-right' id='txs_1'>
+                            <td class='text-end' id='txs_1'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
-                            <td class='text-right' id='size_1'>
+                            <td class='text-end' id='size_1'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
@@ -1270,15 +1270,15 @@
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </th>
-                            <td class='text-right' id='height_2'>
+                            <td class='text-end' id='height_2'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
-                            <td class='text-right' id='txs_2'>
+                            <td class='text-end' id='txs_2'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
-                            <td class='text-right' id='size_2'>
+                            <td class='text-end' id='size_2'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
@@ -1288,15 +1288,15 @@
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </th>
-                            <td class='text-right' id='height_3'>
+                            <td class='text-end' id='height_3'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
-                            <td class='text-right' id='txs_3'>
+                            <td class='text-end' id='txs_3'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
-                            <td class='text-right' id='size_3'>
+                            <td class='text-end' id='size_3'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
@@ -1306,15 +1306,15 @@
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </th>
-                            <td class='text-right' id='height_4'>
+                            <td class='text-end' id='height_4'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
-                            <td class='text-right' id='txs_4'>
+                            <td class='text-end' id='txs_4'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
-                            <td class='text-right' id='size_4'>
+                            <td class='text-end' id='size_4'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
@@ -1324,15 +1324,15 @@
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </th>
-                            <td class='text-right' id='height_5'>
+                            <td class='text-end' id='height_5'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
-                            <td class='text-right' id='txs_5'>
+                            <td class='text-end' id='txs_5'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>
-                            <td class='text-right' id='size_5'>
+                            <td class='text-end' id='size_5'>
                                 <img src="{{url_for('warden.static', filename='images/loading_small.gif'
                                     )}}" width="30" height="30"></img>
                             </td>

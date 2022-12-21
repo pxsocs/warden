@@ -1,13 +1,15 @@
 import collections
 import functools
 import hashlib
+
 import os
 import time
 import logging
-import errno
-import signal
 from functools import wraps
 from glob import glob
+import errno
+import signal
+
 from backend.utils import pickle_it
 
 

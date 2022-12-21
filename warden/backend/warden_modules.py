@@ -312,7 +312,7 @@ def find_fx(row, fx=None):
     return price
 
 
-@MWT(timeout=20)
+# @MWT(timeout=20)
 def transactions_fx():
     # Gets the transaction table and fills with fx information
     # Note that it uses the currency exchange for the date of transaction
@@ -330,9 +330,9 @@ def transactions_fx():
     # SQL DATABASE ========================================
     # Get all transactions from db and format
     df_sql = pd.read_sql_table('trades', current_app.db.engine)
+
     if not df_sql.empty:
         df_sql = df_sql[(df_sql.user_id == current_user.username)]
-        # df = df[(df.trade_operation == "B") | (df.trade_operation == "S")]
         df_sql['trade_date'] = pd.to_datetime(df_sql['trade_date'])
         df_sql = df_sql.set_index('trade_date')
         # Ignore times in df to merge - keep only dates
@@ -341,30 +341,6 @@ def transactions_fx():
 
     # Merge both
     df = df.append(df_sql, sort=False)
-
-    if df.empty:
-        logging.warning(
-            "Transactions_FX - No txs found - using Demo Portfolio")
-        # sample_trade = {
-        #     'user_id': current_user.username,
-        #     'trade_date': datetime(2018, 1, 1),
-        #     'trade_currency': 'USD',
-        #     'trade_fees': 0,
-        #     'trade_fees_fx': 0,
-        #     'trade_quantity': 0.1,
-        #     'trade_multiplier': 1,
-        #     'trade_price': 14920,
-        #     'trade_asset_ticker': 'BTC',
-        #     'trade_operation': 'B',
-        #     'status': 'Demo Line',
-        #     'trade_account': 'Demo Account',
-        #     'cash_value': 1492,
-        #     'cash_value_fx': 1492,
-        # }
-        # df = df.append(sample_trade, ignore_index=True)
-        # df = df.set_index('trade_date')
-
-        return df
 
     # The current fx needs no conversion, set to 1
     df[fx_rate()['fx_rate']] = 1
@@ -1051,7 +1027,7 @@ def cost_calculation(ticker, html_table=None):
             })
 
         cost_matrix = html.to_html(
-            classes='table table-condensed table-striped small-text text-right',
+            classes='table table-condensed table-striped small-text text-end',
             escape=False,
             index_names=False,
             justify='right')

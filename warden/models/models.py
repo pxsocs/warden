@@ -1,7 +1,6 @@
 from datetime import datetime
 from flask import current_app
 from flask_login import UserMixin
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 db = current_app.db
 
@@ -29,8 +28,7 @@ class Trades(db.Model):
     user_id = db.Column(db.String(150),
                         db.ForeignKey("user.id"),
                         nullable=False)
-    trade_inputon = db.Column(db.DateTime,
-                              default=datetime.utcnow())
+    trade_inputon = db.Column(db.DateTime, default=datetime.utcnow())
     trade_date = db.Column(db.DateTime,
                            nullable=False,
                            default=datetime.utcnow())

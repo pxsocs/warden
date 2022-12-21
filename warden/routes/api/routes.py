@@ -850,7 +850,7 @@ def progress_log():
             lines = 200
     else:
         lines = 200
-    from config import Config
+    from backend.config import Config
     from backend.warden_modules import tail
     debug = Config.debug_file
     data = tail(debug, lines)

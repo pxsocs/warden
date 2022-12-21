@@ -1,5 +1,6 @@
 # See specter_importer.MD for instructions
 # and sample json return variables
+import os
 import requests
 import json
 import re
@@ -7,38 +8,39 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup
 from backend.utils import pickle_it
-from connections.connections import tor_request
+from connections.connections import tor_request, url_parser
 from flask_login import current_user
+from backend.config import load_config
 
 import numpy as np
 
 
+# Full details to Specter Server API documentation:
+# https://github.com/cryptoadvance/specter-desktop/blob/master/docs/api/README.md
 class Specter():
 
     def __init__(self):
-        from backend.config import load_config
+        # Set environment variable
+        # export SPECTER_API_ACTIVE=True
+        # Note that this will only work if Specter is running
+        # at the same machine as WARden.
+        os.environ['SPECTER_API_ACTIVE'] = 'True'
+        # Load Config
         config = load_config()
         # URL Lists
         self.base_url = config['SPECTER']['specter_url']
-        if self.base_url[-1] != '/':
-            self.base_url += '/'
-        self.login_url = self.base_url + 'auth/login'
-        self.tx_url = self.base_url + 'wallets/wallets_overview/txlist'
-        self.core_url = self.base_url + 'settings/bitcoin_core?'
-        # Payload lists
-        self.tx_payload = {
-            'idx': 0,
-            'limit': 0,
-            'search': None,
-            'sortby': 'time',
-            'sortdir': 'desc'
-        }
-        self.login_payload = {
+        # Parse URL
+        self.base_url = url_parser(self.base_url)
+        self.login = {
             'username': config['SPECTER']['specter_login'],
             'password': config['SPECTER']['specter_password']
         }
+        # Check if URL is valid
         self.specter_reached = False
+        # Check if authentication is valid
         self.specter_auth = False
+        # Store the API authentication information
+        self.auth_token = None
 
     def rescan_progress(self, wallet_alias, load=True, session=None):
         if wallet_alias is None:
@@ -77,7 +79,41 @@ class Specter():
         session.close()
         return (response)
 
+    def get_token(self):
+        # Set the API token URL
+        url = self.base_url + 'api/v1alpha/token'
+        header = {
+            "Content-Type": "application/json",
+        }
+        data = {
+            "jwt_token_description": "WARden <> Specter API Token",
+            "jwt_token_life": "30 days"
+        }
+        response = requests.post(url, headers=header, data=json.dumps(data))
+        return (response)
+
+    def check_response(self, response):
+        if response.status_code != 200:
+            return ("[Specter Error] Status is not 200")
+
+        # Specter running on Umbrel will not authenticate
+        # since umbrel requires authentication
+        umbrel_error = 'work properly without JavaScript enabled'
+        if umbrel_error in response.text:
+            return (
+                "[Specter Error] Specter is running in Umbrel. " +
+                "Umbrel authentication will block access to the API. " +
+                "In order to fix this change the Specter URL to an Onion address."
+            )
+
+        try:
+            data = response.json()
+            return (data)
+        except Exception as e:
+            return ('[Specter Error] [check_response] {0}'.format(e))
+
     def init_session(self):
+
         with requests.session() as session:
             if "onion" in self.base_url:
                 config = load_config()

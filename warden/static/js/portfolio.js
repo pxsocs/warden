@@ -96,6 +96,7 @@ $(document).ready(function () {
 
 
     function onPopoverHtmlLoad() {
+        console.log("Loading Popover data")
         ticker = $(this).data('ticker')
         this_var = $(this)
         accounting = $(this).data('accounting')
@@ -116,10 +117,10 @@ $(document).ready(function () {
                                     <td>
                                         Operation
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                         Quantity
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + data.user.name_plural + `
                                     </td>
                                 </tr>
@@ -127,10 +128,10 @@ $(document).ready(function () {
                                 <td>
                                     Deposits
                                     </td>
-                                <td class="text-right">
+                                <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].trade_quantity_B, 4) + `
                                     </td>
-                                <td class="text-right">
+                                <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].cash_value_fx_B, 0, fx) + `
                                     </td>
                             </tr>
@@ -139,10 +140,10 @@ $(document).ready(function () {
                                 <td>
                                     Withdraws
                                     </td>
-                                <td class="text-right">
+                                <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].trade_quantity_S, 4) + `
                                     </td>
-                                <td class="text-right">
+                                <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].cash_value_fx_S, 0, fx) + `
                                     </td>
                             </tr>
@@ -151,10 +152,10 @@ $(document).ready(function () {
                             <td>
                                 Total
                                 </td>
-                            <td class="text-right"> <span class="numberCircle">&nbsp1&nbsp</span>
+                            <td class="text-end"> <span class="numberCircle">&nbsp1&nbsp</span>
                                 ` + formatNumber(data.positions[ticker][accounting + '_quantity'], 4) + `
                                 </td>
-                            <td class="text-right"> <span class="numberCircle">&nbsp2&nbsp</span>
+                            <td class="text-end"> <span class="numberCircle">&nbsp2&nbsp</span>
                                 ` + formatNumber(data.positions[ticker].cash_value_fx, 0, fx) + `
 
                                 </td>
@@ -170,7 +171,7 @@ $(document).ready(function () {
                                     <td>
                                     ` + accounting + ` Average Cost
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker][accounting + '_average_cost'], 2, fx) + `
                                     <span class="numberCircle">&nbsp9&nbsp</span>
                                     </td>
@@ -180,7 +181,7 @@ $(document).ready(function () {
                                     <td>
                                     Unrealized PnL = ( <span class="numberCircle">&nbsp3&nbsp</span> - <span class="numberCircle">&nbsp9&nbsp</span> ) X <span class="numberCircle">&nbsp1&nbsp</span>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker][accounting + '_unreal'], 0, fx) + `
                                     <span class="numberCircle">&nbsp10&nbsp</span>
                                     </td>
@@ -190,7 +191,7 @@ $(document).ready(function () {
                                     <td>
                                     Unrealized Break Even = <span class="numberCircle">&nbsp3&nbsp</span> - ( <span class="numberCircle">&nbsp10&nbsp</span> &#xF7 <span class="numberCircle">&nbsp1&nbsp</span> )
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker][accounting + '_unrealized_be'], 2, fx) + `
 
                                     </td>
@@ -200,7 +201,7 @@ $(document).ready(function () {
                                     <td>
                                     Realized PnL = ( <span class="numberCircle">&nbsp7&nbsp</span> - <span class="numberCircle">&nbsp10&nbsp</span> )
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker][accounting + '_real'], 0, fx) + `
 
                                     </td>
@@ -221,7 +222,7 @@ $(document).ready(function () {
                                     <td>
                                     Open Position
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker][accounting + '_quantity'], 4) + `
                                     <span class="numberCircle">&nbsp1&nbsp</span>
                                     </td>
@@ -230,7 +231,7 @@ $(document).ready(function () {
                                     <td>
                                      Price
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                         ` + formatNumber(data.positions[ticker].price, 2, fx) + `
                                         <span class="numberCircle">&nbsp3&nbsp</span>
                                     </td>
@@ -239,7 +240,7 @@ $(document).ready(function () {
                                     <td>
                                     Current Market Value = <span class="numberCircle">&nbsp1&nbsp</span> X <span class="numberCircle">&nbsp3&nbsp</span>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                         ` + formatNumber(data.positions[ticker].position_fx, 0, fx) + `
                                         <span class="numberCircle">&nbsp4&nbsp</span>
                                     </td>
@@ -248,7 +249,7 @@ $(document).ready(function () {
                                     <td>
                                     Total Cash Flow
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].cash_value_fx, 0, fx) + `
                                     <span class="numberCircle">&nbsp2&nbsp</span>
                                     </td>
@@ -258,7 +259,7 @@ $(document).ready(function () {
                                     <td>
                                     Gross PnL = <span class="numberCircle">&nbsp4&nbsp</span> - <span class="numberCircle">&nbsp2&nbsp</span>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].pnl_gross, 0, fx) + `
                                     <span class="numberCircle">&nbsp5&nbsp</span>
                                     </td>
@@ -268,7 +269,7 @@ $(document).ready(function () {
                                     <td>
                                     Fees
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].trade_fees_fx, 0, fx) + `
                                     <span class="numberCircle">&nbsp6&nbsp</span>
                                     </td>
@@ -278,7 +279,7 @@ $(document).ready(function () {
                                     <td>
                                     Net PnL = <span class="numberCircle">&nbsp5&nbsp</span> - <span class="numberCircle">&nbsp6&nbsp</span>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].pnl_net, 0, fx) + `
                                     <span class="numberCircle">&nbsp7&nbsp</span>
                                     </td>
@@ -288,7 +289,7 @@ $(document).ready(function () {
                                     <td>
                                     Break Even price = ( <span class="numberCircle">&nbsp2&nbsp</span> + <span class="numberCircle">&nbsp6&nbsp</span> ) &#xF7 <span class="numberCircle">&nbsp1&nbsp</span>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].breakeven, 2, fx) + `
                                     <span class="numberCircle">&nbsp8&nbsp</span>
                                     </td>
@@ -742,7 +743,7 @@ function stackChart(data) {
             enabled: false
         },
         rangeSelector: {
-            selected: 4,
+            selected: 5,
             style: {
                 fontSize: '10px'
             }
@@ -767,8 +768,6 @@ function stackChart(data) {
             title: {
                 text: 'Stack Size'
             },
-            startOnTick: false,
-            endOnTick: false,
         },
         legend: {
             enabled: false
@@ -782,10 +781,7 @@ function stackChart(data) {
                         x2: 0,
                         y2: 1
                     },
-                    stops: [
-                        [0, Highcharts.getOptions().colors[0]],
-                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-                    ]
+
                 },
                 marker: {
                     radius: 2
@@ -812,7 +808,7 @@ function stackChart(data) {
             data: Object.keys(data).map((key) => [((key * 1)), data[key]]),
             turboThreshold: 0,
             tooltip: {
-                pointFormat: "Stack Size: {point.y:,.0f} ₿"
+                pointFormat: "Stack Size: {point.y:,.8f} ₿"
             }
         }]
     });
