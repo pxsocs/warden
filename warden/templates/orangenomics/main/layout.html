@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        {% if title %}
+        <title>orangenomics | {{ title }}</title>
+        {% else %}
+        <title>orangenomics</title>
+        {% endif %}
+        <link rel="icon" type="image/x-icon" href="{{url_for('static', filename='images/favicon-bitcoin.ico')}}">
+        <link rel="stylesheet" href="{{url_for('static', filename='orangenomics/css/bootstrap.css')}}">
+        <!-- LOCAL theme CSS -->
+        <link rel="stylesheet" href="{{url_for('static', filename='orangenomics/css/local.css')}}">
+        <link rel="stylesheet" href="{{url_for('static', filename='orangenomics/dependencies/fontawesome/css/all.css')}}">
+        <!-- Bootstrap core JS-->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        <!-- JQUERY -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+        <!-- Minimal Cookie Script to save collapsed states of divs -->
+        <script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
+        <!-- Utilities - APP -->
+        <script src="{{url_for('static', filename='orangenomics/js/utils.js')}}"></script>
+    </head>
+    <body id="page-top">
+        <div class="container">
+            <div class="row" id="message_alert_area" hide>
+                {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %} {% for category, message in messages %}
+                <div class="col">
+                    <div id="messagealert" class="alert alert-{{ category }}">
+                        {{message}}
+                    </div>
+                </div>
+                {% endfor %} {% endif %} {% endwith %}
+            </div>
+            <div class="main-content" style="padding-top: 40px">
+                {% block content %} {% endblock %}
+            </div>
+        </div>
+    </body>
+    <!-- Footer -->
+    <footer class="site-footer bg-steel small fixed-bottom">
+        <div class="row text-white">
+            <div class="col-sm-12">
+                <span class="text-start float-left"></span>
+                <span class="text-end float-end">
+                    &copy; {{ now.year }} {{orangenomics | safe}} &nbsp;
+                    <a class="text-white" style="text-decoration: none" href="https://twitter.com/alphaazeta">
+                        <span class="text-muted">@AlphaaZeta&nbsp;&nbsp;&nbsp;</span>
+                    </a
+          >
+                </span>
+            </div>
+        </div>
+    </footer>
+    <!-- Jinja2 Global Variables -->
+    {%block modals%} {%endblock%}
+</html>

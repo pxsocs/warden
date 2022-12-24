@@ -41,7 +41,7 @@ $(document).ready(function () {
         });
     });
 
-    $("#list_fx").click(function (e) {
+    $("#fiat_change").click(function (e) {
         $.ajax({
             type: "GET",
             dataType: 'json',
@@ -51,7 +51,7 @@ $(document).ready(function () {
                 current_path = window.location.pathname;
                 $.each(data, function (option) {
                     link = '/update_fx?code=' + option + '&redirect=' + current_path
-                    html = "<a class='dropdown-item fx_changer' href='" + link + "'>" + option + " | " + data[option] + "</a>"
+                    html = "<li><a class='dropdown-item fx_changer' href='" + link + "'>" + option + " | " + data[option] + "</a></li>"
                     $('#fx_sel').append(html);
                 });
             },

@@ -20,7 +20,7 @@ h6 {
 }
 
 .bg-steel {
-  background-color: #252525;
+  background-color: #121212;
 }
 
 .bg-lightyellow {
@@ -664,4 +664,41 @@ a {
   100%{
     right: 0px;
   }
+}
+
+
+.text-60-small {
+  font-size: 60%!important;
+}
+
+
+.text-orange {
+  color: #fd7e14 !important;
+}
+
+.text-white {
+  color: #fff;
+}
+
+.text-light {
+  font-family: system-ui;
+  font-weight: lighter;
+}
+
+.text-large {
+  font-size: 150%;
+}
+
+.text-super-small {
+  font-size: 12px;
+  font-weight: lighter;
+  vertical-align: text-bottom;
+}
+
+.text-small {
+  font-size: 90%;
+}
+
+.text-strong {
+  font-weight: bold;
 }

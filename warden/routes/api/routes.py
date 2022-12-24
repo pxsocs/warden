@@ -8,7 +8,7 @@ from backend.config import basedir
 from pricing_engine.engine import price_ondate, historical_prices
 from flask_login import login_required, current_user
 from random import randrange
-from pricing_engine.engine import fx_rate, realtime_price
+from pricing_engine.engine import fx_rate, realtime_price, get_ticker_info
 from backend.utils import heatmap_generator, pickle_it, safe_serialize
 from models.models import Trades, AccountInfo, TickerInfo
 from datetime import datetime, timedelta
@@ -884,7 +884,7 @@ def assetlist():
     if len(q) < 2:
         return jsonify(jsonlist)
     # Get list of available tickers from pricing APIs
-    from pricing_engine.alphavantage import asset_list
+    from pricing_engine.cryptocompare import asset_list
     jsonlist.extend(asset_list(q))
     # jsonlist.extend(asset_list_cc(q))
     # jsonlist.extend(asset_list_fp(q))
@@ -1213,3 +1213,51 @@ def drawdown_json():
         })
 
     return simplejson.dumps(return_list)
+
+
+# Gets historical Data Info for a given ticker
+# usage: http://localhost:5001/historical_data?ticker=ibm&df=true
+# returns:
+# {
+#   "empty": false,
+#   "latest_price": 0.25857,
+#   "latest_date": "2002-09-04 00:00:00",
+#   "num_days": 5000,
+#   "first_date": "2022-07-14 00:00:00",
+#   "source": "twelvedata",
+#   "ticker_info": [
+#     {
+#       "symbol": "AAPL",
+#       "name": "Apple Inc",
+#       "provider": "12Data",
+#       "notes": "NASDAQ",
+#       "fx": "USD"
+#     }
+# }
+@api.route("/historical_data", methods=["GET", "POST"])
+def historical_data():
+    ticker = request.args.get("ticker")
+    get_df = request.args.get("df")
+
+    df = historical_prices(ticker)
+
+    if isinstance(df, pd.DataFrame):
+        if not df.empty:
+            meta = {
+                'empty': False,
+                'latest_price': df['close_converted'][-1],
+                'latest_date': df.index[-1],
+                'num_days': len(df.index),
+                'first_date': df.index[0],
+                'source': df['source'][0],
+                'source_url': df['url'][0],
+            }
+            if get_df == 'true':
+                meta['df'] = df.to_dict()
+            meta['ticker_info'] = get_ticker_info(ticker, meta['source'])
+        else:
+            meta = {'empty': True}
+    else:
+        meta = {'empty': True}
+
+    return json.dumps(meta, default=str)

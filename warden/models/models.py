@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from flask import current_app
 from flask_login import UserMixin
@@ -43,13 +44,15 @@ class Trades(db.Model):
     trade_blockchain_id = db.Column(db.String(150))
     cash_value = db.Column(db.Float, nullable=False)
 
-    def __repr__(self):
-        return f"Trades('{self.trade_date}', '{self.trade_asset_ticker}', \
-                        '{self.trade_quantity}', '{self.trade_price}', \
-                        '{self.trade_fees}')"
+    def as_dict(self):
+        dict_return = {
+            c.name: getattr(self, c.name)
+            for c in self.__table__.columns
+        }
+        return (dict_return)
 
-    def to_dict(self):
-        return (vars(self))
+    def __repr__(self):
+        return (json.dumps(self.as_dict(), default=str))
 
 
 class AccountInfo(db.Model):
@@ -58,6 +61,16 @@ class AccountInfo(db.Model):
     account_longname = db.Column(db.String(255))
     account_type = db.Column(db.String(255))
     notes = db.Column(db.Text)
+
+    def as_dict(self):
+        dict_return = {
+            c.name: getattr(self, c.name)
+            for c in self.__table__.columns
+        }
+        return (dict_return)
+
+    def __repr__(self):
+        return (json.dumps(self.as_dict(), default=str))
 
 
 class TickerInfo(db.Model):
@@ -69,6 +82,16 @@ class TickerInfo(db.Model):
     json_price_field = db.Column(db.String(), nullable=False)
     json_date_field = db.Column(db.String(), nullable=False)
 
+    def as_dict(self):
+        dict_return = {
+            c.name: getattr(self, c.name)
+            for c in self.__table__.columns
+        }
+        return (dict_return)
+
+    def __repr__(self):
+        return (json.dumps(self.as_dict(), default=str))
+
 
 class SpecterInfo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -76,3 +99,59 @@ class SpecterInfo(db.Model):
     url = db.Column(db.String(), nullable=False)
     login = db.Column(db.String(), nullable=True)
     password = db.Column(db.String(), nullable=True)
+
+    def as_dict(self):
+        dict_return = {
+            c.name: getattr(self, c.name)
+            for c in self.__table__.columns
+        }
+        return (dict_return)
+
+    def __repr__(self):
+        return (json.dumps(self.as_dict(), default=str))
+
+
+class Allocation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    allocation_inputon = db.Column(db.String(), default=str(datetime.utcnow()))
+    allocation = db.Column(db.String(), nullable=False)
+    visibility = db.Column(db.String(), default='private')
+    rebalance = db.Column(db.String(), default='never')
+    portfolio_name = db.Column(db.String(250))
+    loaded_times = db.Column(db.Integer, default=0)
+    notes = db.Column(db.Text)
+    other_data = db.Column(db.PickleType())
+
+    def as_dict(self):
+        dict_return = {
+            c.name: getattr(self, c.name)
+            for c in self.__table__.columns
+        }
+        return (dict_return)
+
+    def __repr__(self):
+        return (json.dumps(self.as_dict(), default=str))
+
+
+class RequestData(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    portfolio = db.Column(db.String())
+    tickers = db.Column(db.String())
+    allocations = db.Column(db.String())
+    rebalance = db.Column(db.String())
+    start_date = db.Column(db.String())
+    end_date = db.Column(db.String())
+    data = db.Column(db.String())
+    request_time = db.Column(db.String(), default=str(datetime.utcnow()))
+
+    def as_dict(self):
+        dict_return = {
+            c.name: getattr(self, c.name)
+            for c in self.__table__.columns
+        }
+        return (dict_return)
+
+    def __repr__(self):
+        return (json.dumps(self.as_dict(), default=str))

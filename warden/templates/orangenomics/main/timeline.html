@@ -1,0 +1,153 @@
+<div class="row">
+  <div class="col timeline-border">
+    <h4 class="text-yellow">Original Portfolio</h4>
+
+    <p class="text-white text-light">
+      Through the past {%if data.METADATA.total_return.diff.years > 0%}
+      <span class="text-strong">
+        {{data.METADATA.total_return.diff.years}} years </span
+      >and&nbsp; {%endif%} {%if data.METADATA.total_return.diff.months > 0%}
+      <span class="text-strong">
+        {{data.METADATA.total_return.diff.months}} months
+      </span>
+      {%endif%} of data, this portfolio had a total return of
+      <span class="text-strong">
+        {{(data.METADATA.total_return.original_return * 100) | jformat(2)}}% </span
+      >. This is equivalent of
+      <span class="text-strong">
+        {{(data.METADATA.total_return.annualized_return * 100) | jformat(2)}}%
+      </span>
+      per year. During this period, it had a historical volatility of
+      <span class="text-strong">
+        {{(data.METADATA.total_return.original_vol * 100) | jformat(2)}}%
+      </span>
+      p.a. Resulting in a sharpe-ratio of
+      <span class="text-strong">
+        {{(data.METADATA.total_return.original_sharpe ) | jformat(2)}}</span
+      >.
+    </p>
+    <table class="table-condensed text-end">
+      <tbody>
+        <tr>
+          <td class="border-bottom">
+            <h6 class="text-strong numbers">
+              {%if data.METADATA.total_return.annualized_return > 0 %}
+              +{{(data.METADATA.total_return.annualized_return * 100) |
+              jformat(2)}}% {%else%}
+              {{(data.METADATA.total_return.annualized_return * 100) |
+              jformat(2)}}% {%endif%}
+            </h6>
+          </td>
+          <td></td>
+          <td class="border-bottom text-right">
+            <h6 class="text-strong numbers">
+              {{(data.METADATA.total_return.original_vol * 100) | jformat(2)}}%
+            </h6>
+          </td>
+          <td></td>
+          <td class="border-bottom text-right">
+            <h6 class="text-strong numbers">
+              {{(data.METADATA.total_return.original_sharpe ) | jformat(2)}}
+            </h6>
+          </td>
+        </tr>
+        <tr class="align-top text-light">
+          <td class="small text-yellow">Return (annualized)</td>
+          <td></td>
+          <td class="small text-right text-yellow">Volatility (annualized)</td>
+          <td></td>
+          <td class="small text-right text-yellow">
+            Sharpe Ratio<br /><span class="text-muted"
+              >"risk free" rate: {{(data.METADATA.risk_free_rate * 100) |
+              jformat(2)}}%</span
+            >
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div id="pie_chart" style="width: 100%; height: 300px"></div>
+  </div>
+
+  <div class="col">
+    <h4 class="text-yellow">
+      Portfolio with
+      <i class="fa-brands fa-lg fa-bitcoin text-orange"></i>
+    </h4>
+
+    <p class="text-white text-light">
+      We ran a few simulations and included bitcoin allocations of
+      <span class="text-strong">
+        {%for alloc in data.METADATA.allocations%} {%if alloc != 0 %} {{(alloc *
+        100) | jformat(2)}}% {% if alloc == data.METADATA.allocations[-2] %} and
+        {%else%} {%if alloc != data.METADATA.allocations[-1] %} , {%endif%}
+        {%endif%} {% if alloc == data.METADATA.allocations[-1] %}
+      </span>
+      to the original portfolio. {%endif%} {%endif%} {%endfor%}
+      <br />
+      The assumption was that the simulations were {%if data.METADATA.rebalance
+      == '"never"'%}
+      <span class="text-strong">never rebalanced</span> (i.e. the allocation was
+      set at inception and never changed). {%else%} rebalanced
+      <span class="text-strong">{{data.METADATA.rebalance.strip('"')}}</span>.
+      {%endif%}
+    </p>
+    <hr />
+    <p class="text-white text-light">
+      {%if data.METADATA.total_return.max_return[0] != 0%} A
+      <span class="text-strong"
+        >{{(data.METADATA.total_return.max_return[0] * 100) |
+        jformat(2)}}%</span
+      >
+      bitcoin allocation resulted in the best return for the period at
+      <span class="text-strong"
+        >{{(data.METADATA.total_return.max_return[1] * 100)| jformat(2)}}%</span
+      >
+      compared to the original portfolio at
+      <span class="text-warning"
+        >{{(data.METADATA.total_return.original_return * 100) |
+        jformat(2)}}%</span
+      >.
+      <span class="text-success">
+        A bitcoin allocation enhanced this portfolio's returns</span
+      >. {%else%}
+      <span class="text-warning">None of the simulations</span> could improve
+      the original portfolio's return for this period of
+      <span class="text-strong"
+        >{{(data.METADATA.total_return.original_return * 100) |
+        jformat(2)}}%</span
+      >. {%endif%}
+    </p>
+    <hr />
+    <p class="text-white text-light">
+      {%if data.METADATA.total_return.max_sharpe[0] != 0%} A
+      <span class="text-strong"
+        >{{(data.METADATA.total_return.max_sharpe[0] * 100) | jformat(2)}}%
+        bitcoin allocation</span
+      >
+      resulted in the best risk adjusted return with a sharpe ratio of
+      <span class="text-strong"
+        >{{data.METADATA.total_return.max_sharpe[1] | jformat(2)}}</span
+      >. This is
+      <span class="text-success"
+        >{{(data.METADATA.total_return.max_sharpe[1] /
+        data.METADATA.total_return.original_sharpe) | jformat(2)}}x better</span
+      >
+      than the original portfolio.
+      <span class="text-success">
+        A bitcoin allocation resulted in more 'return' for each unit of risk
+        taken during this period</span
+      >. {%else%}
+      <span class="text-warning">None of the simulations</span> could improve
+      the original portfolio's sharpe ratio of
+      <span class="text-strong"
+        >{{(data.METADATA.total_return.original_sharpe) | jformat(2)}}</span
+      >. {%endif%}
+    </p>
+    <hr />
+    <p class="text-small text-end text-light">
+      <span class="text-yellow">
+        click through the tabs for more in-depth statistics</span
+      >&nbsp;&nbsp;<i class="fa-solid fa-arrow-up-short-wide fa-lg"></i>
+    </p>
+  </div>
+</div>

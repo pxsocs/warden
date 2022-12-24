@@ -1,0 +1,53 @@
+<div class="row">
+  <div class="text-start text-light">Ranking of Annual Returns
+  <span class="float-end"
+    >from {{data.METADATA.min_date.strftime("%B, %Y")}} to
+    {{data.METADATA.max_date.strftime("%B, %Y")}}</div>
+
+  <div class="col-12 text-center">
+    <div class="chart-section text-60-small">
+      <!-- Create return table -->
+      <table class="table-server text-light">
+        <thead>
+        <tr>
+          {%for item in data.TABLES.ranked_returns%}
+          <th><strong class="text-orange">{{item["start_date"].year}}</strong>
+            <br><span class="text-muted">
+              {{item["start_date"].strftime("%b")}} to {{item["end_date"].strftime("%b")}}
+              </th>
+            </span>
+
+          </th>
+          {%endfor%}
+        </tr>
+        </thead>
+        <tbody>
+        {%for i in range(0, data.METADATA.ticker_list|length)%}
+          <tr>
+          {%for item in data.TABLES.ranked_returns%}
+            <td>
+              {%if item.ranking[i][1] == 'BTC'%}
+              {%set color = 'orange'%}
+              {%else%}
+              {%set color = 'lightgrey'%}
+              {%endif%}
+              <div class='redgreen' style="border: 2px solid;
+                        opacity:0.8;
+                        border-radius: 2px;
+                        background:{{data.TABLES.color_map[item.ranking[i][1]]}};
+                        height: 40px;
+                        border-color: {{data.TABLES.color_map[item.ranking[i][1]]}}">
+              <span style="font-weight: bold;" class="strokeme">
+              {{(item.ranking[i][0] * 100 )|jformat(2)}}%<br>
+              {{item.ranking[i][1]}}
+              </span>
+              </div>
+            </td>
+          {%endfor%}
+          </tr>
+        {%endfor%}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -354,11 +354,7 @@ def specter_auth():
 @warden.route("/donate", methods=['GET'])
 @login_required
 def donate():
-    counter_file = os.path.join(home_dir, 'counter.json')
-    templateData = {
-        "title": "Support this Software",
-        "current_app": current_app
-    }
+    templateData = {"title": "Support Bitcoin", "current_app": current_app}
     return (render_template('warden/warden_thanks.html', **templateData))
 
 

@@ -129,9 +129,14 @@ def init_app(app):
     # Import models so tables are created
     # It's important to import all models here even if not used.
     # Importing forces the creation of tables.
-    from models.models import Trades, User, AccountInfo, TickerInfo, SpecterInfo
+    from models.models import (Trades, User, AccountInfo, TickerInfo,
+                               SpecterInfo, Allocation, RequestData)
+
     # Create all tables
-    app.db.create_all()
+    try:
+        app.db.create_all()
+    except Exception:
+        pass
 
     # Create empty instance of messagehandler
     # --------------------------------------------
@@ -184,6 +189,16 @@ def init_app(app):
     app.register_blueprint(api)
     app.register_blueprint(csv_routes)
     app.register_blueprint(user_routes)
+    from routes.jinja_filters import jinja_filters
+    app.register_blueprint(jinja_filters)
+    # Orangenomics Blueprint
+    from routes.orangenomics.main import orangenomics
+    app.register_blueprint(orangenomics)
+    # HODL Analysis Blueprint
+    from routes.HODL_analysis.HODL_analysis import hodl_analysis
+    app.register_blueprint(hodl_analysis)
+
+    # Create Flask App
 
     # Get FX information into application configuration
     default_fx = app.settings['PORTFOLIO']['base_fx']

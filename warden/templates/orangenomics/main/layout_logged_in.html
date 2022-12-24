@@ -1,0 +1,223 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{url_for('static', filename='orangenomics/css/bootstrap.css')}}">
+<!-- LOCAL theme CSS -->
+<link rel="stylesheet" href="{{url_for('static', filename='orangenomics/css/local.css')}}">
+<!-- Utilities - APP -->
+<script src="{{url_for('static', filename='orangenomics/js/utils.js')}}"></script>
+<!-- HighCharts -->
+<!--  High Charts -->
+<script src="https://code.highcharts.com/stock/highstock.js"></script>
+<script src="https://code.highcharts.com/modules/boost.js"></script>
+<script src="https://code.highcharts.com/modules/heatmap.js"></script>
+<!-- <script src="https://code.highcharts.com/highcharts.js"></script> -->
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<!-- HighCharts JS for page -->
+<script src="{{url_for('warden.static', filename='js/highcharts.js')}}"></script>
+<div class="bg-steel top-bar">
+    <div class="row align-contents">
+        <!-- Bootstrap NavBar -->
+        <div class="col-6"></div>
+        <div class="col-6 text-end text-light align-contents">
+            {%if current_user.is_authenticated%}
+            <div class="text-end">
+                <button
+                    type="button"
+                    id="load_modal_button"
+                    class="btn btn-outline-light btm-sm text-60-small"
+                    data-bs-toggle="modal"
+                    data-bs-target="#loadModal"
+                >
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                    &nbsp;&nbsp;load portfolio
+                </button>
+                <button
+                    type="button"
+                    id="save_modal_button"
+                    class="btn btn-outline-light btm-sm text-60-small"
+                    data-bs-toggle="modal"
+                    data-bs-target="#saveModal"
+                >
+                    <i class="fa-solid fa-save"></i>
+                    &nbsp;&nbsp;save portfolio
+                </button>
+            </div>
+            {%else%}
+            <div class="text-end">
+                <button
+                    type="button"
+                    id="load_modal_button"
+                    class="btn btn-outline-light btm-sm text-60-small"
+                    data-bs-toggle="modal"
+                    data-bs-target="#loadModal"
+                >
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                    &nbsp;&nbsp;template portfolios
+                </button>
+                <a class="btn btn-outline-light btm-sm text-60-small" href="/login">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    &nbsp;&nbsp;login
+              to save porfolio
+                </a
+            >
+            </div>
+            {%endif%}
+        </div>
+    </div>
+</div>
+<!-- NavBar END -->
+<div class="page-outline">
+    <div class="row">
+        <!-- Sidebar -->
+        <!-- sidebar-container END -->
+        <!-- MAIN -->
+        <div class="col">
+            <div class="row" id="message_alert_area" hide>
+                {% with messages = get_flashed_messages(with_categories=true) %} {%
+            if messages %} {% for category, message in messages %}
+                <div class="col">
+                    <div id="messagealert" class="alert alert-{{ category }}">
+                        {{message}}
+                    </div>
+                </div>
+                {% endfor %} {% endif %} {% endwith %}
+            </div>
+            <div class="row">
+                <div class="col">{% block orange_content %} {% endblock %}</div>
+            </div>
+        </div>
+        <!-- Main Col END -->
+    </div>
+    <!-- body-row END -->
+    <!-- partial -->
+</div>
+<!-- Footer -->
+{%block modals%} {%endblock%}
+<!-- Save Modal -->
+<div
+    class="modal fade"
+    id="saveModal"
+    tabindex="-1"
+    role="dialog"
+>
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Save Portfolio</h5>
+                <button
+                    type="button"
+                    class="close"
+                    data-bs-dismiss="modal"
+                    id="save_modal_close"
+                >
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Portfolio Name
+                <input
+                    id="portfolio_name"
+                    type="text"
+                    class="input-group input-group-sm name_input"
+                    placeholder="Name this portfolio"
+                >
+                <br>
+                Visibility
+                <select class="input-group input-group-sm name_input custom-select" id="portfolio_visibility">
+                    <option value="private" selected>Private&nbsp;&nbsp;🔒</option>
+                    <option value="public">Public&nbsp;&nbsp; 📢</option>
+                </select>
+                <small class="text-light">
+                    Public portfolios can be viewed by anyone.
+                    <br>
+                    Only information
+            shared is the portfolio allocation and name.
+                </small>
+                <hr>
+                <div class="row">
+                    <div class="col">
+                        <div id="port_table"></div>
+                        <div id="port_message"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="button_save_portfolio" type="button" class="btn btn-outline-success">
+                    Save Portfolio
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Load Modal -->
+<div
+    class="modal fade"
+    id="loadModal"
+    tabindex="-1"
+    role="dialog"
+>
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Load Portfolio</h5>
+                <button
+                    type="button"
+                    class="close"
+                    data-bs-dismiss="modal"
+                    id="load_modal_close"
+                >
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input
+                    id="portfolio_filter"
+                    type="text"
+                    class="input-group input-group-sm name_input"
+                    placeholder="Filter by name"
+                >
+                <br>
+                Choose a Portfolio
+                <select class="custom-select custom-select-sm input-group input-group-sm name_input" size="10" id="loader_select">
+                </select
+          >
+                <br>
+                <div class="d-grid gap-2">
+                    <button id="button_load_portfolio" type="button" class="btn btn-success">
+                        Load Portfolio
+                    </button>
+                </div>
+                <br>
+                <span class="text-small">
+                    Portfolio Details
+                    <div id="portfolio_details">
+                        <span class="text-muted">
+                            Select a portfolio from the list to display details
+                        </span
+              >
+                    </div>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Please Wait Modal -->
+<div
+    class="modal modal-extra-blur fade"
+    id="loading_modal"
+    tabindex="-1"
+    role="dialog"
+>
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <h4 class="text-light">
+                    <span id="load_message">Loading. Please Wait.</span>
+                    <div class="spinner-border text-yellow float-end" role="status"></div>
+                </h4>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

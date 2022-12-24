@@ -1,9 +1,12 @@
 import os
 import json
 import pickle
+import time
 from datetime import datetime
 
 import backend.mhp as mrh
+import pandas as pd
+import numpy as np
 
 
 # Function to load and save data into pickles
@@ -229,3 +232,61 @@ def file_created_today(filename):
             return False
     except Exception:
         return False
+
+
+def df_col_to_highcharts(df, cols):
+    """
+    receives columns in format ['col1'] or ['col1', 'col2',...]
+    returns a dictionary that can later be used in highcharts
+    names is a list of names for the columns
+    colors is a list of colors for the columns
+    """
+    # copy only these columns
+    data = df[cols].copy()
+    # dates need to be in Epoch time for Highcharts
+    data.index = (data.index - datetime(1970, 1, 1)).total_seconds()
+    data.index = data.index * 1000
+    data.index = data.index.astype(np.int64)
+    # Make sure it is a dataframe
+    if isinstance(data, pd.Series):
+        data = data.to_frame()
+    data = data.to_records(index=True).tolist()
+    data = [list(elem) for elem in data]
+    return data
+
+
+def get_image(domain):
+    """
+    Returns the image for a given ticker
+    """
+    return "https://www.google.com/s2/favicons?domain=" + domain
+
+
+def safe_filename(s):
+    return ("".join([
+        c for c in s if c.isalpha() or c.isdigit() or c == '_' or c == '-'
+    ]).rstrip())
+
+
+def join_all(threads, timeout):
+    """
+    Args:
+        threads: a list of thread objects to join
+        timeout: the maximum time to wait for the threads to finish
+    Raises:
+        RuntimeError: is not all the threads have finished by the timeout
+    """
+    start = cur_time = time.time()
+    while cur_time <= (start + timeout):
+        for thread in threads:
+            if thread.is_alive():
+                thread.join(timeout=0)
+        if all(not t.is_alive() for t in threads):
+            break
+        time.sleep(0.1)
+        cur_time = time.time()
+    else:
+        still_running = [t for t in threads if t.is_alive()]
+        num = len(still_running)
+        names = [t.name for t in still_running]
+        raise RuntimeError('Timeout on {0} threads: {1}'.format(num, names))

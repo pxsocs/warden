@@ -3,6 +3,7 @@ import configparser
 import logging
 import secrets
 from pathlib import Path
+from backend.utils import pickle_it
 
 home = Path.home()
 # make directory to store all private data at /home/.warden
@@ -11,7 +12,15 @@ home_dir = os.path.join(home, '.warden/')
 
 import __main__
 
-basedir = os.path.abspath(os.path.dirname(__main__.__file__))
+try:
+    basedir = os.path.abspath(os.path.dirname(__main__.__file__))
+    # store base dir if no error
+    pickle_it('save', 'homedir.pkl', basedir)
+except Exception:
+    # in case of an error load latest.
+    # this can happen during threads where __main__.__file__ is not available
+    basedir = pickle_it('load', 'homedir.pkl')
+
 # Check if the home directory exists, if not create it
 try:
     os.mkdir(home_dir)
@@ -38,8 +47,6 @@ def create_config():
 
 # Config class for Application Factory
 class Config:
-    import __main__
-    basedir = os.path.abspath(os.path.dirname(__main__.__file__))
 
     # Check if secret key exists, if not create it
     from backend.utils import pickle_it
