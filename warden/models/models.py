@@ -1,14 +1,39 @@
 import json
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from flask import current_app
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user, login_required
+from sqlalchemy import func
+from backend.utils import pickle_it
 
 db = current_app.db
+
+# Loaders -------------
 
 
 @current_app.login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    user = User.query.get(int(user_id))
+    # Update the application status object
+    current_app.warden_status['username'] = user.username
+    return user
+
+
+def load_Node(name=None, url=None):
+    if name is None and url is None:
+        query = Nodes.query.all()
+        node_list = []
+        for element in query:
+            node_list.append(element)
+        return node_list
+    if name is not None:
+        query = Nodes.query.filter_by(name=name).first()
+        return query
+    if url is not None:
+        query = Nodes.query.filter_by(url=url).first()
+        return query
+
+
+# ---------------- End loaders ----------------
 
 
 class User(db.Model, UserMixin):
@@ -155,3 +180,48 @@ class RequestData(db.Model):
 
     def __repr__(self):
         return (json.dumps(self.as_dict(), default=str))
+
+
+#  Node Models -------------
+
+
+class Nodes(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    name = db.Column(db.String(250), nullable=False)
+    # Make sure to parse url before including / editing
+    url = db.Column(db.String(250), nullable=False, unique=True)
+    is_reachable = db.Column(db.Boolean, default=False)
+    is_public = db.Column(db.Boolean, default=None)
+    last_check = db.Column(db.DateTime, default=date.min)
+    is_localhost = db.Column(db.Boolean, default=None)
+    node_tip_height = db.Column(db.Integer, default=0)
+    mps_api_reachable = db.Column(db.Boolean, default=False)
+    ping_time = db.Column(db.PickleType(), default=0)
+    last_online = db.Column(db.DateTime, default=date.min)
+    blockchain_tip_height = pickle_it('load', 'max_blockchain_tip_height.pkl')
+
+    def is_onion(self):
+        return (True if 'onion' in self.url else False)
+
+    def is_at_tip(self):
+        # Reload the blockchain tip height from file
+        self.blockchain_tip_height = pickle_it(
+            'load', 'max_blockchain_tip_height.pkl')
+        is_at_tip = False if self.node_tip_height != self.blockchain_tip_height else True
+        return is_at_tip
+
+    def as_dict(self):
+        dict_return = {
+            c.name: getattr(self, c.name)
+            for c in self.__table__.columns
+        }
+        # Add methods to return dict
+        dict_return['is_onion'] = self.is_onion()
+        dict_return['is_at_tip'] = self.is_at_tip()
+        return (dict_return)
+
+    def __repr__(self):
+        return (json.dumps(self.as_dict(), default=str))
+
+        # return f'{self.id}, {self.name}, {self.url}'

@@ -17,6 +17,7 @@ from flask_sqlalchemy import SQLAlchemy
 from pathlib import Path
 from connections.connections import internet_connected
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.events import EVENT_JOB_ERROR
 from backend.ansi_management import (warning, success, error, info,
                                      clear_screen, muted, yellow, blue)
 
@@ -91,37 +92,46 @@ def create_tor():
             return ('error')
 
 
-# ------------------------------------
-# FLASK Application Factory
-# ------------------------------------
-def init_app(app):
-    from backend.config import Config
-
-    # Create an empty dict to store warden metadata
+def create_loginmanager(app):
+    # Create instance of FLASK LOGIN Manager
     # --------------------------------------------
-    app.warden_status = {}
+    # Database initiation
+    table_error = False
+    try:
+        # create empty instance of LoginManager
+        app.login_manager = LoginManager()
+    except sqlite3.OperationalError:
+        table_error = True
+    #  There was an initial error on getting users
+    #  probably because tables were not created yet.
+    # The above create_all should have solved it so try again.
+    if table_error:
+        # create empty instance of LoginManager
+        app.login_manager = LoginManager()
+    # If login required - go to login:
+    app.login_manager.login_view = "warden.login"
+    # To display messages - info class (Bootstrap)
+    app.login_manager.login_message_category = "secondary"
+    app.login_manager.init_app(app)
+    app.warden_status['loginmanager_initiated'] = True
+    return (app)
 
+
+def create_config(app):
     # Load config.ini into app
     # --------------------------------------------
     # Read Global Variables from warden.config(s)
     # Can be accessed as a dictionary like:
     # app.settings['PORTFOLIO']['RENEW_NAV']
+    from backend.config import Config
     config_file = Config.config_file
     config_settings = configparser.ConfigParser()
     config_settings.read(config_file)
     app.settings = config_settings
+    return (app)
 
-    # Create instance of FLASK LOGIN Manager
-    # --------------------------------------------
-    app.login_manager = LoginManager()
-    # Define the login page
-    app.login_manager.login_view = "warden.login"
-    # To display messages - info class (Bootstrap)
-    app.login_manager.login_message_category = "secondary"
-    # Sets strong session protection to avoid sessions being stolen
-    app.login_manager.session_protection = "strong"
-    app.login_manager.init_app(app)
 
+def create_db(app):
     # Create instance of SQLAlchemy database
     # --------------------------------------------
     app.db = SQLAlchemy()
@@ -137,12 +147,39 @@ def init_app(app):
         app.db.create_all()
     except Exception:
         pass
+    app.warden_status['db_initiated'] = True
+    return (app)
+
+
+# ------------------------------------
+# FLASK Application Factory
+# ------------------------------------
+def init_app(app):
+    # Create an empty dict to store warden metadata
+    # --------------------------------------------
+    app.warden_status = {'username': None}
+
+    # Load config.ini into app
+    # --------------------------------------------
+    app = create_config(app)
+    app.app_context().push()
+
+    # Create instance of FLASK LOGIN Manager
+    # --------------------------------------------
+    app = create_loginmanager(app)
+    app.app_context().push()
+
+    # Create instance of SQLAlchemy database
+    # --------------------------------------------
+    app = create_db(app)
+    app.app_context().push()
 
     # Create empty instance of messagehandler
     # --------------------------------------------
     from connections.message_handler import MessageHandler
     app.message_handler = MessageHandler()
     app.message_handler.clean_all()
+    app.app_context().push()
 
     # Checks if Cryptocompare is available and has valid API key
     # --------------------------------------------
@@ -153,6 +190,7 @@ def init_app(app):
     # Check if there are any users on database.
     # If not, needs initial setup
     # --------------------------------------------
+    from models.models import User
     users = User.query.all()
     if users == []:
         print("[i] No users found. Running initial setup.")
@@ -161,6 +199,7 @@ def init_app(app):
     # Get WARden App Version - check for upgrade
     # --------------------------------------------
     app = check_version(app)
+    app.app_context().push()
 
     # Check if the provided port at config.ini is available
     # If not, switch to an available port
@@ -168,6 +207,7 @@ def init_app(app):
     from connections.connections import find_usable_port
     port = app.settings['SERVER'].getint('port')
     app = find_usable_port(port, app)
+    app.app_context().push()
 
     # TOR Server through Onion Address --
     # USE WITH CAUTION - ONION ADDRESSES CAN BE EXPOSED!
@@ -179,6 +219,116 @@ def init_app(app):
 
     # Prepare Flask Blueprints & Register
     # --------------------------------------------
+    app = register_blueprints(app)
+    app.app_context().push()
+
+    # Create Flask App
+    # Get FX information into application configuration
+    default_fx = app.settings['PORTFOLIO']['base_fx']
+    from backend.utils import fxsymbol
+    app.fx = app.fx = fxsymbol(default_fx, 'all')
+    app.app_context().push()
+
+    # Specter Server Setup
+    # Prepare app to receive Specter Server info
+    # For the first load, just get a saved file if available
+    # The background jobs will update later
+    # --------------------------------------------
+    from specter.specter_importer import Specter
+    app.specter = Specter()
+    app.specter.refresh_txs(load=True)
+    # Sets downloading status to false
+    app.warden_status['downloading_specter_txs'] = False
+    app.app_context().push()
+
+    # Test Tor and store status
+    # --------------------------------------------
+    app.tor = create_tor()
+    app.app_context().push()
+
+    # Launch Background Jobs
+    # --------------------------------------------
+    app = create_background_jobs(app)
+    app.app_context().push()
+    app.scheduler.start()
+    app.warden_status['scheduler_initiated'] = True
+    print("")
+    print(success("✅ Background jobs running"))
+
+    # Finished Application Factory Method - return application
+    # --------------------------------------------
+    print("")
+    print(success("✅ Application Factory successfully assembled app"))
+    return app
+
+
+def create_background_jobs(app):
+    # Start Schedulers and Background Jobs
+    # --------------------------------------------
+    from backend.backgroundjobs import (background_settings_update,
+                                        background_scan_network)
+    from backend.backgroundjobs_node import (update_nodes, get_nodes_status,
+                                             check_tip_heights)
+    from connections.mempoolspace import node_searcher
+
+    app.scheduler = BackgroundScheduler()
+
+    app.scheduler.add_job(background_settings_update,
+                          'interval',
+                          args=[app],
+                          seconds=1,
+                          max_instances=1)
+
+    app.scheduler.add_job(background_scan_network,
+                          'interval',
+                          args=[app],
+                          seconds=1,
+                          max_instances=1)
+
+    app.scheduler.add_job(check_tip_heights,
+                          'interval',
+                          args=[app],
+                          seconds=5,
+                          max_instances=1)
+
+    app.scheduler.add_job(update_nodes,
+                          'interval',
+                          args=[app],
+                          seconds=5,
+                          max_instances=1)
+
+    app.scheduler.add_job(get_nodes_status,
+                          'interval',
+                          args=[app],
+                          seconds=5,
+                          max_instances=1)
+
+    app.scheduler.add_job(node_searcher,
+                          'interval',
+                          args=[True],
+                          seconds=120,
+                          max_instances=1)
+
+    # Add listener to catch errors on background jobs
+    def listener(event):
+        logging.info(
+            error(
+                f'Job {event.job_id} raised {event.exception.__class__.__name__}'
+            ))
+        logging.info(error(f'Job {event.job_id} raised {event.exception}'))
+        logging.info(error(f'Job {event.job_id} raised {event.traceback}'))
+
+    # Start listener
+    app.scheduler.add_listener(listener, EVENT_JOB_ERROR)
+
+    from connections.mempoolspace import get_max_height
+    with app.app_context():
+        get_max_height()
+
+    return (app)
+
+
+def register_blueprints(app):
     from routes.routes import warden
     from routes.errors.handlers import errors
     from routes.api.routes import api
@@ -197,50 +347,11 @@ def init_app(app):
     # HODL Analysis Blueprint
     from routes.HODL_analysis.HODL_analysis import hodl_analysis
     app.register_blueprint(hodl_analysis)
-
-    # Create Flask App
-
-    # Get FX information into application configuration
-    default_fx = app.settings['PORTFOLIO']['base_fx']
-    from backend.utils import fxsymbol
-    app.fx = app.fx = fxsymbol(default_fx, 'all')
-
-    # Specter Server Setup
-    # Prepare app to receive Specter Server info
-    # For the first load, just get a saved file if available
-    # The background jobs will update later
-    # --------------------------------------------
-    from specter.specter_importer import Specter
-    app.specter = Specter()
-    app.specter.refresh_txs(load=True)
-    # Sets downloading status to false
-    app.warden_status['downloading_specter_txs'] = False
-
-    # Test Tor and store status
-    # --------------------------------------------
-    app.tor = create_tor()
-
-    # Start Schedulers and Background Jobs
-    # --------------------------------------------
-    from backend.backgroundjobs import (background_settings_update,
-                                        background_specter_update,
-                                        background_scan_network,
-                                        background_specter_health,
-                                        background_mempool_seeker)
-
-    app.scheduler = BackgroundScheduler()
-    app.scheduler.add_job(background_specter_update, 'interval', seconds=1)
-    app.scheduler.add_job(background_settings_update, 'interval', seconds=1)
-    app.scheduler.add_job(background_scan_network, 'interval', seconds=1)
-    app.scheduler.add_job(background_specter_health, 'interval', seconds=1)
-    app.scheduler.add_job(background_mempool_seeker, 'interval', seconds=1)
-    app.scheduler.start()
-    print(success("✅ Background jobs running"))
-
-    # Finished Application Factory Method - return application
-    # --------------------------------------------
-    print("")
-    print(success("✅ Application Factory successfully assembled app"))
+    # Node Managements Blueprint
+    from routes.node_management.node_management import node_management
+    from routes.node_management.sockets import sockets
+    app.register_blueprint(node_management)
+    app.register_blueprint(sockets)
     return app
 
 
@@ -524,8 +635,7 @@ def main(debug, reloader):
     # Initializes the Flask Application
     # this creates instances of Flask methods and
     # attaches them to the application
-    with app.app_context():
-        app = init_app(app)
+    app = init_app(app)
     app.app_context().push()
 
     # Register the closing method to run at close

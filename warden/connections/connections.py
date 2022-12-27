@@ -108,6 +108,9 @@ def tor_request(url, tor_only=False, method="get", headers=None):
         except requests.exceptions.ConnectionError:
             return "ConnectionError"
 
+        except Exception:
+            return "ConnectionError"
+
     if TOR["status"] is True:
         try:
             # Activate TOR proxies
@@ -142,7 +145,7 @@ def tor_request(url, tor_only=False, method="get", headers=None):
             if method == "post":
                 request = requests.post(url, timeout=10)
 
-        except requests.exceptions.ConnectionError:
+        except Exception:
             return "ConnectionError"
 
     return request
@@ -154,7 +157,6 @@ def scan_network():
     # Need to include a check for added onion addresses. Particularly
     # for Specter Server included as an onion address. After that is verified
     # will need to save that specter server details in a file and later load it.
-
     # Add WARden to services
     onion = pickle_it('load', 'onion_address.pkl')
     local_ip = pickle_it('load', 'local_ip_address.pkl')
@@ -166,13 +168,6 @@ def scan_network():
     ]
 
     just_found = []
-    # Add any host not on list above but saved on hosts_found
-    # This ensures that added hosts will be searched
-    hosts_found = pickle_it('load', 'hosts_found.pkl')
-    for host, value in hosts_found.items():
-        if value['host'] not in host_list:
-            host_list.append(value['host'])
-            just_found.append(value['host'])
 
     def check_host(host):
         # try to Load history of nodes reached
@@ -227,16 +222,13 @@ def scan_network():
                  (3002, 'Bitcoin RPC Explorer'),
                  (3006, 'Mempool.space Explorer'),
                  (4080, 'Mempool.space Explorer'),
-                 (3008, 'BlueWallet Lightning'), (5000, 'WARden Server')]
+                 (3008, 'BlueWallet Lightning'), (5000, 'WARden Server'),
+                 (5001, 'WARden Server'), (8082, 'Pi-Hole'),
+                 (8091, 'VSCode Server'), (8085, 'Gitea'), (8081, 'Nextcloud'),
+                 (8083, "Home Assistant")]
 
     # Save the list above for later
     pickle_it('save', 'port_list.pkl', port_list)
-    # Additional Services (from Umbrel mostly - add this later)
-    # (8082, 'Pi-Hole'),
-    # (8091, 'VSCode Server'),
-    # (8085, 'Gitea'),
-    # (8081, 'Nextcloud'),
-    # (8083, "Home Assistant")
 
     check_list = []
     # Create the list of hosts to reach
@@ -349,6 +341,17 @@ def is_service_running(service, expiry=None):
                     continue
             return (True, val)
     return (False, None)
+
+
+def url_reachable(url):
+    request = tor_request(url)
+    try:
+        if request == 'ConnectionError':
+            return False
+        else:
+            return True
+    except Exception:
+        return True
 
 
 def url_parser(url):

@@ -84,6 +84,18 @@ function formatDate(date) {
     return month + '/' + day + '/' + year;
 }
 
+function formatDateTime(date) {
+    var hours = date.getHours();
+    var minutes = date.getMinutes();
+    var ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    var strTime = hours + ':' + minutes + ' ' + ampm;
+    return (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + "  " + strTime;
+}
+
+
 var getUrlParameter = function getUrlParameter(sParam) {
     var sPageURL = window.location.search.substring(1),
         sURLVariables = sPageURL.split('&'),
@@ -500,6 +512,30 @@ function copyTable(el) {
 }
 
 
+function pkl_grabber(pickle_file, interval_ms, target_element, status_element = undefined) {
+    const socket = new WebSocket("ws://" + location.host + "/pickle");
+    socket.addEventListener("message", (ev) => {
+        $(target_element).html(ev.data);
+    });
+
+    // Executes the function every 1000 milliseconds
+    const interval = setInterval(function () {
+        if (socket.readyState === WebSocket.CLOSED) {
+            if (status_element != undefined) {
+                $(status_element).html("<span style='color: red'>Disconnected</span>");
+            }
+            $(target_element).text("WebSocket Error -- Check if app is running");
+        } else {
+            socket.send(pickle_file);
+            if (status_element != undefined) {
+                $(status_element).html("<span style='color: darkgreen'>Connected</span>");
+            }
+        }
+    }, interval_ms);
+}
+
+
+
 function timeDifference(current, previous) {
 
     var msPerMinute = 60 * 1000;
@@ -536,5 +572,123 @@ function timeDifference(current, previous) {
 
     else {
         return 'approximately ' + Math.round(elapsed / msPerYear) + ' years ago';
+    }
+}
+
+
+function send_message(message, bg = 'info') {
+    if (message == 'clear') {
+        $(message_element).html("");
+        $(message_element).hide("medium");
+        return
+    }
+    var uniqid = Date.now();
+    message_element = '#message_alert_area';
+    new_html = `
+    <div class="col">
+        <div id='${uniqid}' class="alert alert-${bg} alert-dismissible" role="alert" data-alert="alert">
+            <strong>${message}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    `;
+    $(message_element).html(new_html);
+    $(message_element).show("medium");
+}
+
+
+function base_url() {
+    return location.protocol + "//" + location.host + "/";
+}
+
+
+function ajax_getter(url, dataType = 'json') {
+    // Note that this is NOT an asynchronous request.
+    return_data = "Empty Data";
+    $.ajax({
+        type: "GET",
+        dataType: 'json',
+        url: url,
+        async: false,
+        success: function (data) {
+            return_data = data
+        },
+        error: function (xhr, status, error) {
+            return_data = ("Error on request. status: " + status + " error:" + error);
+        }
+    });
+    return return_data;
+}
+
+// Sort a list of objects by a certain key
+function sortObj(list, key, reverse = false) {
+    try {
+        function compare(a, b) {
+            a = a[key];
+            b = b[key];
+            var type = (typeof (a) === 'string' ||
+                typeof (b) === 'string') ? 'string' : 'number';
+            var result;
+            if (type === 'string') result = a.localeCompare(b);
+            else result = a - b;
+            return result;
+        }
+        if (reverse == true) {
+            return list.sort(compare).reverse();
+        } else {
+            return list.sort(compare);
+        }
+
+    } catch (e) {
+        console.log("Error sorting list: " + e);
+        return list;
+
+    }
+}
+
+// source: https://stackoverflow.com/questions/64254355/cut-string-into-chunks-without-breaking-words-based-on-max-length
+function splitString(n, str) {
+    let arr = str?.split(' ');
+    let result = []
+    let subStr = arr[0]
+    for (let i = 1; i < arr.length; i++) {
+        let word = arr[i]
+        if (subStr.length + word.length + 1 <= n) {
+            subStr = subStr + ' ' + word
+        }
+        else {
+            result.push(subStr);
+            subStr = word
+        }
+    }
+    if (subStr.length) { result.push(subStr) }
+    return result
+}
+
+
+function initialize_tooltips() {
+    $(".tooltip").tooltip("hide");
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+}
+
+// Shorten strings
+String.prototype.trimEllip = function (length) {
+    beg_end = (length / 2);
+    tail_str = this.substr(this.length - beg_end);
+    return this.length > length ? this.substring(0, beg_end) + "..." + tail_str : this;
+}
+
+
+function sats_btc(sats) {
+    sats = parseInt(sats);
+    if (sats <= 100000000) {
+        return formatNumber(sats, 0, '', ' sats')
+    } else {
+        sats = parseFloat(sats) / 100000000;
+        return formatNumber(sats, 8, '₿ ')
     }
 }

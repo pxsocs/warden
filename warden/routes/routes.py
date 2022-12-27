@@ -105,8 +105,10 @@ def register():
 def login():
 
     if current_user.is_authenticated:
+        flash(f"Logged in as {current_user.username}.", "success")
         return redirect(url_for("warden.warden_page"))
 
+    # LOGIN USER
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()

@@ -1,0 +1,404 @@
+@import url("https://fonts.googleapis.com/css?family=Orbitron");
+@import url("https://fonts.googleapis.com/css?family=Allerta");
+@import url("https://fonts.googleapis.com/css?family=Lato:300,300italic");
+@import url("https://fonts.googleapis.com/css?family=Roboto+Mono:100");
+
+
+
+
+body {
+  color: #c1c6cb;
+  background-color: #15202e;
+  padding-bottom: 80px;
+}
+
+html{
+  font-size: 85%;
+}
+
+.bg-steel {
+  background-color: #252525;
+}
+
+.bg-lightyellow {
+  background-color: #ffedc4;
+}
+
+.table-server {
+  color: #c1c6cb;
+  overflow-x: scroll;
+}
+
+.datainfo:hover {
+   cursor: pointer!important;
+}
+
+.content-section {
+    box-sizing: content-box;
+    padding: 10px 10px;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, .1);
+}
+
+.info-section {
+    box-sizing: content-box;
+    padding: 5px 5px;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.414);
+}
+
+.table-condensed {
+  width: 100%;
+  font-size: 16px;
+  border: none;
+  text-align: left;
+  border-spacing: 6px;
+  border-collapse: collapse;
+}
+
+.small-text {
+  font-size: 75%;
+  font-weight: lighter;
+}
+
+td.red_negpos {
+  color: red;
+}
+
+td.green_negpos {
+  color: green;
+}
+
+pre {
+  font-family: monospace;
+}
+
+.codetext {
+    color: darkgreen;
+    font-family: monospace;
+    font-size: 80%;
+    background-color: LightGray;
+}
+
+.table-white {
+  background: #ffffff;
+  color: #333333;
+}
+
+.white-text {
+  color: #ffffff;
+}
+
+.emptycell {
+  background-color: #e6e6e6;
+}
+
+.chart {
+  min-width: 320px;
+  max-width: 800px;
+  height: 220px;
+  margin: 0 auto;
+}
+
+/* CSS for Animated Loading info */
+#wrapper {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 80em;
+}
+
+.loadanim {
+  animation: text-shadow 1s ease-in-out infinite;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+a {
+  color: #024794;
+}
+
+@keyframes text-shadow {
+  0% {
+    transform: translateY(0);
+    text-shadow: 0 0 0 #0c2ffb, 0 0 0 #2cfcfd, 0 0 0 #fb203b, 0 0 0 #fefc4b;
+  }
+
+  20% {
+    transform: translateY(-1em);
+    text-shadow: 0 0.125em 0 #0c2ffb, 0 0.25em 0 #2cfcfd, 0 -0.125em 0 #fb203b,
+      0 -0.25em 0 #fefc4b;
+  }
+
+  40% {
+    transform: translateY(0.5em);
+    text-shadow: 0 -0.0625em 0 #0c2ffb, 0 -0.125em 0 #2cfcfd,
+      0 0.0625em 0 #fb203b, 0 0.125em 0 #fefc4b;
+  }
+
+  60% {
+    transform: translateY(-0.25em);
+    text-shadow: 0 0.03125em 0 #0c2ffb, 0 0.0625em 0 #2cfcfd,
+      0 -0.03125em 0 #fb203b, 0 -0.0625em 0 #fefc4b;
+  }
+
+  80% {
+    transform: translateY(0);
+    text-shadow: 0 0 0 #0c2ffb, 0 0 0 #2cfcfd, 0 0 0 #fb203b, 0 0 0 #fefc4b;
+  }
+}
+
+.noclose .ui-dialog-titlebar-close {
+  display: none;
+}
+
+.shaker {
+  position: relative;
+  animation-name: shake;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in;
+  cursor: pointer;
+}
+
+.shaker:hover {
+  animation-name: shakeAnim;
+}
+
+@keyframes shakeAnim {
+  0% {
+    left: 0;
+  }
+
+  1% {
+    left: -3px;
+  }
+
+  2% {
+    left: 5px;
+  }
+
+  3% {
+    left: -8px;
+  }
+
+  4% {
+    left: 8px;
+  }
+
+  5% {
+    left: -5px;
+  }
+
+  6% {
+    left: 3px;
+  }
+
+  7% {
+    left: 0;
+  }
+}
+
+@keyframes shake {
+  0% {
+    left: 0;
+  }
+
+  1% {
+    left: -3px;
+  }
+
+  2% {
+    left: 5px;
+  }
+
+  3% {
+    left: -8px;
+  }
+
+  4% {
+    left: 8px;
+  }
+
+  5% {
+    left: -5px;
+  }
+
+  6% {
+    left: 3px;
+  }
+
+  7% {
+    left: 0;
+  }
+}
+
+
+.numberCircle {
+  border-radius: 20% !important;
+  width: 12px !important;
+  height: 12px !important;
+  padding: 2px !important;
+  background: #da5526;
+  border: 2px solid #da552;
+  color: white;
+  text-align: center;
+  font: 10px Arial, sans-serif;
+  font-weight: bold;
+}
+
+.stripedBackground {
+  color: white;
+  background: repeating-linear-gradient(-55deg,
+      rgb(254, 254, 254),
+      rgb(254, 254, 254) 10px,
+      rgb(248, 248, 248) 10px,
+      rgb(248, 248, 248) 20px);
+}
+
+.offlineBackground {
+  color: #ffcfcf;
+  background: rgb(187 0 0 / 29%);
+}
+
+
+json_area {
+  width: 100%;
+  min-height: 30rem;
+  font-family: "Lucida Console", Monaco, monospace;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+
+hr {
+    height: 1px;
+    border: 0;
+    border-top: 1px solid #ccc;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+/* Server CSS */
+.dashboard-header {
+        padding-top: 10px;
+        padding-bottom: 10px;
+        font-family: 'Lato', sans-serif;
+        text-transform: uppercase;
+    }
+
+.text-success {
+  color: rgb(212, 255, 177) !important;
+}
+
+.btn-info {
+  background-color: #da5526!important;
+  color: white!important;
+  border-color: #da5526!important;
+}
+
+.bg-success {
+  background-color: rgb(212, 255, 177) !important;
+  color: black!important;
+}
+
+.bg-info {
+  background-color: #da5526!important;
+  color: black!important;
+}
+
+.text-info {
+  color: #da5526!important;
+}
+
+.text-success {
+  color: rgb(212, 255, 177) !important;
+}
+
+.dashboard-numbers {
+        align-items: center;
+        font-weight: lighter;
+        font-size: 130%;
+        color: rgb(212, 255, 177);
+        width:100%;
+        }
+
+.clock {
+      align-items: center;
+        padding-top: -40px;
+        font-size: 65%;
+        font-weight: lighter;
+        color: rgb(255, 255, 255)
+        }
+
+
+.server {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 4px;
+    white-space: nowrap;
+    background-color: rgba(255, 255, 255, .1);}
+
+.server-icon {
+        display: inline-block;
+        font-size: 2.5rem;
+        margin: 0 2rem;
+}
+
+.server-details {
+        flex: 1;
+        display: block;
+        list-style: none;
+        margin: 0;
+        padding: 0;}
+
+/* END Server CSS */
+
+
+/* Quote Box */
+
+.quotebox {
+  font-family:'Roboto Mono',monospace;
+  font-size:85%;
+  color: white;
+  overflow-wrap: break-word;
+  text-align: justify;
+}
+
+.dud{
+  color:#757575;
+}
+
+.alert {
+  font-size: 80%;
+   height:70%;
+}
+
+
+
+.background-mover {
+  background: linear-gradient(90deg, #c1c6cb, #757575, rgba(255, 255, 255, .1));
+  background-size: 200% 200%;
+  animation: Animation 15s linear infinite;
+}
+
+@-webkit-keyframes Animation {
+  0%{
+    background-position-x: 200%
+  }
+  100%{
+    background-position-x: 0%
+  }
+}
+
+.text-bold {
+  font-weight: bold;
+}
+
+.blockquote-footer {
+  color: white;
+}

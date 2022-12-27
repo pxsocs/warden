@@ -10,7 +10,8 @@ from flask_login import login_required, current_user
 from random import randrange
 from pricing_engine.engine import fx_rate, realtime_price, get_ticker_info
 from backend.utils import heatmap_generator, pickle_it, safe_serialize
-from models.models import Trades, AccountInfo, TickerInfo
+from models.models import Trades, AccountInfo, TickerInfo, Nodes
+from sqlalchemy import func
 from datetime import datetime, timedelta
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
@@ -97,7 +98,9 @@ def get_pickle():
         serialize = True
     if not filename:
         return None
-    filename += ".pkl"
+    # include default pkl extension if not specified
+    if not filename.endswith('.pkl') and '.' not in filename:
+        filename += ".pkl"
     data_loader = pickle_it(action='load', filename=filename)
     if serialize is True:
         return (json.dumps(data_loader,
@@ -666,10 +669,18 @@ def histvol():
 @api.route("/mempool_json", methods=["GET", "POST"])
 @login_required
 def mempool_json():
-    url = None
+
+    # If private is true, only return private node info
+    private = request.args.get("private")
+    if private is not None:
+        url = pickle_it('load', 'top_node_private_url.pkl')
+    else:
+        url = pickle_it('load', 'top_node_public_url.pkl')
+
+    if url == 'file not found':
+        url = None
+
     try:
-        mp_config = current_app.settings['MEMPOOL']
-        url = mp_config.get('url')
         url = url_parser(url)
 
         # Get recommended fees
@@ -687,7 +698,7 @@ def mempool_json():
                 'mp_url':
                 url,
                 'error':
-                'Mempool.space seems to be unavailable. Maybe node is still synching.'
+                'Mempool.space API seems to be unavailable. Maybe node is still synching.'
             })
         mp_blocks = tor_request(url + 'api/blocks').json()
 

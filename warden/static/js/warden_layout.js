@@ -73,15 +73,12 @@ $(document).ready(function () {
 
 
 function BTC_price() {
-    console.log("Getting BTC price")
     $.ajax({
         type: "GET",
         dataType: 'json',
         url: "/realtime_btc",
         success: function (data) {
             if ('cross' in data) {
-                console.log("success")
-                console.log(data)
                 $('#fx_cross').html(data['cross']);
                 $('#fx_rate').html(data['fx_rate'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 })).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
                 $('#btc_fx').html(data['btc_fx'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 })).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
