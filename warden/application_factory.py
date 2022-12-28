@@ -15,7 +15,7 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from pathlib import Path
-from connections.connections import internet_connected
+from connections.connections import internet_connected, get_local_host_name
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.events import EVENT_JOB_ERROR
 from backend.ansi_management import (warning, success, error, info,
@@ -40,7 +40,7 @@ def create_app():
 
     # Change some config messages Levels (to avoid excessive logging)
     logging.getLogger('apscheduler').setLevel(logging.CRITICAL)
-    # logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    logging.getLogger('werkzeug').setLevel(logging.DEBUG)
     # Ignores warnings
     warnings.filterwarnings('ignore')
 
@@ -650,6 +650,9 @@ def main(debug, reloader):
     # Gets current Port
     port = app.settings['SERVER'].getint('port')
 
+    # Get current host name
+    hostname = get_local_host_name()
+
     print(
         fg.brightgreen("""
         _   _           __        ___    ____     _
@@ -669,8 +672,9 @@ def main(debug, reloader):
       Open your browser and navigate to one of these addresses:
       {yellow('http://localhost:' + str(port) + '/')}
       {yellow('http://127.0.0.1:' + str(port) + '/')}
-        {local_network_string(app)}
-        {onion_string(app)}
+    {local_network_string(app)}
+    {yellow(f'http://{hostname}.local:' + str(port) + '/')}
+    {onion_string(app)}
     ----------------------------------------------------------------
                          CTRL + C to quit server
     ----------------------------------------------------------------

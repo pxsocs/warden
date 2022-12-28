@@ -748,7 +748,7 @@ function copyTable(el) {
 }
 
 
-function timeDifference(current, previous, precise = false) {
+function timeDifference(current, previous, just_now_precision_seconds = 30) {
 
     var msPerMinute = 60 * 1000;
     var msPerHour = msPerMinute * 60;
@@ -763,7 +763,7 @@ function timeDifference(current, previous, precise = false) {
     }
 
     if (elapsed < msPerMinute) {
-        if (precise == false) {
+        if (elapsed < just_now_precision_seconds) {
             return "Just Now"
         } else {
             return Math.round(elapsed / 1000) + ' seconds ago';

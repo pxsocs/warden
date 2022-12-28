@@ -536,7 +536,7 @@ function pkl_grabber(pickle_file, interval_ms, target_element, status_element = 
 
 
 
-function timeDifference(current, previous) {
+function timeDifference(current, previous, just_now_precision_seconds = 50) {
 
     var msPerMinute = 60 * 1000;
     var msPerHour = msPerMinute * 60;
@@ -546,12 +546,17 @@ function timeDifference(current, previous) {
 
     var elapsed = current - previous;
 
+
     if (isNaN(parseFloat(elapsed))) {
         return ("Never")
     }
 
     if (elapsed < msPerMinute) {
-        return Math.round(elapsed / 1000) + ' seconds ago';
+        if (elapsed <= (just_now_precision_seconds * 1000)) {
+            return "just now"
+        } else {
+            return Math.round(elapsed / 1000) + ' seconds ago';
+        }
     }
 
     else if (elapsed < msPerHour) {

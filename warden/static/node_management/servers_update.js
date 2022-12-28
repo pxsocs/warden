@@ -28,6 +28,7 @@ $(document).ready(function () {
     window.status = {};
     initialize_tooltips();
     update_servers();
+    update_services();
     update_clock();
     update_max_height();
     update_block_details();
@@ -343,7 +344,7 @@ function removeOptions(selectElement) {
 
 function update_servers() {
     // Updated every second
-    interval_ms = 5000;
+    interval_ms = 1000;
     const interval = setInterval(function () {
         // Get all servers
         url = base_url() + 'node_list';
@@ -530,6 +531,150 @@ function create_table(data) {
 
     $("#add_node").click(function () {
         $("#hidden-add-node").slideToggle("medium");
+    });
+
+
+    // Check if edit name is clicked, then change html
+    $(".edit_name").click(function () {
+        // Get node information from table
+        node_name = $(this).text();
+        node_url = $(this).parent().parent().find('.node_url').html()
+        node_url = node_url.match(/href="([^"]*)/)[1];
+        node_public = $(this).parent().parent().find('.public_node').html()
+        if (node_public != undefined) {
+            node_public = true
+        } else {
+            node_public = false
+        }
+        // Open new node edit and change values
+        $("#hidden-add-node").show("medium");
+        $("#new_node_name").val(node_name);
+        $("#new_node_url").val(node_url);
+        is_private_node = document.getElementById("is_private_node");
+        is_private_node.checked = !node_public;
+        // Change button text
+        $("#new_node_txt").text("edit node");
+        $("#save_node_txt").text("update");
+        // Include Delete Button
+        delete_button = `
+            <button id="delete_node" class="btn btn-outline-danger btn-sm">
+            <i class="fa-regular fa-trash-can"></i>
+            </button>`
+        $("#delete_node_button").html(delete_button)
+        $("#delete_node_button").click(function () {
+            add_edit_node(action = 'delete')
+        });
+
+    });
+
+}
+
+
+function update_services() {
+    // Updated every second
+    interval_ms = 1000;
+    const interval = setInterval(function () {
+        // Get all services
+        url = base_url() + 'get_pickle?filename=services_found';
+        service_data = ajax_getter(url);
+
+        if (service_data.length == 0) {
+            content_id = '#services_table';
+            $(content_id).html(`
+                <h6 class='text-center align-center text-muted'>
+                <i class="fa-solid fa-triangle-exclamation fa-lg text-muted"></i>&nbsp;&nbsp;No Running Services found</h6>
+                `);
+            return
+
+        }
+        // Create the table
+        create_services_table(service_data);
+        initialize_tooltips();
+
+    }, interval_ms);
+}
+
+
+function create_services_table(data) {
+    content_id = '#services_table';
+    table = '<table class="table table-server">'
+    // Create table header
+    // Each host has the following data structure
+    // url": "http://umbrel.local:25441/",
+    // "status": "ok",
+    // "last_update": 1672233363.373492,
+    // "port": 25441,
+    // "service": "Specter Server"
+
+    table += `
+        <thead>
+            <tr class='small-text'>
+                <td class="text-start">Service</td>
+                <td class="text-start">Address</td>
+                <td class="text-start"></td>
+                <td class="text-center">Status</td>
+                <td class="text-end">
+                    Last Seen
+                </td>
+            </tr>
+        </thead>
+    `
+
+    $.each(data, function (key_x, row) {
+        // Start Row
+        table += "<tr class='box'>";
+        // Name
+        if (row.service == undefined) {
+            table += '<td class="text-start text-warning datainfo">Loading Service... Please wait.</span></td>';
+        } else {
+            table += '<td class="text-start datainfo"><span class="edit_name">' + row.service + '</span></td>';
+        }
+
+        // Address details
+        table += '<td class="text-start node_url">'
+        table += row.url
+        table += '</td>'
+        // Add link to URL
+        table += '<td class="text-start node_url">'
+        table += '<a href="' + row.url + '" target="_blank" class="text-white"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>'
+        table += '</td>'
+
+        // Status
+        table += '<td class="text-center">';
+        if (row.status == 'ok') {
+            table += createPill(row.status, 'success', '', 'yellow')
+
+        } else {
+            table += createPill(row.status, 'warning', '', 'yellow')
+        }
+
+        table += '</td>';
+
+
+        // Updated time
+        isoDateString = new Date().toISOString();
+        currentTimeStamp = new Date(isoDateString).getTime()
+        // Mark current time as UTC with a Z
+        try {
+            updated_time = new Date(row.last_update + 'Z').toISOString()
+            updated_time = new Date(updated_time).getTime()
+            table += '<td class="onlineoffline text-end small-text">' + timeDifference(currentTimeStamp, updated_time) + '</td>';
+        } catch (e) {
+            table += '<td class="onlineoffline text-end small-text text-warning"> offline</td>';
+        }
+
+
+        // Close Row
+        table += '</tr>';
+    });
+    // Include hidden line for new node inclusion
+
+    // Close Table
+    table += '</table>';
+    $(content_id).html(table);
+
+    $("#add_node").click(function () {
+        $("#hidden-add-node").show("medium");
     });
 
 

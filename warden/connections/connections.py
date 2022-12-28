@@ -260,22 +260,23 @@ def scan_network():
                     status = f'Did not get a response'
             if not result.ok:
                 status = 'Reached URL but did not get a code 200 [ok]'
-            epoch_time = None
             if status == 'ok':
-                utc_time = datetime.utcnow()
-                epoch_time = (utc_time - datetime(1970, 1, 1)).total_seconds()
                 try:
                     # If the URL is the WARden Onion Address
                     if onion in url:
                         port = 5000
                     else:
                         port = int(url.split(':')[2].strip('/'))
-                except:
+                except Exception:
                     port = None
+                try:
+                    update_time = str(datetime.utcnow())
+                except Exception:
+                    update_time = 'Unknown'
                 service_found[url] = {
                     'url': url,
                     'status': status,
-                    'last_update': epoch_time,
+                    'last_update': update_time,
                     'port': port,
                     'service': service_name(port)
                 }
@@ -309,8 +310,8 @@ def scan_network():
     except Exception:
         pass
 
-    # Sort the list
-    # services_found = sorted(services_found.items(), key=lambda k_v: k_v['last_update'], reverse=True)
+    # Sort the list by keys (urls sorted)
+    services_found = dict(sorted(services_found.items()))
 
     pickle_it('save', 'services_found.pkl', services_found)
 
@@ -319,7 +320,7 @@ def scan_network():
     # 'http://umbrel.local:80/': {
     #   'url': 'http://umbrel.local:80/',
     #   'status': 'ok',
-    #   'last_update': 1634758799.142936,
+    #   'last_update': UTC,
     #   'port': '80',
     #   'service': 'Web Server'
     #   }
@@ -376,6 +377,10 @@ def get_local_ip():
     local_ip_address = s.getsockname()[0]
     pickle_it('save', 'local_ip_address.pkl', local_ip_address)
     return (local_ip_address)
+
+
+def get_local_host_name():
+    return (socket.gethostname())
 
 
 #  Check if a port at localhost is in use
