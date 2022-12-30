@@ -39,7 +39,7 @@
             <div class="form-group">
                 <a href="/importcsv?f={{filename}}">
                     <button id="importbutton" type="button" class="btn btn-block btn-outline-success btn-lg">Click to
-                        Start Importing Transactions <> {{row_count | jformat(0)}} Found in CSV <i
+                        Start Importing Transactions <> {{(row_count - 1) | jformat(0)}} Found in CSV <i
                                 class="fas fa-file-import"></i>
                     </button>
                 </a>

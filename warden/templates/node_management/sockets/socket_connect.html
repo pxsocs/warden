@@ -1,0 +1,34 @@
+{% extends "warden/warden_layout.html" %} {% block content %}
+
+<!-- Node List -->
+
+<div class="col-12">
+  <h1>WebSocket</h1>
+  <h5>.pkl files saved locally</h5>
+
+  <div id="status"></div>
+
+  <form id="form">
+    <select class="form-select" id="drop_pkl_list">
+      <option selected>Select pkl File</option>
+      {% for pkl in pkl_files%}
+      <option value="{{pkl}}">{{pkl}}</option>
+      {%endfor%}
+    </select>
+  </form>
+
+  <div id="variable_chosen"></div>
+  <div>
+    <pre id="log" class="codetext"></pre>
+  </div>
+
+  <script>
+    document.getElementById("drop_pkl_list").onchange = (ev) => {
+      ev.preventDefault();
+      const pkl_chosen = document.getElementById("drop_pkl_list");
+      $("#variable_chosen").html(pkl_chosen.value);
+      pkl_grabber(pkl_chosen.value, 1000, "#log", "#status");
+    };
+  </script>
+</div>
+{% endblock %}

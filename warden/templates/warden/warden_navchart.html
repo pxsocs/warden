@@ -20,10 +20,10 @@
 
 <ul class="nav nav-tabs" style="padding-top: 20px;">
   <li class="nav-item text-rebel">
-    <a class="nav-link active text-rebel" data-toggle="tab" href="#chart_tab">Chart</a>
+    <a class="nav-link active text-rebel" data-bs-toggle="tab" href="#chart_tab">Chart</a>
   </li>
   <li class="nav-item text-rebel">
-    <a class="nav-link text-rebel" data-toggle="tab" href="#table_tab">Table</a>
+    <a class="nav-link text-rebel" data-bs-toggle="tab" href="#table_tab">Table</a>
   </li>
 </ul>
 
@@ -51,7 +51,7 @@
           <table class="table tableFixHead hoverTable">
             <thead class='thead-dark'>
               <tr>
-                <th class='text-left'>Date</th>
+                <th class='text-start'>Date</th>
                 <th class='text-center'>Portfolio Value<br>({{current_user['symbol']}})</th>
                 <th class='text-center'>Cost<br>({{current_user['symbol']}})</th>
                 <th class='text-center'>PnL<br>({{current_user['symbol']}})</th>
@@ -68,23 +68,23 @@
                 <td>
                   {{key.strftime("%Y-%b-%d")}}
                 </td>
-                <td class='text-right'>
+                <td class='text-end'>
                   {{current_user['symbol']}}&nbsp;{{value['PORT_fx_pos'] | jformat(0)}}
                 </td>
 
-                <td class='text-right'>
+                <td class='text-end'>
                   {{current_user['symbol']}}&nbsp;{{value['PORT_ac_CFs_fx'] | jformat(0)}}
                 </td>
 
-                <td class='text-right'>
+                <td class='text-end'>
 
                   {{current_user['symbol']}}&nbsp;{{(value['PORT_fx_pos'] - value['PORT_ac_CFs_fx']) | jformat(0)}}
                 </td>
 
-                <td class='text-right'>
+                <td class='text-end'>
                   {{value['BTC_pos'] | jformat(4)}}
                 </td>
-                <td class='text-right'>
+                <td class='text-end'>
                   {%if value['BTC_quant'] > 0 %}
                   <span class='text-success'>
                     <i class="far fa-arrow-alt-circle-down"></i>
@@ -96,10 +96,10 @@
                   {%endif%}
                   {{value['BTC_quant'] | jformat(4)}}
                 </td>
-                <td class='text-right'>
+                <td class='text-end'>
                   {{current_user['symbol']}}&nbsp;{{value['BTC_price'] | jformat(0)}}
                 </td>
-                <td class='text-right'>
+                <td class='text-end'>
                   {{value['NAV_fx'] | jformat(2)}}
                 </td>
 

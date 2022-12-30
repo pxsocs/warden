@@ -1,0 +1,82 @@
+{% extends "orangenomics/main/layout_logged_in.html" %}
+{% block orange_content %}
+<div class="row" style="padding: 10px 10px 10px 10px">
+    <div class="col">
+        <h4>
+            <i class="fa-solid fa-chart-pie"></i>
+            &nbsp;&nbsp;portfolio builder
+        </h4>
+        <span id="start_here_text">
+            <span class="badge rounded-pill bg-warning text-dark">1</span>
+            <span class="text-light">
+                &nbsp;&nbsp;build a portfolio allocation below or&nbsp;&nbsp;
+                <button
+                    type="button"
+                    id="load_modal_button"
+                    class="btn btn-outline-warning btm-sm text-60-small"
+                    data-bs-toggle="modal"
+                    data-bs-target="#loadModal"
+                >
+                    load an existing portfolio
+                </button>
+            </span
+    >
+        </span>
+    </div>
+</div>
+<div id="portfolio_box" class="row" style="padding: 00px 20px 0px 20px">
+    <div class="col-12 content-section text-start">
+        {% include 'orangenomics/main/portfolio_table.html' %}
+    </div>
+</div>
+<div class="row" style="padding: 0px 20px 0px 20px">
+    <div class="col" id="start_input">
+        <div class="d-grid gap-2">
+            <button class="btn btn-warning float-end align-self-end text-white" id="analyze">
+                analyze this portfolio&nbsp;&nbsp;
+                <i class="fa-solid fa-circle-arrow-right text-white fa-lg next-arrow"></i>
+            </button>
+        </div>
+    </div>
+</div>
+<div class="row" style="padding: 20px 20px 0px 20px">
+    <div class="col-6">
+        <div id="ticker_results" class="content-section"></div>
+    </div>
+    <div class="col-6">
+        <div id="dates_input" class="content-section">
+            <div class="text-light text-end text-small">Simulation Options</div>
+            <div class="input-group input-group-sm mb-auto">
+                <span class="input-group-text input-group-sm" style="width: 100px;">start date</span>
+                <input
+                    type="date"
+                    disabled
+                    class="form-control"
+                    id="start_date"
+                >
+            </div>
+            <div class="input-group input-group-sm mb-auto">
+                <span class="input-group-text input-group-sm" style="width: 100px;">end date</span>
+                <input
+                    type="date"
+                    disabled
+                    class="form-control"
+                    id="end_date"
+                >
+            </div>
+            <div class="input-group input-group-sm mb-auto">
+                <span class="input-group-text" style="width: 100px;">rebalance</span>
+                <select class="form-select" id="rebalance" disabled>
+                    <option selected value="never">never</option>
+                    <option value="monthly">monthly</option>
+                    <option value="quarterly">quarterly</option>
+                    <option value="annually">annually</option>
+                </select>
+            </div>
+        </div>
+        <div id="portfolio_results" class="content-section"></div>
+    </div>
+</div>
+</div>
+<script src="{{url_for('static', filename='orangenomics/js/portfolio.js')}}"></script>
+{% endblock orange_content %}

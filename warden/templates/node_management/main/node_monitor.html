@@ -1,0 +1,125 @@
+{% extends "warden/warden_layout.html" %} {% block content %}
+<link rel="stylesheet" href="{{url_for('static', filename='css/nodes.css')}}">
+<div class="col-12">
+    <!-- dashboard -->
+    <div class="row" id="node_dashboard">
+        <div class="col-3">
+            <div
+                class="text-start"
+                data-bs-toggle="tooltip"
+                data-bs-placement="bottom"
+                title="Refers to the block height of the valid chain with the most proof of work"
+            >
+                <span class="dashboard-numbers" id="max_height"> Loading...</span>
+                <br>
+                <hr>
+                <span class="clock">block height</span>
+                <br>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="text-end">
+                <span class="dashboard-numbers text-success" id="block_info">
+                    Loading...
+                </span
+        >
+                <br>
+                <hr>
+                <span class="clock" id="_clock_section">Latest Block</span>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="" id="stats"></div>
+        </div>
+    </div>
+    <!-- Node List -->
+    <div class="row">
+        <div class="col-12">
+            <div>
+                <header class="text-left dashboard-header">
+                    Nodes and Services
+                    <span class="text-small float-end">
+                        <button id="toggle_nodes" class="btn btn-outline-light btn-sm">
+                            <i class="fa-solid fa-circle-nodes"></i>
+                        </button>
+                    </span>
+                </header>
+            </div>
+        </div>
+    </div>
+    <div class="row" id="hidden-add-node" style="padding-top: 10px; padding-bottom: 10px">
+        <div class="col-4">
+            <input
+                id="new_node_name"
+                type="text"
+                class="form-control"
+                placeholder="Node Name"
+            >
+        </div>
+        <div class="col-4">
+            <input
+                id="new_node_url"
+                type="text"
+                class="form-control"
+                placeholder="Node URL (onion addresses are accepted)"
+            >
+        </div>
+        <div class="col-1 text-center clock align-center">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                value=""
+                id="is_private_node"
+            >
+            <label
+                class="form-check-label"
+                for="flexCheckDefault"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="A private node is your own node, with better privacy."
+            >
+                Private Node
+            </label>
+        </div>
+        <div class="col-3 text-end align-end">
+            <button id="save_node" class="btn btn-outline-light btn-sm">
+                <span id="save_node_txt">save</span>
+            </button>
+            <span id="delete_node_button"></span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="content-section" id="server_table">
+                <span class="text-small loadanim">Searching for nodes...</span>
+            </div>
+        </div>
+    </div>
+    <!-- Services List -->
+    <div class="row">
+        <div class="col-12">
+            <div>
+                <header class="text-left dashboard-header">
+                    Running Services
+                    <span class="text-small float-end">
+                        <button id="toggle_services" class="btn btn-outline-light btn-sm">
+                            <i class="fa-solid fa-circle-nodes"></i>
+                        </button>
+                    </span>
+                </header>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="content-section" id="services_table">
+                <span class="text-small loadanim">Searching for running services...</span>
+            </div>
+        </div>
+    </div>
+    <script src="{{url_for('static', filename='js/utils.js')}}"></script>
+    <script src="{{url_for('static', filename='node_management/servers_update.js')}}"></script>
+    <script src="{{url_for('static', filename='js/animate_number.js')}}"></script>
+    {% endblock content %} {%block modals%} {% endblock modals %}
+</div>
+</div>

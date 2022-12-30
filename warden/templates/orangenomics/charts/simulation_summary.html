@@ -1,0 +1,226 @@
+<div class="row">
+  <div class="col-12">
+    <table class="table table-wide table-condensed table-striped">
+      <thead>
+        <tr class="text-center">
+          <th>ticker</th>
+          <th>name</th>
+          <th>initial<br /><span class="text-60-small">weight</span></th>
+          <th>return<br /><span class="text-60-small">(period)</span></th>
+          <th>return<br /><span class="text-60-small">(annualized)</span></th>
+          <th>volatility<br /><span class="text-60-small">(daily)</span></th>
+          <th>
+            volatility<br /><span class="text-60-small">(annualized)</span>
+          </th>
+          <th>
+            sharpe ratio<br /><span class="text-60-small"
+              >rf = {{(data.METADATA.risk_free_rate * 100) | jformat(2)}}%</span
+            >
+          </th>
+          <th>VaR<br /><span class="text-60-small">CI = 95%</span></th>
+          <th>DrawDown<br /><span class="text-60-small">Maximum</span></th>
+          <th>DrawDown<br /><span class="text-60-small">Average</span></th>
+          <th>
+            DrawDown<br /><span class="text-60-small">at Risk w/ 95% CI</span>
+          </th>
+
+          <th>ATH<br /><span class="text-60-small">(from start date)</span></th>
+          <th>ATL<br /><span class="text-60-small">(from start date)</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Asset returns -->
+        {%for ticker in data.ASSETS.tickers%}
+        <tr class="table-primary">
+          {%if ticker[0] != ""%}
+          <td class="text-start">{{ticker}}</td>
+          <td class="text-end">
+            {%if ticker == 'BTC'%} Bitcoin ₿ {%else%} {%for element in
+            data.METADATA.tickers%} {%if element[0] == ticker%} {{element[1]}}
+            {%endif%} {%endfor%}{%endif%}
+          </td>
+          <td class="text-center">
+            {%for element in data.METADATA.portfolio%} {%if element[0] ==
+            ticker%} {{(element[1] * 100) | jformat(2)}}% {%endif%} {%endfor%}
+          </td>
+          <td class="text-end">
+            {{((data['ASSETS']['asset_results'][ticker]['total_return'] - 1) *
+            100) | jformat(0)}}%
+          </td>
+          <td class="text-end">
+            {{(data['ASSETS']['asset_results'][ticker]['return_annual'] * 100) |
+            jformat(2)}}%
+          </td>
+          <td class="text-end">
+            {{(data['ASSETS']['asset_results'][ticker]['volatility_daily'] *
+            100) | jformat(2)}}%
+          </td>
+          <td class="text-end">
+            {{(data['ASSETS']['asset_results'][ticker]['volatility_annual'] *
+            100) | jformat(2)}}%
+          </td>
+          <td class="text-center">
+            {{(data['ASSETS']['asset_results'][ticker]['sharpe_ratio'] ) |
+            jformat(2)}}
+          </td>
+
+          <td class="text-center">
+            {{(data['ASSETS']['asset_results'][ticker]['hist_VaR_95'] * 100) |
+            jformat(2)}}%
+          </td>
+
+          <td class="text-center">
+            -{{(data['ASSETS']['asset_results'][ticker]['max_DD_abs'] * 100) |
+            jformat(2)}}%
+          </td>
+          <td class="text-center">
+            -{{(data['ASSETS']['asset_results'][ticker]['avg_DD_abs'] * 100) |
+            jformat(2)}}%
+          </td>
+          <td class="text-center">
+            -{{(data['ASSETS']['asset_results'][ticker]['DaR_DD_abs'] * 100) |
+            jformat(2)}}%
+          </td>
+
+          <td class="text-end">
+            {{((data['ASSETS']['asset_results'][ticker]['max_return'] - 1) *
+            100) | jformat(0)}}%
+          </td>
+          <td class="text-end">
+            {{((data['ASSETS']['asset_results'][ticker]['lowest_return'] - 1) *
+            100) | jformat(2)}}%
+          </td>
+          {%endif%}
+        </tr>
+        {%endfor%}
+        <!-- PORTFOLIO Returns -->
+        {%for portfolio, value in data.PORTFOLIOS.items()%}
+        <tr class="table-secondary">
+          <td class="text-end" colspan="2">
+            {% if value['allocation'] != 0 %} Original Portfolio + ₿
+            ({{(value['allocation'] * 100) | jformat(2)}}%) {%else%} Original
+            Portfolio {%endif%}
+          </td>
+          <td class="text-center">
+            {% if value['allocation'] != 0 %} {{(value['allocation'] * 100) |
+            jformat(2)}}% {%endif%}
+          </td>
+          <td class="text-end">
+            {{((value['port_results']['asset_results']['port']['total_return'] -
+            1) * 100) | jformat(0)}}%
+          </td>
+          <td class="text-end">
+            {{(value['port_results']['asset_results']['port']['return_annual'] *
+            100) | jformat(2)}}%
+          </td>
+          <td class="text-end">
+            {{(value['port_results']['asset_results']['port']['volatility_daily']
+            * 100) | jformat(2)}}%
+          </td>
+          <td class="text-end">
+            {{(value['port_results']['asset_results']['port']['volatility_annual']
+            * 100) | jformat(2)}}%
+          </td>
+          <td class="text-center">
+            {{(value['port_results']['asset_results']['port']['sharpe_ratio'] )
+            | jformat(2)}}
+          </td>
+
+          <td class="text-center">
+            {{(value['port_results']['asset_results']['port']['hist_VaR_95'] *
+            100) | jformat(2)}}%
+          </td>
+
+          <td class="text-center">
+            -{{(value['port_results']['asset_results']['port']['max_DD_abs'] *
+            100) | jformat(2)}}%
+          </td>
+          <td class="text-center">
+            -{{(value['port_results']['asset_results']['port']['avg_DD_abs'] *
+            100) | jformat(2)}}%
+          </td>
+          <td class="text-center">
+            -{{(value['port_results']['asset_results']['port']['DaR_DD_abs'] *
+            100) | jformat(2)}}%
+          </td>
+
+          <td class="text-end">
+            {{((value['port_results']['asset_results']['port']['max_return'] -
+            1) * 100) | jformat(0)}}%
+          </td>
+          <td class="text-end">
+            {{((value['port_results']['asset_results']['port']['lowest_return']
+            - 1) * 100) | jformat(2)}}%
+          </td>
+        </tr>
+        {%endfor%}
+      </tbody>
+    </table>
+
+    <table
+      class="table-condensed text-end float-end"
+      style="max-width: 700px; margin-top: 30px !important"
+    >
+      <tbody>
+        <tr>
+          <td class="border-bottom">
+            <span class="text-strong">
+              {{data.METADATA.min_date.strftime("%B, %Y")}}
+            </span>
+          </td>
+          <td></td>
+          <td class="border-bottom text-right">
+            <span class="text-strong">
+              {{data.METADATA.max_date.strftime("%B, %Y")}}
+            </span>
+          </td>
+          <td></td>
+          <td class="border-bottom text-right">
+            <span class="text-strong">
+              {%if data.METADATA.total_return.diff.years > 0%}
+              <span class="text-strong">
+                {{data.METADATA.total_return.diff.years}} year(s) </span
+              >and{%endif%} {%if data.METADATA.total_return.diff.months > 0%}
+              <span class="text-strong">
+                {{data.METADATA.total_return.diff.months}} month(s)
+              </span>
+              {%endif%}
+            </span>
+          </td>
+          <td></td>
+          <td class="border-bottom text-right">
+            <span class="text-strong">
+              {{data['PORTFOLIOS']['portfolio_BTC@0']['port_results']['asset_results']['port']['number_points']
+              | jformat(0)}}
+            </span>
+          </td>
+          <td></td>
+          <td class="border-bottom text-right">
+            <span class="text-strong">
+              {{data.METADATA.rebalance.replace('"', '').upper()}}
+            </span>
+          </td>
+          <td></td>
+          <td class="border-bottom text-right">
+            <span class="text-strong">{{data.METADATA.fx.upper()}}</span>
+          </td>
+          <td></td>
+        </tr>
+        <tr class="align-top text-light">
+          <td class="small text-yellow">Start Date</td>
+          <td></td>
+          <td class="small text-right text-yellow">End Date</td>
+          <td></td>
+          <td class="small text-right text-yellow">Data Lifespan</td>
+          <td></td>
+          <td class="small text-right text-yellow"># data points</td>
+          <td></td>
+          <td class="small text-right text-yellow">Rebalance Frequency</td>
+          <td></td>
+          <td class="small text-right text-yellow">Base Currency</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

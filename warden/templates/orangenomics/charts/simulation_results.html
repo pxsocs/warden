@@ -1,0 +1,39 @@
+<div class="row">
+  <div class="text-start text-light">Portfolio Results
+  <span class="float-end"
+    >from {{data.METADATA.min_date.strftime("%B, %Y")}} to
+    {{data.METADATA.max_date.strftime("%B, %Y")}}</div>
+
+  <div class="col-12 text-start">
+    <div class="chart-section">
+      <!-- Sample here: https://jsfiddle.net/highcharts/VqruM/ -->
+      <table id="trellis_portfolio" class="table-server trellis">
+        <tr>
+          {%for idx in data.CHARTS.stats_chart.portfolio.datasets%}
+          <td></td>
+          {%endfor%}
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="text-start text-light">Asset Results
+  <span class="float-end"
+    >from {{data.METADATA.min_date.strftime("%B, %Y")}} to
+    {{data.METADATA.max_date.strftime("%B, %Y")}}</div>
+
+  <div class="col-12 text-start">
+    <div class="chart-section">
+      <!-- Sample here: https://jsfiddle.net/highcharts/VqruM/ -->
+      <table id="trellis_assets" class="table-server trellis">
+        <tr>
+          {%for idx in data.CHARTS.stats_chart.assets.datasets%}
+          <td></td>
+          {%endfor%}
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>

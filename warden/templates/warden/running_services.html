@@ -1,101 +1,23 @@
 {% extends "warden/warden_layout.html" %}
 {% block content %}
-
-
-
-<div class='container-fluid' style='padding-bottom: 200px;'>
-
-  <form class="form-group" method="post" action="/host_list">
-    <input type="text" class="form-control" name="new_url" id="new_url"
-      placeholder="[+] Add new host / service URL (ex. http://192.168.1.1:5000/ or xyzxyz.onion)" />
-  </form>
-
-  <div class="row">
-    <div class='col-lg-12'>
-    
-      <div id="output">
-        Loading...
-      </div>
-
-
-
+<div class="container-fluid" style="padding-bottom: 200px;">
+    <form class="form-group" method="post" action="/host_list">
+        <input
+            type="text"
+            class="form-control"
+            name="new_url"
+            id="new_url"
+            placeholder="[+] Add new host / service URL (ex. http://192.168.1.1:5000/ or xyzxyz.onion)"
+        >
+    </form>
+    <div class="row" style="padding-top: 20px;">
+        <div class="col-lg-12">
+            <div id="output">
+                Loading...
+            </div>
+        </div>
     </div>
-  </div>
-
 </div>
-
 <script src="{{url_for('warden.static', filename='js/utils.js')}}"></script>
-
-<script>
-  $(document).ready(function () {
-    var intervalId = window.setInterval(function () {
-      run_ajax()
-    }, 1000);
-  });
-
-  function run_ajax() {
-    const currentTimeStamp = new Date().getTime();
-    table_header = `
-    <table class='table table-sm table-striped small-text' id='list_table_json'>
-        <thead>
-          <tr>
-            <th></th>
-            <th class='text-left'>Service</th>
-            <th class='text-left'>Location</th>
-            <th class='text-right'>Last time reached</th>
-            <th></th>
-          </tr>
-        </thead>
-    <tbody>
-    `
-    table_footer = "</tbody></table>"
-    $.ajax({
-      type: "GET",
-      dataType: 'json',
-      url: "/get_pickle?filename=services_found&serialize=False",
-      success: function (data) {
-        $('#output').html('')
-        if (data == '') {
-          $('#output').html(
-            "<div class='small alert alert-info' role='alert'>No messages from this session yet. But monitoring realtime." +
-            "</div>"
-          )
-        } else {
-          var event_data = '';
-          $.each(data, function (index, value) {
-            time_ago = timeDifference(currentTimeStamp, parseFloat(value['last_update'] * 1000))
-            difference = (currentTimeStamp - parseFloat(value['last_update'] * 1000)) / 1000
-            if (difference < 180) {
-              icon = "<i style='color: green' class='far fa-lg fa-check-circle'></i>"
-            } else if (difference < 400) {
-              icon = "<i style='color: orange' class='fas fa-lg fa-exclamation-triangle'></i>"
-            } else {
-              icon = "<i style='color: red' class='far fa-lg fa-stop-circle'></i>"
-            }
-
-            /*console.log(value);*/
-            event_data += '<tr>';
-            event_data += "<td class='text-center'>" + icon + '</td>';
-            event_data += "<td class='text-left'>" + value['service'] + '</td>';
-            event_data += "<td class='text-left'><a href='" + value['url'] + "' target='_blank'>" + value['url'] + "</a></td>";
-            event_data += "<td class='text-right'>" + time_ago + '</td>';
-            event_data += "<td class='text-right'><a href='/host_list?delete=" + encodeURIComponent(value['url']) + "'><i style='color: red' class='far fa-trash-alt'></i></a> </td>";
-            event_data += '</tr>';
-          });
-          $("#output").html(table_header + event_data + table_footer)
-
-        }
-
-      },
-      error: function (xhr, status, error) {
-        $('#output').html(
-          "<div class='small alert alert-danger' role='alert'>An error occured while getting service list..." +
-          "</div>"
-        )
-      }
-    });
-  }
-</script>
-
-
+<script src="{{url_for('warden.static', filename='js/running_services.js')}}"></script>
 {% endblock content %}

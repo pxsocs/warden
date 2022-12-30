@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+
+    {% if title %}
+    <title>The WARden | {{ title }}</title>
+    {% else %}
+    <title>The WARden</title>
+    {% endif %}
+
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{{url_for('static', filename='images/favicon-bitcoin.ico')}}"
+    />
+
+        <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+      crossorigin="anonymous"
+    />
+
+    <!-- WARden theme CSS -->
+    <link
+      rel="stylesheet"
+      href="{{url_for('static', filename='css/warden.css')}}"
+    />
+
+    <link
+      rel="stylesheet"
+      href="{{url_for('static', filename='dependencies/fontawesome/css/all.css')}}"
+    />
+
+    <!-- Bootstrap core JS-->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+      crossorigin="anonymous"
+    ></script>
+
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"
+    ></script>
+
+  <!-- Minimal Cookie Script to save collapsed states of divs -->
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
+
+  <body id="page-top">
+    <!-- Navigation-->
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+      <div id="header_div" class="row bg-steel">
+        <div class="col-9 dashboard-header text-start">
+          <span id="header_message"></span>
+        </div>
+        <div class="col-3 dashboard-header text-end text-white">
+          <a
+            class="text-white"
+            href="/"
+            style="text-decoration: none; font-size: 110%; font-weight: normal"
+          >
+            Node Monitor
+          </a>
+        </div>
+      </div>
+
+      <div class="row" id="message_alert_area" hide>
+        {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %} {% for category, message in messages %}
+        <div class="col">
+          <div id="messagealert" class="alert alert-{{ category }}">
+            {{message}}
+          </div>
+        </div>
+        {% endfor %} {% endif %} {% endwith %}
+      </div>
+
+      <div class="row" id="main_body">
+        <div class="col">{% block content %} {% endblock %}</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer bg-steel small fixed-bottom">
+      <div class="row text-white">
+        <div class="col-sm-6 text-start float-left">
+          <i class="fa-brands fa-github"></i>
+          &nbsp;&nbsp;<a
+            class="text-white"
+            style="text-decoration: none"
+            href="https://github.com/pxsocs/warden/"
+          >
+            Open Source Code</a
+          >
+        </div>
+
+        <div class="col-sm-6 text-end float-end">
+          Developed by
+          <a
+            class="text-white"
+            style="text-decoration: none"
+            href="https://twitter.com/alphaazeta"
+          >
+            <span class="text-white">@AlphaaZeta&nbsp;</span></a
+          >
+        </div>
+      </div>
+    </footer>
+  </body>
+
+  {%block modals%} {%endblock%}
+</html>

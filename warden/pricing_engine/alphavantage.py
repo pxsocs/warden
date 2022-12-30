@@ -1,13 +1,11 @@
 from datetime import datetime
-from pathlib import Path
 import requests
 import os
 from pricing_engine.engine import apikey
-from connections import tor_request
+from connections.connections import tor_request
 import pandas as pd
-from warden_modules import current_path
-from warden_decorators import MWT
-from flask import flash
+from backend.config import basedir
+from backend.decorators import MWT
 # docs
 # https://www.alphavantage.co/documentation/
 
@@ -25,18 +23,19 @@ def realtime(ticker, fx='USD', function='CURRENCY_EXCHANGE_RATE', parsed=True):
 
         # No need for any API calls to return 1 :)
         if ticker == fx:
-            return (
-                {'Realtime Currency Exchange Rate':
-                 {'1. From_Currency Code': ticker,
-                  '2. From_Currency Name': ticker,
-                  '3. To_Currency Code': fx,
-                  '4. To_Currency Name': fx,
-                  '5. Exchange Rate': '1',
-                  '6. Last Refreshed': datetime.utcnow(),
-                  '7. Time Zone': 'UTC',
-                  '8. Bid Price': '1',
-                  '9. Ask Price': '1'}}
-            )
+            return ({
+                'Realtime Currency Exchange Rate': {
+                    '1. From_Currency Code': ticker,
+                    '2. From_Currency Name': ticker,
+                    '3. To_Currency Code': fx,
+                    '4. To_Currency Name': fx,
+                    '5. Exchange Rate': '1',
+                    '6. Last Refreshed': datetime.utcnow(),
+                    '7. Time Zone': 'UTC',
+                    '8. Bid Price': '1',
+                    '9. Ask Price': '1'
+                }
+            })
 
         # SAMPLE RETURN DATA
         # {'Realtime Currency Exchange Rate':
@@ -123,7 +122,10 @@ def realtime(ticker, fx='USD', function='CURRENCY_EXCHANGE_RATE', parsed=True):
     return data
 
 
-def historical(ticker, function='TIME_SERIES_DAILY_ADJUSTED', fx='USD', parsed=True):
+def historical(ticker,
+               function='TIME_SERIES_DAILY_ADJUSTED',
+               fx='USD',
+               parsed=True):
     if function == 'TIME_SERIES_DAILY_ADJUSTED':
         globalURL = 'https://www.alphavantage.co/query?function=' + function
         globalURL += '&symbol=' + ticker
@@ -201,9 +203,7 @@ def historical(ticker, function='TIME_SERIES_DAILY_ADJUSTED', fx='USD', parsed=T
         #         "4. close": "1.2072"
         #     },
 
-    response = tor_request(url=globalURL)
-    if response.status_code == 403:
-        response = requests.get(globalURL)
+    response = requests.get(globalURL)
 
     data = response.json()
 
@@ -215,9 +215,8 @@ def historical(ticker, function='TIME_SERIES_DAILY_ADJUSTED', fx='USD', parsed=T
                         data['Time Series (Digital Currency Daily)'],
                         orient="index")
                 if 'Time Series FX (Daily)' in data:
-                    df = pd.DataFrame.from_dict(
-                        data['Time Series FX (Daily)'],
-                        orient="index")
+                    df = pd.DataFrame.from_dict(data['Time Series FX (Daily)'],
+                                                orient="index")
 
                 # Clean columns
                 for i in range(0, 7):
@@ -234,6 +233,9 @@ def historical(ticker, function='TIME_SERIES_DAILY_ADJUSTED', fx='USD', parsed=T
                     })
                 df_save = df[['close', 'open', 'high', 'low']]
                 df_save.index.names = ['date']
+                df_save['source'] = 'Alphavantage Digital Currency'
+                df_save['url'] = globalURL
+
             except Exception:
                 df_save = pd.DataFrame()
             return (df_save)
@@ -256,6 +258,8 @@ def historical(ticker, function='TIME_SERIES_DAILY_ADJUSTED', fx='USD', parsed=T
                     })
                 df_save = df[['close', 'open', 'high', 'low']]
                 df_save.index.names = ['date']
+                df_save['source'] = 'Alphavantage Time Series'
+                df_save['url'] = globalURL
             except Exception:
                 df_save = pd.DataFrame()
             return (df_save)
@@ -269,33 +273,18 @@ def asset_list(term=None):
     if term is None:
         term = ""
     # Alphavantage Currency List - CSV
-    filename = os.path.join(
-        current_path(), 'static/csv_files/physical_currency_list.csv')
+    filename = os.path.join(basedir,
+                            'static/csv_files/physical_currency_list.csv')
     with open(filename, newline='') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             if term.upper() in row[0].upper() or term in row[1].upper():
-                master_list.append(
-                    {
-                        'symbol': row[0],
-                        'name': row[1],
-                        'provider': 'aa_fx'
-                    }
-                )
-    # Alphavantage Digital Currency list
-    filename = os.path.join(
-        current_path(), 'static/csv_files/digital_currency_list.csv')
-    with open(filename, newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            if term.upper() in row[0].upper() or term.upper() in row[1].upper():
-                master_list.append(
-                    {
-                        'symbol': row[0],
-                        'name': row[1],
-                        'provider': 'aa_digital'
-                    }
-                )
+                master_list.append({
+                    'symbol': row[0],
+                    'name': row[1],
+                    'provider': 'aa_fx'
+                })
+
     # Alphavantage Stock Search EndPoint
     try:
         url = 'https://www.alphavantage.co/query?function=SYMBOL_SEARCH'
@@ -304,15 +293,25 @@ def asset_list(term=None):
         result = requests.get(url).json()
         result = result['bestMatches']
         for element in result:
-            master_list.append(
-                {
-                    'symbol': element['1. symbol'],
-                    'name': element['2. name'],
-                    'provider': 'aa_stock',
-                    'notes': element['3. type'] + ' ' + element['4. region'],
-                    'fx': element['8. currency']
-                }
-            )
+            master_list.append({
+                'symbol':
+                element['1. symbol'],
+                'name':
+                element['2. name'],
+                'provider':
+                'aa_stock',
+                'notes':
+                element['3. type'] + ' ' + element['4. region'],
+                'fx':
+                element['8. currency']
+            })
     except Exception:
         pass
     return (master_list)
+
+
+def get_company_info(ticker):
+    url = 'https://www.alphavantage.co/query?function=OVERVIEW&symbol=' + ticker
+    url += '&apikey=' + api
+    result = requests.get(url).json()
+    return (result)

@@ -10,18 +10,25 @@
 
 This app was built with a couple of goals:
 
-- Easily track portfolio values in fiat
+- Easily track portfolio values;
 
-When connected to Specter Server 👻 [optional]:
+- Runs analytics on portfolio, including performance, cost basis and others;
 
-- Monitors Wallets and Addresses for activity using your own node and notifies user of activity
-- Track your Bitcoin node status
+- Allows user to simulate different portfolio allocations and how Bitcoin would impact this allocation;
+
+- Track your Bitcoin node status;
+
+- Keep all data locally to improve privacy.
 
 # INSTALLATION
+
+This will clone the repository, create a new virtual environment, install dependencies and start the application.
 
 ```bash
 git clone https://github.com/pxsocs/warden
 cd warden
+python3 -m venv .env
+source .env/bin/activate
 python3 -m pip install -r requirements.txt
 ```
 
@@ -31,7 +38,7 @@ Then run the WARden server:
 python3 warden
 ```
 
-Upgrade:
+To Upgrade:
 
 ```bash
 git pull origin master
@@ -39,7 +46,7 @@ git pull origin master
 
 ## Screenshot
 
-![Screenshot](https://raw.githubusercontent.com/pxsocs/warden/master/warden/static/images/Screen%20Shot%202021-02-08%20at%209.19.28%20AM.png)
+![Screenshot](https://raw.githubusercontent.com/pxsocs/warden/master/warden/static/images/web_screen_shot.png)
 
 ## This is an Open Source project
 
@@ -67,28 +74,6 @@ sudo apt-get -y install python3-pip
 sudo apt-get install git
 ```
 
-> If Docker is not installed
-
-[Docker Install Instructions for most OS systems can be found here](https://docs.docker.com/get-docker/)
-
-Docker Installation Instructions for Debian (Most Raspberry Pi systems)
-
-```bash
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-```
-
-Then get your user name by typing:
-
-```bash
-w
-```
-
-Then add this user to the docker group:
-
-```bash
-sudo usermod -aG docker <your-user>
-```
 
 **Please note that this is ALPHA software. There is no guarantee that the
 information and analytics are correct. Also expect no customer support. Issues are encouraged to be raised through GitHub but they will be answered on a best efforts basis.**

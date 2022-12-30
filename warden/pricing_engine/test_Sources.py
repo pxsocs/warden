@@ -2,10 +2,9 @@
 # python3 -m pricing_engine.test_Sources
 
 import unittest
-from utils import load_config
-from pricing_engine.engine import (apikey, realtime_price,
-                                   historical_prices, price_ondate,
-                                   fx_price_ondate)
+from backend.utils import load_config
+from pricing_engine.engine import (apikey, realtime_price, historical_prices,
+                                   price_ondate, fx_price_ondate)
 from pricing_engine.alphavantage import realtime, historical
 from pricing_engine.cryptocompare import realtime as cc_realtime
 from pricing_engine.cryptocompare import historical as cc_historical
@@ -14,7 +13,6 @@ from pricing_engine.fmp import historical as fmp_historical
 
 from pricing_engine.twelvedata import realtime as td_realtime
 from pricing_engine.twelvedata import historical as td_historical
-
 
 import pandas as pd
 
@@ -26,7 +24,8 @@ class TestPricing(unittest.TestCase):
         ticker_list = ['BTC', 'GBTC', 'ETH', 'IBM', 'MSTR', 'TSLA']
         for ticker in ticker_list:
             results = realtime_price(ticker)['price']
-            self.assertIsNotNone(results, f'Could not get realtime price for {ticker}')
+            self.assertIsNotNone(results,
+                                 f'Could not get realtime price for {ticker}')
 
     # Test price_ondate
     def test_price_ondate(self):
@@ -47,7 +46,8 @@ class TestPricing(unittest.TestCase):
 
         # BTC from Alphavantage Digital
         result = historical('BTC', function='DIGITAL_CURRENCY_DAILY')
-        self.assertIsInstance(result, pd.DataFrame, 'BTC DIGITAL_CURRENCY_DAILY')
+        self.assertIsInstance(result, pd.DataFrame,
+                              'BTC DIGITAL_CURRENCY_DAILY')
         self.assertFalse(result.empty, 'BTC DIGITAL_CURRENCY_DAILY')
 
         # BTC converted to BRL
@@ -62,7 +62,8 @@ class TestPricing(unittest.TestCase):
 
         # AAPL from Alphavantage TIME_SERIES_DAILY_ADJUSTED
         result = historical('AAPL', function='TIME_SERIES_DAILY_ADJUSTED')
-        self.assertIsInstance(result, pd.DataFrame, 'AAPL TIME_SERIES_DAILY_ADJUSTED')
+        self.assertIsInstance(result, pd.DataFrame,
+                              'AAPL TIME_SERIES_DAILY_ADJUSTED')
         self.assertFalse(result.empty, 'AAPL TIME_SERIES_DAILY_ADJUSTED')
 
         # BTC from Cryptocompare
@@ -80,7 +81,8 @@ class TestPricing(unittest.TestCase):
         ticker_list = ['BTC', 'GBTC', 'IBM']
         for ticker in ticker_list:
             results = historical_prices(ticker)
-            self.assertIsInstance(results, pd.DataFrame, f'{ticker} - Auto historical')
+            self.assertIsInstance(results, pd.DataFrame,
+                                  f'{ticker} - Auto historical')
             self.assertFalse(results.empty, f'{ticker} - Auto historical')
 
     # =====================================
@@ -115,8 +117,7 @@ class TestPricing(unittest.TestCase):
 
     def test_aa_realtime(self):
         ticker_list = [('BTC', 'CURRENCY_EXCHANGE_RATE'),
-                       ('GBTC', 'GLOBAL_QUOTE'),
-                       ('AAPL', 'GLOBAL_QUOTE'),
+                       ('GBTC', 'GLOBAL_QUOTE'), ('AAPL', 'GLOBAL_QUOTE'),
                        ('ETH', 'CURRENCY_EXCHANGE_RATE'),
                        ('EUR', 'CURRENCY_EXCHANGE_RATE'),
                        ('USD', 'CURRENCY_EXCHANGE_RATE')]
@@ -127,8 +128,7 @@ class TestPricing(unittest.TestCase):
         ticker_list = [('BTC', 'DIGITAL_CURRENCY_DAILY'),
                        ('GBTC', 'TIME_SERIES_DAILY_ADJUSTED'),
                        ('AAPL', 'TIME_SERIES_DAILY_ADJUSTED'),
-                       ('ETH', 'DIGITAL_CURRENCY_DAILY'),
-                       ('EUR', 'FX_DAILY'),
+                       ('ETH', 'DIGITAL_CURRENCY_DAILY'), ('EUR', 'FX_DAILY'),
                        ('USD', 'FX_DAILY')]
         for ticker in ticker_list:
             historical(ticker=ticker[0], function=ticker[1])
@@ -142,17 +142,13 @@ class TestPricing(unittest.TestCase):
         self.assertNotEqual(api_key, None)
 
     def test_cc_realtime(self):
-        ticker_list = [('BTC', 'USD'),
-                       ('BTC', 'EUR'),
-                       ('ETH', 'BTC,USD,GBP'),
+        ticker_list = [('BTC', 'USD'), ('BTC', 'EUR'), ('ETH', 'BTC,USD,GBP'),
                        ('ETH', 'BRL')]
         for ticker in ticker_list:
             cc_realtime(ticker=ticker[0], fxs=ticker[1])
 
     def test_cc_historical(self):
-        ticker_list = [('BTC', 'USD'),
-                       ('BTC', 'EUR'),
-                       ('ETH', 'BRL')]
+        ticker_list = [('BTC', 'USD'), ('BTC', 'EUR'), ('ETH', 'BRL')]
         for ticker in ticker_list:
             cc_historical(ticker=ticker[0], fx=ticker[1])
 

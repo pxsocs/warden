@@ -50,7 +50,7 @@ function run_ajax() {
         },
         error: function (xhr, status, error) {
             $('#alerts').html("<div class='small alert alert-danger alert-dismissible fade show' role='alert'>An error occured while refreshing data. Check the ticker and try again." +
-                "<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button></div>")
+                "<button type='button' class='close' data-bs-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button></div>")
             console.log(status);
         }
     });
@@ -81,12 +81,12 @@ function handle_ajax_data(data) {
         $.each(data.cols, function (key_a, value_col) {
             if (value_col == "eoy") {
                 benchmark_table = benchmark_table +
-                    "<td class='text-right table-secondary redgreen'>" +
+                    "<td class='text-end table-secondary redgreen'>" +
                     (data.heatmap[value_col][value] * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 1, minimumFractionDigits: 1 }) + "%"
             } else {
                 if (data.heatmap[value_col][value] != 0) {
                     benchmark_table = benchmark_table +
-                        "<td class='text-right heatmap'>" +
+                        "<td class='text-end heatmap'>" +
                         (data.heatmap[value_col][value] * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 1, minimumFractionDigits: 1 }) + "%"
                 } else {
                     benchmark_table = benchmark_table +
@@ -124,12 +124,12 @@ function handle_ajax_data(data) {
         $.each(data.cols, function (key_a, value_col) {
             if (value_col == "eoy") {
                 benchmark_table = benchmark_table +
-                    "<td class='text-right table-secondary redgreen'>" +
+                    "<td class='text-end table-secondary redgreen'>" +
                     (data.heatmap_diff[value_col][value] * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 1, minimumFractionDigits: 1 }) + "%"
             } else {
                 if (data.heatmap[value_col][value] != 0) {
                     benchmark_table = benchmark_table +
-                        "<td class='text-right heatmap'>" +
+                        "<td class='text-end heatmap'>" +
                         (data.heatmap_diff[value_col][value] * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 1, minimumFractionDigits: 1 }) + "%"
                 } else {
                     benchmark_table = benchmark_table +

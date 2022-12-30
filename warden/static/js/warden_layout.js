@@ -16,15 +16,15 @@ $(document).ready(function () {
 
     setTimeout(function () { $('.alert-slideup').slideUp(1000) }, 7000);
 
-    // Updates BTC Price every 30 seconds
+    // Updates BTC Price every 10 seconds
     window.setInterval(function () {
         BTC_price();
         check_activity();
-    }, 30000);
+    }, 10000);
 
 
     $(function () {
-        $('[data-toggle="tooltip"]').tooltip()
+        $('[data-bs-toggle="tooltip"]').tooltip()
     })
 
     $('#myModal').on('shown.bs.modal', function () {
@@ -41,7 +41,7 @@ $(document).ready(function () {
         });
     });
 
-    $("#list_fx").click(function (e) {
+    $("#fiat_change").click(function (e) {
         $.ajax({
             type: "GET",
             dataType: 'json',
@@ -51,7 +51,7 @@ $(document).ready(function () {
                 current_path = window.location.pathname;
                 $.each(data, function (option) {
                     link = '/update_fx?code=' + option + '&redirect=' + current_path
-                    html = "<a class='dropdown-item fx_changer' href='" + link + "'>" + option + " | " + data[option] + "</a>"
+                    html = "<li><a class='dropdown-item fx_changer' href='" + link + "'>" + option + " | " + data[option] + "</a></li>"
                     $('#fx_sel').append(html);
                 });
             },
@@ -84,6 +84,7 @@ function BTC_price() {
                 $('#btc_fx').html(data['btc_fx'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 })).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
                 $('#btc_usd').html(data['btc_usd'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 })).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
             } else {
+                console.log("Error on FX request -- missing info")
                 $('#fx_cross').html(data);
             }
 
@@ -143,8 +144,8 @@ function test_tor() {
         success: function (data) {
             console.log("[Check Tor] ajax request: OK");
             if (data.status) {
-                html_tor = "<span style='color: lightgreen;' data-toggle='tooltip' data-placement='right' title='Tor Enabled (" + data.post_proxy.origin + ") Ping time " + data.post_proxy_ping + "'><i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor running</span>"
-                $('[data-toggle="tooltip"]').tooltip()
+                html_tor = "<span style='color: lightgreen;' data-bs-placement='right' title='Tor Enabled (" + data.post_proxy.origin + ") Ping time " + data.post_proxy_ping + "'><i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor running</span>"
+                $('[data-bs-toggle="tooltip"]').tooltip()
             } else {
                 html_tor = "<span class='text-warning'><i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled</span>"
             }

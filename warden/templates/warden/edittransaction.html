@@ -1,24 +1,15 @@
 {% extends "warden/warden_layout.html" %}
 {% block content %}
-
 <div class="content-section">
-
     <form method="POST" action="" enctype="multipart/form-data">
         <!-- Important to include the below for added security -->
         {{ form.hidden_tag() }}
         <fieldset class="form-group">
-
             <legend class="border-bottom mb-4">Edit Transaction</legend>
-
             <div class="form-group" id="trade_date">
-
                 {{ form.trade_date.label(class="form-control-label") }}
                 {{ form.trade_date(class="form-control form-control-sm")}}
-
             </div>
-
-
-
             <div class="form-group" id="trade_asset_ticker">
                 {{ form.trade_asset_ticker.label(class="form-control-label") }}
 
@@ -32,17 +23,11 @@
                 {% else %}
                 {{ form.trade_asset_ticker(class="form-control form-control-lg ui-widget", id="tickerauto") }}
                 {% endif %}
-
-
             </div>
-
             <div class="form-group" id="trade_operation">
-
                 {{ form.trade_operation.label(class="form-control-label") }}
                 {{ form.trade_operation(class="form-control form-control-sm", id="BSDW")}}
-
             </div>
-
             <div class="form-group" id="trade_quantity">
                 {{ form.trade_quantity.label(class="form-control-label") }}
 
@@ -56,82 +41,67 @@
                 {% else %}
                 {{ form.trade_quantity(class="form-control form-control-sm", autocomplete="off", id="quant") }}
                 {% endif %}
-
             </div>
-
             <div class="form-group" id="trade_currency">
-
                 {{ form.trade_currency.label(class="form-control-label") }}
                 {{ form.trade_currency(class="form-control form-control-sm", autocomplete="off", id="fx")}}
-
             </div>
-
-
             <div class="form-group" id="trade_price">
-
                 {{ form.trade_price.label(class="form-control-label") }}
                 {{ form.trade_price(class="form-control form-control-sm", autocomplete="off", id="price")}}
                 <small class="form-text text-info">Price quoted in the Trade Currency</small>
-
             </div>
-
             <div class="form-group" id="trade_fees">
-
                 {{ form.trade_fees.label(class="form-control-label") }}
                 {{ form.trade_fees(class="form-control form-control-sm", autocomplete="off", id="fees")}}
                 <small class="form-text text-info">Fees quoted in the Trade Currency</small>
             </div>
-
             <div class="form-group" id="cash_value">
-
                 {{ form.cash_value.label(class="form-control-label") }}
                 {{ form.cash_value(class="form-control form-control-sm", id="cash", readonly=true)}}
                 <small class="form-text text-info">Fiat Cash Value quoted in the Trade Currency</small>
             </div>
-
             <div class="form-group" id="trade_account">
-
                 {{ form.trade_account.label(class="form-control-label") }}
                 {{ form.trade_account(class="form-control form-control-sm")}}
                 <small class="form-text text-muted">This is the account where your Crypto is held</small>
-                <small class="form-text text-info">Don't see your account here? <a href="\tradeaccounts">Click here to
-                        add accounts to the list.</a></small>
+                <small class="form-text text-info">Don't see your account here?
+                    <a href="\tradeaccounts">
+                        Click here to
+                        add accounts to the list.
+                    </a>
+                </small>
             </div>
-
-
-
             <div class="form-group" id="trade_notes">
-
                 {{ form.trade_notes.label(class="form-control-label") }}
                 {{ form.trade_notes(class="form-control form-control-sm", autocomplete="off")}}
-                <small class="form-text text-muted">Use this field to include any notes or tags to help you identify or
-                    classify this transaction</small>
-
+                <small class="form-text text-muted">
+                    Use this field to include any notes or tags to help you identify or
+                    classify this transaction
+                </small>
             </div>
-
-
-
         </fieldset>
         <div class="form-group">
             {{ form.submit(class="btn btn-block btn-lg btn-info ")}}
         </div>
-
     </form>
-    <br><br><br>
-
-    <div class="text-right">
+    <br>
+    <br>
+    <br>
+    <div class="text-end">
         <a class="btn btn-danger" href="/deltrade?id={{id}}" role="button">Delete Trade (no undo)</a>
     </div>
-
     {% for field in form.errors %}
     {% for error in form.errors[field] %}
     <div class="error text-danger">FORM ERROR: {{ error }} on field: {{field}}</div>
     {% endfor %}
     {% endfor %}
-
 </div>
-<br><br><br><br><br>
+<br>
+<br>
+<br>
+<br>
+<br>
 <!-- page own JavaScript -->
 <script src="{{url_for('warden.static', filename='js/newtrade.js')}}"></script>
-
 {% endblock content %}

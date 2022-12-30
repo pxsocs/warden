@@ -1,0 +1,24 @@
+
+<div class="row">
+  <div class="text-start text-light">Allocation over time
+  <span class="float-end"
+    >from {{data.METADATA.min_date.strftime("%B, %Y")}} to
+    {{data.METADATA.max_date.strftime("%B, %Y")}}</div>
+
+<div class="text-end" style="padding-top: 10px; padding-bottom: 5px;">
+  {%for button in data.METADATA.allocations%}
+  {%if button == 0%}
+  <button class="btn btn-outline-success alloc-butt" onclick="change_allocation(0, this)"> No ₿ Allocation </button>
+  {%else%}
+  <button class="btn btn-outline-light alloc-butt" onclick="change_allocation({{button}}, this)"> (+) {{(button * 100) | jformat(2)}}% ₿ Allocation </button>
+  {%endif%}
+
+  {%endfor%}
+</div>
+
+  <div class="col-12 text-center">
+    <div class="chart-section">
+      <div id="allocation_chart" style="min-width: 100%; height: 500px"></div>
+    </div>
+  </div>
+</div>

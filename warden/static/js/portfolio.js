@@ -12,6 +12,9 @@ $(document).ready(function () {
     red_green()
     $('.lifo_costtable').toggle();
 
+    // If set to true the mempool api can be accessed from the mempool public server
+    window.mempool_public = false;
+    $('#public_private_mempool').hide();
 
     $('#dismiss_balances').click(function () {
         $('#dismiss_balances').html('Please wait...');
@@ -29,7 +32,7 @@ $(document).ready(function () {
                 console.log(error);
                 alerts_html = $('#alerts').html();
                 $('#alerts').html(alerts_html + "<div class='small alert alert-danger alert-dismissible fade show' role='alert'>An error occured while refreshing data." +
-                    "<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button></div>")
+                    "<button type='button' class='close' data-bs-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button></div>")
             }
         });
     });
@@ -47,19 +50,18 @@ $(document).ready(function () {
     // set run_once to true so some functions at ajax are only executed once
     run_once = true;
     realtime_table();
-    getNodeInfo();
     update_mempool();
 
     // Popover management
     // Default popover enabler from Bootstrap
-    $('[data-toggle="popover"]').popover()
+    $('[data-bs-toggle="popover"]').popover()
 
     // If clicked outside of popover, it closes
     $('.popover-dismiss').popover({
         trigger: 'focus'
     })
     // Start this function whenever a popup opens
-    $('[data-toggle="popover"]').on('shown.bs.popover', onPopoverHtmlLoad)
+    $('[data-bs-toggle="popover"]').on('shown.bs.popover', onPopoverHtmlLoad)
 
     $('.edit_tx_button').click(function () {
         this_var = $(this)
@@ -96,6 +98,7 @@ $(document).ready(function () {
 
 
     function onPopoverHtmlLoad() {
+        console.log("Loading Popover data")
         ticker = $(this).data('ticker')
         this_var = $(this)
         accounting = $(this).data('accounting')
@@ -116,10 +119,10 @@ $(document).ready(function () {
                                     <td>
                                         Operation
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                         Quantity
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + data.user.name_plural + `
                                     </td>
                                 </tr>
@@ -127,10 +130,10 @@ $(document).ready(function () {
                                 <td>
                                     Deposits
                                     </td>
-                                <td class="text-right">
+                                <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].trade_quantity_B, 4) + `
                                     </td>
-                                <td class="text-right">
+                                <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].cash_value_fx_B, 0, fx) + `
                                     </td>
                             </tr>
@@ -139,10 +142,10 @@ $(document).ready(function () {
                                 <td>
                                     Withdraws
                                     </td>
-                                <td class="text-right">
+                                <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].trade_quantity_S, 4) + `
                                     </td>
-                                <td class="text-right">
+                                <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].cash_value_fx_S, 0, fx) + `
                                     </td>
                             </tr>
@@ -151,10 +154,10 @@ $(document).ready(function () {
                             <td>
                                 Total
                                 </td>
-                            <td class="text-right"> <span class="numberCircle">&nbsp1&nbsp</span>
+                            <td class="text-end"> <span class="numberCircle">&nbsp1&nbsp</span>
                                 ` + formatNumber(data.positions[ticker][accounting + '_quantity'], 4) + `
                                 </td>
-                            <td class="text-right"> <span class="numberCircle">&nbsp2&nbsp</span>
+                            <td class="text-end"> <span class="numberCircle">&nbsp2&nbsp</span>
                                 ` + formatNumber(data.positions[ticker].cash_value_fx, 0, fx) + `
 
                                 </td>
@@ -170,7 +173,7 @@ $(document).ready(function () {
                                     <td>
                                     ` + accounting + ` Average Cost
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker][accounting + '_average_cost'], 2, fx) + `
                                     <span class="numberCircle">&nbsp9&nbsp</span>
                                     </td>
@@ -180,7 +183,7 @@ $(document).ready(function () {
                                     <td>
                                     Unrealized PnL = ( <span class="numberCircle">&nbsp3&nbsp</span> - <span class="numberCircle">&nbsp9&nbsp</span> ) X <span class="numberCircle">&nbsp1&nbsp</span>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker][accounting + '_unreal'], 0, fx) + `
                                     <span class="numberCircle">&nbsp10&nbsp</span>
                                     </td>
@@ -190,7 +193,7 @@ $(document).ready(function () {
                                     <td>
                                     Unrealized Break Even = <span class="numberCircle">&nbsp3&nbsp</span> - ( <span class="numberCircle">&nbsp10&nbsp</span> &#xF7 <span class="numberCircle">&nbsp1&nbsp</span> )
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker][accounting + '_unrealized_be'], 2, fx) + `
 
                                     </td>
@@ -200,7 +203,7 @@ $(document).ready(function () {
                                     <td>
                                     Realized PnL = ( <span class="numberCircle">&nbsp7&nbsp</span> - <span class="numberCircle">&nbsp10&nbsp</span> )
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker][accounting + '_real'], 0, fx) + `
 
                                     </td>
@@ -221,7 +224,7 @@ $(document).ready(function () {
                                     <td>
                                     Open Position
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker][accounting + '_quantity'], 4) + `
                                     <span class="numberCircle">&nbsp1&nbsp</span>
                                     </td>
@@ -230,7 +233,7 @@ $(document).ready(function () {
                                     <td>
                                      Price
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                         ` + formatNumber(data.positions[ticker].price, 2, fx) + `
                                         <span class="numberCircle">&nbsp3&nbsp</span>
                                     </td>
@@ -239,7 +242,7 @@ $(document).ready(function () {
                                     <td>
                                     Current Market Value = <span class="numberCircle">&nbsp1&nbsp</span> X <span class="numberCircle">&nbsp3&nbsp</span>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                         ` + formatNumber(data.positions[ticker].position_fx, 0, fx) + `
                                         <span class="numberCircle">&nbsp4&nbsp</span>
                                     </td>
@@ -248,7 +251,7 @@ $(document).ready(function () {
                                     <td>
                                     Total Cash Flow
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].cash_value_fx, 0, fx) + `
                                     <span class="numberCircle">&nbsp2&nbsp</span>
                                     </td>
@@ -258,7 +261,7 @@ $(document).ready(function () {
                                     <td>
                                     Gross PnL = <span class="numberCircle">&nbsp4&nbsp</span> - <span class="numberCircle">&nbsp2&nbsp</span>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].pnl_gross, 0, fx) + `
                                     <span class="numberCircle">&nbsp5&nbsp</span>
                                     </td>
@@ -268,7 +271,7 @@ $(document).ready(function () {
                                     <td>
                                     Fees
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].trade_fees_fx, 0, fx) + `
                                     <span class="numberCircle">&nbsp6&nbsp</span>
                                     </td>
@@ -278,7 +281,7 @@ $(document).ready(function () {
                                     <td>
                                     Net PnL = <span class="numberCircle">&nbsp5&nbsp</span> - <span class="numberCircle">&nbsp6&nbsp</span>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].pnl_net, 0, fx) + `
                                     <span class="numberCircle">&nbsp7&nbsp</span>
                                     </td>
@@ -288,7 +291,7 @@ $(document).ready(function () {
                                     <td>
                                     Break Even price = ( <span class="numberCircle">&nbsp2&nbsp</span> + <span class="numberCircle">&nbsp6&nbsp</span> ) &#xF7 <span class="numberCircle">&nbsp1&nbsp</span>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                     ` + formatNumber(data.positions[ticker].breakeven, 2, fx) + `
                                     <span class="numberCircle">&nbsp8&nbsp</span>
                                     </td>
@@ -303,8 +306,8 @@ $(document).ready(function () {
 
                     `
 
-                this_var.attr('data-content', pop_html).data('bs.popover').setContent()
-                $('[data-toggle="popover"]').popover({
+                this_var.attr('data-bs-content', pop_html).data('bs.popover').setContent()
+                $('[data-bs-toggle="popover"]').popover({
 
                     html: true
                 })
@@ -321,7 +324,6 @@ $(document).ready(function () {
     }, 5000);
 
     window.setInterval(function () {
-        getNodeInfo();
         update_mempool();
     }, 60000);
 
@@ -400,61 +402,77 @@ $(document).ready(function () {
 });
 
 function update_mempool() {
-    $.ajax({
-        type: 'GET',
-        url: '/mempool_json',
-        dataType: 'json',
-        success: function (data) {
-            if (data['error'] == 'Mempool.space seems to be unavailable. Maybe node is still synching.') {
-                $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occured while connecting to Mempool.space at <a href='" + data['mp_url'] + "' target='_blank'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
-            } else if (data['error'] == null) {
-                const currentTimeStamp = new Date().getTime();
-                $('#fastest_fee').html(formatNumber(data['mp_fee']['fastestFee'], 0, '', ' sats/Vb'));
-                $('#30min_fee').html(formatNumber(data['mp_fee']['halfHourFee'], 0, '', ' sats/Vb'));
-                $('#1hr_fee').html(formatNumber(data['mp_fee']['hourFee'], 0, '', ' sats/Vb'));
-                // Block 0
-                time_ago_0 = timeDifference(currentTimeStamp, data['mp_blocks'][0]['timestamp'] * 1000)
-                $('#time_0').html(time_ago_0);
-                $('#height_0').html(formatNumber(data['mp_blocks'][0]['height'], 0, ''));
-                $('#txs_0').html(formatNumber(data['mp_blocks'][0]['tx_count'], 0, ''));
-                $('#size_0').html(formatNumber(data['mp_blocks'][0]['size'] / 1000, 0, '', ' MB'));
-                // Block 1
-                time_ago_1 = timeDifference(currentTimeStamp, data['mp_blocks'][1]['timestamp'] * 1000)
-                $('#time_1').html(time_ago_1);
-                $('#height_1').html(formatNumber(data['mp_blocks'][1]['height'], 0, ''));
-                $('#txs_1').html(formatNumber(data['mp_blocks'][1]['tx_count'], 0, ''));
-                $('#size_1').html(formatNumber(data['mp_blocks'][1]['size'] / 1000, 0, '', ' MB'));
-                // Block 2
-                time_ago_2 = timeDifference(currentTimeStamp, data['mp_blocks'][2]['timestamp'] * 1000)
-                $('#time_2').html(time_ago_2);
-                $('#height_2').html(formatNumber(data['mp_blocks'][2]['height'], 0, ''));
-                $('#txs_2').html(formatNumber(data['mp_blocks'][2]['tx_count'], 0, ''));
-                $('#size_2').html(formatNumber(data['mp_blocks'][2]['size'] / 1000, 0, '', ' MB'));
-                // Block 3
-                time_ago_3 = timeDifference(currentTimeStamp, data['mp_blocks'][3]['timestamp'] * 1000)
-                $('#time_3').html(time_ago_3);
-                $('#height_3').html(formatNumber(data['mp_blocks'][3]['height'], 0, ''));
-                $('#txs_3').html(formatNumber(data['mp_blocks'][3]['tx_count'], 0, ''));
-                $('#size_3').html(formatNumber(data['mp_blocks'][3]['size'] / 1000, 0, '', ' MB'));
-                // Block 4
-                time_ago_4 = timeDifference(currentTimeStamp, data['mp_blocks'][4]['timestamp'] * 1000)
-                $('#time_4').html(time_ago_4);
-                $('#height_4').html(formatNumber(data['mp_blocks'][4]['height'], 0, ''));
-                $('#txs_4').html(formatNumber(data['mp_blocks'][4]['tx_count'], 0, ''));
-                $('#size_4').html(formatNumber(data['mp_blocks'][4]['size'] / 1000, 0, '', ' MB'));
-                // Block 5
-                time_ago_5 = timeDifference(currentTimeStamp, data['mp_blocks'][5]['timestamp'] * 1000)
-                $('#time_5').html(time_ago_5);
-                $('#height_5').html(formatNumber(data['mp_blocks'][5]['height'], 0, ''));
-                $('#txs_5').html(formatNumber(data['mp_blocks'][5]['tx_count'], 0, ''));
-                $('#size_5').html(formatNumber(data['mp_blocks'][5]['size'] / 1000, 0, '', ' MB'));
 
-                $('#mempool_source').html('<a href=' + data['mp_url'] + '>Source : ' + data['mp_url'] + '</a>')
-            } else {
-                $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occured while connecting to Mempool.space at <a href='" + data['mp_url'] + "' target='_blank'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
-            }
+
+    // Updated every 1 second
+    interval_ms = 1000;
+    const interval = setInterval(function () {
+        if (window.mempool_public == false) {
+            url = '/mempool_json?private=true'
+        } else {
+            url = '/mempool_json'
         }
-    });
+
+        $.ajax({
+            type: 'GET',
+            url: url,
+            dataType: 'json',
+            success: function (data) {
+                if (data['error'] == 'Mempool.space API seems to be unavailable. Maybe node is still synching.') {
+                    // Try the public mempool.space endpoint
+                    window.mempool_public = true
+                    // $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occured while connecting to Mempool.space at <a href='" + data['mp_url'] + "' target='_blank'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
+
+                } else if (data['error'] == null) {
+                    const currentTimeStamp = new Date().getTime();
+                    $('#fastest_fee').html(formatNumber(data['mp_fee']['fastestFee'], 0, '', ' sats/Vb'));
+                    $('#30min_fee').html(formatNumber(data['mp_fee']['halfHourFee'], 0, '', ' sats/Vb'));
+                    $('#1hr_fee').html(formatNumber(data['mp_fee']['hourFee'], 0, '', ' sats/Vb'));
+                    // Block 0
+                    time_ago_0 = timeDifference(currentTimeStamp, data['mp_blocks'][0]['timestamp'] * 1000)
+                    $('#time_0').html(time_ago_0);
+                    $('#height_0').html(formatNumber(data['mp_blocks'][0]['height'], 0, ''));
+                    $('#latest_btc_block').html(formatNumber(data['mp_blocks'][0]['height'], 0, ''));
+                    $('#txs_0').html(formatNumber(data['mp_blocks'][0]['tx_count'], 0, ''));
+                    $('#size_0').html(formatNumber(data['mp_blocks'][0]['size'] / 1000, 0, '', ' MB'));
+                    // Block 1
+                    time_ago_1 = timeDifference(currentTimeStamp, data['mp_blocks'][1]['timestamp'] * 1000)
+                    $('#time_1').html(time_ago_1);
+                    $('#height_1').html(formatNumber(data['mp_blocks'][1]['height'], 0, ''));
+                    $('#txs_1').html(formatNumber(data['mp_blocks'][1]['tx_count'], 0, ''));
+                    $('#size_1').html(formatNumber(data['mp_blocks'][1]['size'] / 1000, 0, '', ' MB'));
+                    // Block 2
+                    time_ago_2 = timeDifference(currentTimeStamp, data['mp_blocks'][2]['timestamp'] * 1000)
+                    $('#time_2').html(time_ago_2);
+                    $('#height_2').html(formatNumber(data['mp_blocks'][2]['height'], 0, ''));
+                    $('#txs_2').html(formatNumber(data['mp_blocks'][2]['tx_count'], 0, ''));
+                    $('#size_2').html(formatNumber(data['mp_blocks'][2]['size'] / 1000, 0, '', ' MB'));
+                    // Block 3
+                    time_ago_3 = timeDifference(currentTimeStamp, data['mp_blocks'][3]['timestamp'] * 1000)
+                    $('#time_3').html(time_ago_3);
+                    $('#height_3').html(formatNumber(data['mp_blocks'][3]['height'], 0, ''));
+                    $('#txs_3').html(formatNumber(data['mp_blocks'][3]['tx_count'], 0, ''));
+                    $('#size_3').html(formatNumber(data['mp_blocks'][3]['size'] / 1000, 0, '', ' MB'));
+                    // Block 4
+                    time_ago_4 = timeDifference(currentTimeStamp, data['mp_blocks'][4]['timestamp'] * 1000)
+                    $('#time_4').html(time_ago_4);
+                    $('#height_4').html(formatNumber(data['mp_blocks'][4]['height'], 0, ''));
+                    $('#txs_4').html(formatNumber(data['mp_blocks'][4]['tx_count'], 0, ''));
+                    $('#size_4').html(formatNumber(data['mp_blocks'][4]['size'] / 1000, 0, '', ' MB'));
+                    // Block 5
+                    time_ago_5 = timeDifference(currentTimeStamp, data['mp_blocks'][5]['timestamp'] * 1000)
+                    $('#time_5').html(time_ago_5);
+                    $('#height_5').html(formatNumber(data['mp_blocks'][5]['height'], 0, ''));
+                    $('#txs_5').html(formatNumber(data['mp_blocks'][5]['tx_count'], 0, ''));
+                    $('#size_5').html(formatNumber(data['mp_blocks'][5]['size'] / 1000, 0, '', ' MB'));
+
+                    $('#mempool_source').html('<span class="float-end"><a href=' + data['mp_url'] + ' target="_blank">' + data['mp_url'] + '</a></span>')
+                } else {
+                    $('#mempool_body').html("<span><i class='text-warning fas fa-heart-broken'></i>&nbsp&nbspAn error occurred while connecting to Mempool.space at <a href='" + data['mp_url'] + "' target='_blank'>" + data['mp_url'] + "</a></span><br><span class='small text-muted'>" + data['error'] + '</span>');
+                }
+            }
+        });
+    }, interval_ms);
 }
 
 
@@ -599,52 +617,7 @@ function realtime_table() {
 
 
 
-function getNodeInfo() {
-    // GET latest Bitcoin Block Height
-    $.ajax({
-        type: 'GET',
-        url: '/specter',
-        dataType: 'json',
-        success: function (data) {
-            $('#latest_btc_block').html(data['bitcoin_core_data']['Blocks count']);
-            $('#current_block').html(data['bitcoin_core_data']['Blocks count']);
-            $('#size_on_disk').html(data['bitcoin_core_data']['Size on disk']);
-            $('#difficulty').html(data['bitcoin_core_data']['Difficulty']);
-            $('#specter_refresh').html(data['last_update']);
-            const currentTimeStamp = new Date().getTime();
-            last_up_specter = new Date(data['last_update'])
-            specter_difference = timeDifference(currentTimeStamp, last_up_specter)
 
-            if (specter_difference.indexOf('seconds') != -1) {
-                color = 'success'
-            } else if (specter_difference.indexOf('minutes') != -1) {
-                color = 'warning'
-            } else {
-                color = 'danger'
-            }
-            ago_string = "<span class='text-" + color + "'>" + specter_difference + "</span>"
-
-            $('#specter_refresh_ago').html(ago_string);
-
-            $('#core_version').html(data['bitcoin_core_data']['Bitcoin Core Version']);
-            $('#connection_count').html(data['bitcoin_core_data']['Connections count']);
-            $('#mempool_size').html(data['bitcoin_core_data']['Mempool Size']);
-            $('#uptime').html(data['bitcoin_core_data']['Node uptime']);
-            if ('specter_health' in data) {
-                $("#specter_health").html(data['specter_health']);
-            } else {
-                $("#specter_health").html('Could not check [Retrying..]')
-            }
-
-        },
-        error: function (xhr, status, error) {
-            console.log(status);
-            console.log(error);
-            $('#latest_btc_block').html("[Error]");
-            console.log("Error: failed to download node data")
-        }
-    });
-};
 
 
 // NAV CHART
@@ -742,7 +715,7 @@ function stackChart(data) {
             enabled: false
         },
         rangeSelector: {
-            selected: 4,
+            selected: 5,
             style: {
                 fontSize: '10px'
             }
@@ -767,8 +740,6 @@ function stackChart(data) {
             title: {
                 text: 'Stack Size'
             },
-            startOnTick: false,
-            endOnTick: false,
         },
         legend: {
             enabled: false
@@ -782,10 +753,7 @@ function stackChart(data) {
                         x2: 0,
                         y2: 1
                     },
-                    stops: [
-                        [0, Highcharts.getOptions().colors[0]],
-                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-                    ]
+
                 },
                 marker: {
                     radius: 2
@@ -812,7 +780,7 @@ function stackChart(data) {
             data: Object.keys(data).map((key) => [((key * 1)), data[key]]),
             turboThreshold: 0,
             tooltip: {
-                pointFormat: "Stack Size: {point.y:,.0f} ₿"
+                pointFormat: "Stack Size: {point.y:,.8f} ₿"
             }
         }]
     });

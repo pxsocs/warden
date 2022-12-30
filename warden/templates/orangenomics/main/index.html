@@ -1,0 +1,164 @@
+{% extends "main/layout.html" %} {% block content %}
+
+<link
+  rel="stylesheet"
+  href="{{url_for('static', filename='css/video_container.css')}}"
+/>
+
+<div class="video-container">
+  <video
+    autoplay
+    muted
+    src="{{url_for('static', filename='videos/EarthMoonZoom.mov')}}"
+  ></video>
+</div>
+
+<div class="row">
+  <div class="col-12 text-center">
+    <h1 class="display-5 fw-bold">{{orangenomics | safe}}</h1>
+    <p class="lead mb-4 text-light">portfolio analytics</p>
+  </div>
+</div>
+
+<div id="login_box" class="row content-section login-box">
+  <div class="col-12 text-start">
+    <form
+      class="d-flex flex-column form-container w-100"
+      method="POST"
+      action=""
+    >
+      {{ form.hidden_tag() }}
+
+      <fieldset class="form-group">
+        <div class="form-group">
+          {% if form.username.errors %} {{ form.username(class="form-control
+          form-control is-invalid ") }}
+          <div class="invalid-feedback">
+            {% for error in form.username.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+          {% else %} {{ form.username(class="form-control form-control signin")
+          }} {% endif %}
+        </div>
+
+        <div class="form-group">
+          {% if form.password.errors %} {{ form.password(class="form-control
+          form-control w-100 is-invalid") }}
+          <div class="invalid-feedback">
+            {% for error in form.password.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+          {% else %} {{ form.password(class="form-control w-100 form-control
+          signin") }} {% endif %}
+        </div>
+        <span class="text-small float-end">
+          <a class="text-small text-muted" href="#">forgot password?</a></span
+        >
+        <br />
+
+        <div class="row">
+          <div class="col-12 d-grid gap-2">
+            {{ form.submit(class="btn btn-outline-light border-orange")}}
+          </div>
+        </div>
+      </fieldset>
+    </form>
+    <div class="row" style="padding-top: 30px">
+      <div class="col-6 d-grid gap-2">
+        <button
+          id="create_account"
+          class="btn btn-outline-light border-orange"
+          href="#"
+        >
+          <i class="fa-solid fa-user-plus text-orange"></i>&nbsp;&nbsp; create
+          account
+        </button>
+      </div>
+      <div class="col-6 d-grid gap-2">
+        <button class="btn btn-outline-light border-orange" id="login_anon">
+          <i class="fa-solid fa-user-secret text-orange"></i>
+          &nbsp;&nbsp; skip login
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="signup_box" class="row content-section login-box">
+  <div class="col-12 text-start">
+    <h4>Signup
+    </h4>
+    <div>
+    <span class="text-orange text-light">we encourage you not to use your real name or email address</span>
+    </div>
+    <form
+      class="d-flex flex-column form-container w-100"
+      style="padding-top: 30px"
+      method="POST"
+      action=""
+    >
+      <!-- Important to include the below for added security -->
+      {{ signup_form.hidden_tag() }}
+      <fieldset class="form-group">
+        <div class="form-group">
+          {% if signup_form.username.errors %} {{
+          signup_form.username(class="form-control form-control is-invalid
+          signin") }}
+          <div class="invalid-feedback">
+            {% for error in signup_form.username.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+          {% else %} {{ signup_form.username(class="form-control form-control
+          signin") }} {% endif %}
+        </div>
+
+        <div class="form-group">
+          {% if signup_form.password.errors %} {{
+          signup_form.password(class="form-control form-control is-invalid
+          signin") }}
+          <div class="invalid-feedback">
+            {% for error in signup_form.password.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+          {% else %} {{ signup_form.password(class="form-control form-control
+          signin") }} {% endif %}
+        </div>
+
+        <div class="form-group">
+          {% if signup_form.confirm_password.errors %} {{
+          signup_form.confirm_password(class="form-control form-control
+          is-invalid signin") }}
+          <div class="invalid-feedback">
+            {% for error in signup_form.confirm_password.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+          {% else %} {{ signup_form.confirm_password(class="form-control
+          form-control signin") }} {% endif %}
+        </div>
+      </fieldset>
+
+      <div class="row" style="padding-top: 10px">
+        <div class="col-8 d-grid gap-2">
+          <div class="form-group">
+            {{ signup_form.submit(class="btn btn-outline-light border-orange")}}
+          </div>
+        </div>
+        </form>
+        <div class="col-4 d-grid gap-2">
+          <button id="back_button" class="btn btn-outline-light">
+            go back
+          </button>
+        </div>
+      </div>
+
+  </div>
+</div>
+
+<script src="{{url_for('static', filename='js/login.js')}}"></script>
+
+{% endblock content %}

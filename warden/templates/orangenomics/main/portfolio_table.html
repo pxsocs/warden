@@ -1,0 +1,21 @@
+<!-- send jinja2 portfolio variable to javascript -->
+<script>
+  var portfolio = {{portfolio | tojson | safe}};
+</script>
+<table class="table table-server text-white">
+    <thead>
+        <tr>
+            <td style="width: 7%"></td>
+            <td class="text-start" id="ticker">ticker</td>
+            <td id="name" class="text-start">asset</td>
+            <td id="name" class="text-end">weight</td>
+            <td style="width: 7%"></td>
+        </tr>
+    </thead>
+    <tbody id="portfolio_body">
+        <tr>
+            <td class="loadanim" colspan="100%">loading...</td>
+        </tr>
+    </tbody>
+</table>
+<script src="{{url_for('static', filename='orangenomics/js/portfolio_consts.js')}}"></script>

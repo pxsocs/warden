@@ -1,0 +1,117 @@
+{% extends "orangenomics/main/layout_logged_in.html" %} {% block orange_content %}
+<script src="{{url_for('static', filename='orangenomics/js/analyze.js')}}"></script>
+<script>
+  var data = {{data_json | safe}};
+</script>
+<ul class="nav nav-tabs align-self-end text-super-small text-light">
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#overview">
+            <i class="fa-solid fa-comments-dollar"></i>
+            &nbsp;&nbsp;analysis
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#summary">
+            <i class="fa-solid fa-chart-bar"></i>
+            &nbsp;&nbsp;summary
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#results">
+            <i class="fa-solid fa-chart-bar"></i>
+            &nbsp;&nbsp;overview
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#allocation_tab">
+            <i class="fa-solid fa-chart-line"></i>
+            &nbsp;&nbsp;allocation
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#ranked_tab">
+            <i class="fa-solid fa-trophy"></i>
+            &nbsp;&nbsp;annual
+            <br>
+            rank
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#asset_r_tab">
+            <i class="fa-solid fa-chart-line"></i>
+            &nbsp;&nbsp;asset
+            <br>
+            returns
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#sim_r_tab">
+            <i class="fa-solid fa-chart-line"></i>
+            &nbsp;&nbsp;sim
+            <br>
+            returns
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#corr_tab">
+            <i class="fa-solid fa-table-cells"></i>
+            &nbsp;&nbsp;correlation
+            <br>
+            matrix
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#rolling_corr_tab">
+            <i class="fa-solid fa-table-cells"></i>
+            &nbsp;&nbsp;Rolling
+            <br>
+            Correlation
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#scatter_tab">
+            <i class="fa-solid fa-braille"></i>
+            &nbsp;&nbsp;scatter
+            <br>
+            plots
+        </a>
+    </li>
+</ul>
+<div class="container-fluid">
+    <div class="tab-content">
+        <div role="tabpanel" class="tab-pane fade" id="overview">
+            {% include 'orangenomics/main/timeline.html' %}
+        </div>
+        <div role="tabpanel" class="tab-pane active" id="summary">
+            {% include 'orangenomics/charts/simulation_summary.html' %}
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="results">
+            {% include 'orangenomics/charts/simulation_results.html' %}
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="allocation_tab">
+            {% include
+      'orangenomics/charts/allocation_results.html' %}
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="ranked_tab">
+            {% include
+      'orangenomics/charts/ranked_results.html' %}
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="asset_r_tab">
+            {% include 'orangenomics/charts/asset_returns.html' %}
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="sim_r_tab">
+            {% include 'orangenomics/charts/simulation_returns.html' %}
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="corr_tab">
+            {% include 'orangenomics/charts/correlation_matrix.html' %}
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="rolling_corr_tab">
+            {% include 'orangenomics/charts/rolling_correlation.html' %}
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="scatter_tab">
+            {% include 'orangenomics/charts/scatter_plots.html'%}
+        </div>
+    </div>
+</div>
+</div>
+{%endblock orange_content %}

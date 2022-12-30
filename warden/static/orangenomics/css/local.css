@@ -1,0 +1,356 @@
+@import url("https://fonts.googleapis.com/css?family=Roboto");
+@import url("https://fonts.googleapis.com/css?family=Anton");
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: Roboto;
+}
+
+h3 {
+  align-items: bottom !important;
+}
+
+.text-large {
+  font-size: 150%;
+}
+
+.text-60-small {
+  font-size: 60%!important;
+}
+
+.text-super-small {
+  font-size: 12px;
+  font-weight: lighter;
+  vertical-align: text-bottom;
+}
+
+.text-small {
+  font-size: 90%;
+}
+
+.text-strong {
+  font-weight: bold;
+}
+
+.text-brown {
+  color: #8c5a2e;
+}
+
+.text-yellow {
+  color: #ffc800 !important;
+}
+
+.text-orange {
+  color: #fd7e14 !important;
+}
+
+.bg-steel {
+  background-color: #121212;
+}
+
+.text-white {
+  color: #fff;
+}
+
+.text-light {
+  font-family: system-ui;
+  font-weight: lighter;
+}
+
+.border-orange {
+  border-color: #fd7e14 !important;
+}
+
+.bg-error {
+  background: #f25b51 !important;
+}
+
+.content-section {
+  background: #121212;
+  opacity: 0.8;
+  padding: 10px 10px 10px 10px;
+  border: 1px solid #ffffff;
+  border-left: 6px solid #ffffff;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.chart-heading {
+  background: #fd7e14;
+  color: #ffffff;
+}
+
+.chart-section {
+  background: #fff;
+  padding: 10px 10px;
+  border: 1px solid #b3b3b3;
+  border-left: 6px solid #b3b3b3;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.signin {
+  letter-spacing: 2px;
+  transition: all 0.3s ease;
+  background: #222;
+  border-bottom: #fff solid 0.8px;
+}
+
+.url-clean {
+  font-size: inherit;
+  font-weight: inherit;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  word-break: keep-all;
+  white-space: nowrap!important;
+  cursor: pointer;
+}
+
+.screen-centered {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.login-box {
+  width: 70%;
+  margin-left: 15%;
+}
+
+.table-condensed {
+  color: inherit;
+  width: 100%;
+  font-size: 70%;
+  border: none !important;
+  border-spacing: 0px !important;
+  border-collapse: collapse !important;
+}
+
+.table-condensed > :not(caption) > * > * {
+    padding: 0.3rem 0.3rem !important;
+}
+
+pre {
+  font-family: monospace;
+}
+
+.codetext {
+  color: darkgreen;
+  font-family: monospace;
+  font-size: 80%;
+}
+
+a {
+  color: #024794;
+}
+
+.loadanim {
+  animation: text-shadow 1s ease-in-out infinite;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+@keyframes text-shadow {
+  0% {
+    transform: translateY(0);
+    text-shadow: 0 0 0 #0c2ffb, 0 0 0 #2cfcfd, 0 0 0 #fb203b, 0 0 0 #fefc4b;
+  }
+
+  20% {
+    transform: translateY(-1em);
+    text-shadow: 0 0.125em 0 #0c2ffb, 0 0.25em 0 #2cfcfd, 0 -0.125em 0 #fb203b,
+      0 -0.25em 0 #fefc4b;
+  }
+
+  40% {
+    transform: translateY(0.5em);
+    text-shadow: 0 -0.0625em 0 #0c2ffb, 0 -0.125em 0 #2cfcfd,
+      0 0.0625em 0 #fb203b, 0 0.125em 0 #fefc4b;
+  }
+
+  60% {
+    transform: translateY(-0.25em);
+    text-shadow: 0 0.03125em 0 #0c2ffb, 0 0.0625em 0 #2cfcfd,
+      0 -0.03125em 0 #fb203b, 0 -0.0625em 0 #fefc4b;
+  }
+
+  80% {
+    transform: translateY(0);
+    text-shadow: 0 0 0 #0c2ffb, 0 0 0 #2cfcfd, 0 0 0 #fb203b, 0 0 0 #fefc4b;
+  }
+}
+
+.table-server {
+  color: black;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  table-layout: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+.table-wide {
+  display: block;
+  margin: 0 auto;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.trellis {
+  height: 200px;
+}
+
+.bullet {
+  border-radius: 20% !important;
+  width: 12px !important;
+  height: 12px !important;
+  padding: 2px !important;
+  background: white;
+  border: 2px solid black;
+  color: black;
+  text-align: center !important;
+}
+
+.word-box {
+  text-align: left;
+}
+
+/* TIMELINE */
+
+.timeline-border {
+  border-right:  rgb(253, 126, 20);
+  border-right-color: linear-gradient(180deg, rgba(253, 126, 20, 1) 65%, #222 100%);
+}
+
+
+.rounded-circle {
+  width: 70px;
+  height: 70px;
+  filter: gray; /* IE6-9 */
+  -webkit-filter: grayscale(1); /* Google Chrome, Safari 6+ & Opera 15+ */
+  filter: grayscale(1); /* Microsoft Edge and Firefox 35+ */
+}
+
+/* Disable grayscale on hover */
+.rounded-circle:hover {
+  -webkit-filter: grayscale(0);
+  filter: none;
+}
+
+
+.img-mirror {
+  -moz-transform: scaleX(-1);
+  -o-transform: scaleX(-1);
+  -webkit-transform: scaleX(-1);
+  transform: scaleX(-1);
+  filter: FlipH;
+  -ms-filter: "FlipH";
+}
+
+.numbers {
+    color: white;
+    font-size: 18px;
+    font-family: system-ui;
+    /* font-weight: lighter; */
+    letter-spacing: 1px;
+}
+
+.navbar {
+    padding-top: 0%;
+    padding-bottom: 0%;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.page-outline {
+    padding-top: 20px;
+    padding-bottom: 0%;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-bottom: 100px;
+}
+
+.top-bar {
+    margin: 0px;
+    padding-top: 10px;
+    padding-bottom: 0px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.container-fluid {
+  padding-top: 20px;
+  border-left: #444 solid 1px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-right:  #444 solid 1px;;
+  border-bottom:  #444 solid 1px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.nav-link {
+  text-align: right!important;
+  color: #ffff!important;
+  padding: 15px;
+}
+
+
+.red_negpos {
+  color: red;
+}
+
+.green_negpos {
+  color: green;
+}
+
+.strokeme {
+  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff!important;
+}
+
+
+.article-text {
+  font-size: 1.2em;
+  font-family: system-ui;
+  font-weight: lighter;
+  text-align: justify!important;
+}
+
+
+.next-arrow  {
+    -webkit-animation: next 1.0s infinite normal ease-out;
+    animation: next 1.0s infinite normal ease-out;
+    position: relative;
+    content: "";
+}
+@keyframes next{
+  0%{
+    right: 0px;
+  }
+  50%{
+    right: -8px;
+  }
+  100%{
+    right: 0px;
+  }
+}
+
+
+.modal {
+  backdrop-filter: blur(1px);
+}
+
+.modal-extra-blur {
+  backdrop-filter: blur(3px);
+}
+
+/* For some reason this avoids screen flickering */
+.row {
+    --bs-gutter-x: 10px;
+}

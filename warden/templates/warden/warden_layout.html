@@ -1,422 +1,489 @@
 <!doctype html>
 <html lang="en">
-<link rel="icon" href="{{url_for('warden.static', filename='images/favicon-bitcoin.ico')}}" class="invert">
-
-<head>
-    <!-- Style Sheets -->
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-    <!-- Fon Awesome -->
-    <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/font-awesome/css/all.css')}}">
-    <!-- Tags Input -->
-    <link rel="stylesheet"
-        href="{{url_for('warden.static', filename='dependencies/bootstrap-tagsinput/bootstrap-tagsinput.css')}}">
-    <!-- JQuery UI -->
-    <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/jquery/themes/flicker.css')}}">
-    <link rel="stylesheet" href="{{url_for('warden.static', filename='css/warden_main.css')}}">
-    <link rel="stylesheet" type="text/css" href="{{url_for('warden.static', filename='css/warden_layout.css')}}">
-
-    <!-- End Style Sheets -->
+    <link rel="icon" href="{{url_for('warden.static',
+        filename='images/favicon-bitcoin.ico')}}" class="invert">
 
 
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <head>
+        <meta charset="UTF-8" />
 
-    {% if title %}
-    <title>The WARden | {{ title }}</title>
-    {% else %}
-    <title>The WARden</title>
-    {% endif %}
-</head>
+        {% if title %}
+        <title>WARden | {{ title }}</title>
+        {% else %}
+        <title>WARden</title>
+        {% endif %}
 
-<body>
-    <!-- JavaScript Loaders -->
-    <!-- JQuery -->
-    <script src="{{url_for('warden.static', filename='dependencies/jquery/jquery-3.4.1.js')}}"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link
+            rel="icon"
+            type="image/x-icon"
+            href="{{url_for('static', filename='images/favicon-bitcoin.ico')}}"
+            />
 
-    <script src="{{url_for('warden.static', filename='dependencies/popper/tooltip.js')}}">
-    </script>
-    <!-- Bootstrap -->
-    <script src="{{url_for('warden.static', filename='dependencies/jquery-ui/jquery-ui.js')}}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-        crossorigin="anonymous"></script>
-    <script
-        src="{{url_for('warden.static', filename='dependencies/bootstrap-tagsinput/bootstrap-tagsinput.js')}}"></script>
+        <!-- BOOTSTRAP -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
+            crossorigin="anonymous">
+        <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+            crossorigin="anonymous"></script>
 
-    <!-- END JavaScript Loaders -->
-
-    <header>
-        <nav class="navbar navbar-dark bg-steel navbar-expand-lg navbar-font justify-content-end">
-            <a class="navbar-brand" href="/"> <img src="{{url_for('warden.static', filename='images/logo_flat.png')}}"
-                    width="180" height="40" alt="Home">
-            </a>
-
-            <div class="rightfloater">
-
-
-                <div class="btn-group">
-                    <button type="button" class="btn btn-sm statusbox text-white">
-                        WARden Status
-                    </button>
-                    <button id="status" type="button"
-                        class="btn btn-sm statusbox text-white dropdown-toggle dropdown-toggle-split"
-                        data-toggle="dropdown">
-                    </button>
-                    <div class="dropdown-menu scrollable-menu dropdown-menu-right text-muted">
-                        <span>
-
-                            <!-- CHECK TOR -->
-                            {%if current_app.tor%}
-                            <a class="dropdown-item" href='/tor_services'>
-                                <i class="fas fa-check-square text-success"></i>&nbsp;
-                                Tor Running</a>
-                            {%else%}
-                            <a class="dropdown-item">
-                                <i class="fas fa-exclamation-triangle text-warning"></i>&nbsp;
-                                Tor Unavailable</a>
-                            {%endif%}
-
-                            <!-- Check Onion -->
-                            {%if current_app.tor_service_id%}
-                            <a class="dropdown-item" href='/tor_services'>
-                                <i class="fas fa-user-secret text-success"></i>&nbsp;
-                                Onion Server Running</a>
-                            {%endif%}
+        <!-- LOCAL theme CSS -->
+        <!-- LOCAL CSS -->
+        <link rel="stylesheet" href="{{url_for('warden.static',
+            filename='css/warden_main.css')}}">
+        <link rel="stylesheet" type="text/css" href="{{url_for('warden.static',
+            filename='css/warden_layout.css')}}">
 
 
-                            <!-- Specter Server -->
-
-                            <a class="dropdown-item">
-                                {%if current_app.specter.specter_auth %}
-                                <i class="fas fa-ghost text-success"></i>&nbsp;
-                                Specter Server Connected</a>
-                            {%else%}
-                            <i class="fas fa-ghost text-danger"></i>&nbsp;
-                            Specter Server Not Connected</a>
-                            {%endif%}
+        <link
+            rel="stylesheet"
+            href="{{url_for('static',
+            filename='dependencies/font-awesome/css/all.css')}}"
+            />
 
 
-                            <!-- Current Version and Upgrade? -->
-                            {%if current_app.warden_status['needs_upgrade'] == True%}
-                            <i class="fas fa-exclamation-triangle text-warning"></i>&nbsp;
-                            <a class="dropdown-item">WARden Upgrade Available:
-                                {{current_app.warden_status['github_version']}}</a>
-                            {%else%}
-                            <a class="dropdown-item">
-                                <i class="fas fa-check-square text-success"></i>&nbsp;
-                                You are running the latest WARden version
-                                ({{current_app.warden_status['running_version']}})</a>
-                            {%endif%}
+        <!-- JQUERY -->
+        <script
+            src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous"></script>
 
 
-                            <!-- User logged in -->
-                            <a class="dropdown-item">
-                                <i class="fas fa-info-circle text-info"></i>&nbsp;
-                                Logged in as {{current_user.username}}
-                            </a>
-                            <!-- Running inside Docker -->
-                            {%if current_app.runningInDocker%}
-                            <a class="dropdown-item">
-                                <i class="fab fa-docker text-info"></i>&nbsp;
-                                Running inside a Docker Container
-                            </a>
-                            {%endif%}
+        <!-- Utilities - APP -->
+        <script src="{{url_for('static', filename='js/utils.js')}}"></script>
+        <script src="{{url_for('static', filename='js/warden_layout.js')}}"></script>
+    </head>
 
 
-                        </span>
-                    </div>
-                </div>
-
-
-
-                {%if current_app.tor%}
-                <span class="btn btn-sm statusbox text-white">
-                    <span id="btc_usd">
-                        <span class="loadanim small">loading</span>
-                    </span>&nbsp;$/₿
-                </span>
-
-                {%if current_app.fx['code'] != "USD"%}
-                <span class="btn btn-sm statusbox text-white">
-                    <span id="btc_fx">
-                        <span class="loadanim small">loading</span>
-                    </span>&nbsp;{{current_app.fx['symbol']}}/₿
-                </span>
-                <span class="btn btn-sm statusbox text-white">
-                    <span id="fx_rate">
-                        <span class="loadanim small">loading</span>
-                    </span>&nbsp;{{current_app.fx['symbol']}}/$
-                </span>
-                {%endif%}
-
-                <div class="btn-group">
-                    <button type="button" id='fiat_change' class="btn btn-sm statusbox text-white">
-                        All values in
-                        {{current_app.fx['name_plural'].title()}} ({{current_app.fx['symbol']}})
-                    </button>
-                    <button id="list_fx" type="button"
-                        class="btn btn-sm statusbox text-white dropdown-toggle dropdown-toggle-split"
-                        data-toggle="dropdown">
-                    </button>
-                    <div class="dropdown-menu scrollable-menu dropdown-menu-right">
-                        <span id='fx_sel'>
-                            <a class="dropdown-item">Loading....</a>
-                        </span>
-                    </div>
-                </div>
-
-                {%endif%}
-            </div>
-        </nav>
-    </header>
 
 
     <body>
 
-        <!-- Sidebar -->
-        <div id="sidebar-wrapper">
-            <ul class="sidebar-nav small">
+        <header class="fixed-top">
+            <nav class="navbar navbar-dark bg-steel navbar-expand-lg navbar-font
+                justify-content-end">
+                <a class="navbar-brand" href="/"> <img
+                        src="{{url_for('warden.static',
+                        filename='images/logo_flat.png')}}"
+                        width="180" height="40" alt="Home">
+                </a>
 
-                <!-- TRANSACTIONS MENU + SUBMENUS -->
-                <li>
-                    <a data-toggle="collapse" href="#collapse_transactions" role="button" aria-expanded="true"
-                        aria-controls="collapse_transactions">
-                        <i class="fas fa-coins fa-lg"></i>
-                        &nbsp;&nbsp;&nbsp;&nbsp;Portfolio
-                        <i class="fas fa-caret-down"></i></a>
-                </li>
-                <div class="collapse show" id="collapse_transactions"">
-                    <div class=" list-group bg-transparent text-white">
-                    <a class="sidebar-subitem" href="/"><i class="fas fa-table fa-lg"></i>&nbsp;&nbsp;Dashboard</a>
+                <div class="rightfloater">
 
-                    <a class="sidebar-subitem" href="/navchart"><i class="fas fa-chart-area fa-lg"></i>&nbsp;&nbsp;NAV
-                        and Cost Chart</a>
-
-
-                    <a class="sidebar-subitem" href="/heatmap" )>
-                        <i class="fas fa-fire fa-lg"></i>&nbsp;&nbsp;Monthly HeatMap</a>
-
-                    <a class="sidebar-subitem" href="/portfolio_compare"><i
-                            class="fas fa-check-double fa-lg"></i>&nbsp;&nbsp;Compare Performance</a>
-
-
-                    <a class="sidebar-subitem" href="/volchart"><i
-                            class="fas fa-cloud-sun-rain fa-lg"></i>&nbsp;&nbsp;Volatility Chart</a>
-
-                    <a class="sidebar-subitem" href="{{ url_for('warden.allocation_history') }}"><i
-                            class="fas fa-chart-pie fa-lg"></i>&nbsp;&nbsp;Allocation History</a>
-
-                    <a class="sidebar-subitem" href="{{ url_for('warden.drawdown') }}"><i
-                            class="fas fa-procedures fa-lg"></i>&nbsp;&nbsp;Drawdowns</a>
-
-                </div>
-
-                <li>
-                    <a data-toggle="collapse" href="#collapse_trades" role="button" aria-expanded="true"
-                        aria-controls="collapse_trades">
-                        <i class="fas fa-coins fa-lg"></i>
-                        &nbsp;&nbsp;&nbsp;&nbsp;Transactions
-                        <i class="fas fa-caret-down"></i></a>
-                </li>
-                <div class="collapse show" id="collapse_trades"">
-                    <div class=" list-group bg-transparent text-white">
-                    <a class="sidebar-subitem" href="{{ url_for('warden.trade_transactions') }}"><i
-                            class="fas fa-list fa-lg"></i>&nbsp;&nbsp;List & Edit Trades</a>
-                    <a class="sidebar-subitem" href="{{ url_for('warden.newtrade') }}"><i
-                            class="fas fa-plus-square fa-lg"></i>&nbsp;&nbsp;Include New Trade</a>
-
-                    <a class="sidebar-subitem" href="{{ url_for('csv_routes.importcsv') }}"><i
-                            class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;CSV Import</a>
-
-                    <a class="sidebar-subitem" id="downloadcsv" href="{{ url_for('csv_routes.exportcsv') }}"><i
-                            class="fas fa-download fa-lg"></i>&nbsp;&nbsp;Download transactions</a>
-
-                    <a class="sidebar-subitem fa-lg" href="{{ url_for('csv_routes.csvtemplate') }}"><i
-                            class="fas fa-book fa-lg"></i>&nbsp;&nbsp;CSV file instructions</a>
-
-                </div>
-
-
-                <li>
-                    <a data-toggle="collapse" href="#collapse_specter" role="button" aria-expanded="true"
-                        aria-controls="collapse_specter">
-                        <i class="fas fa-users-cog fa-lg"></i>
-                        &nbsp;&nbsp;&nbsp;&nbsp;Specter Server
-                        <i class="fas fa-caret-down"></i></a>
-                </li>
-
-
-                <div class="collapse show" id="collapse_specter"">
-                    <div class=" list-group bg-transparent text-white">
-
-                    <a class="sidebar-subitem" href="/specter_auth"><i
-                            class="fas fa-ghost fa-lg"></i>&nbsp;&nbsp;Connection</a>
-
-                    <a class="sidebar-subitem" href="/list_transactions"><i
-                            class="fas fa-list fa-lg"></i>&nbsp;&nbsp;Transactions</a>
-
-
-                </div>
-        </div>
-
-
-        <li>
-            <a data-toggle="collapse" href="#collapse_settings" role="button" aria-expanded="true"
-                aria-controls="collapse_transactions">
-                <i class="fas fa-users-cog fa-lg"></i>
-                &nbsp;&nbsp;&nbsp;&nbsp;System
-                <i class="fas fa-caret-down"></i></a>
-        </li>
-
-
-        <div class="collapse show" id="collapse_settings"">
-                    <div class=" list-group bg-transparent text-white">
-
-            <a class="sidebar-subitem" href="{{ url_for('user_routes.account') }}"><i
-                    class="fas fa-users-cog fa-lg"></i>&nbsp;&nbsp;Manage User Account</a>
-
-            <a class="sidebar-subitem" href="{{ url_for('user_routes.tor_services') }}"><i
-                    class="fas fa-user-secret fa-lg"></i>&nbsp;&nbsp;Tor Hidden Services</a>
-
-            <a class="sidebar-subitem" href="/running_services"><i class="fas fa-running fa-lg"></i>&nbsp;&nbsp;Running
-                Services</a>
-
-            <a class="sidebar-subitem" href="/show_broadcast"><i class="fas fa-bullhorn fa-lg"></i>&nbsp;&nbsp;Message
-                Monitor</a>
-
-            <a class="sidebar-subitem" href="/config_ini"><i class="fas fa-edit fa-lg"></i>&nbsp;&nbsp;Edit
-                Config</a>
-
-            <a class="sidebar-subitem" href="/satoshi_quotes"><i
-                    class="fas fa-quote-left fa-lg"></i>&nbsp;&nbsp;Quotable Satoshi</a>
-
-
-
-            <a class="sidebar-subitem" href="https://github.com/pxsocs/warden_terminal" target='_blank'><i
-                    class="fas fa-terminal fa-lg"></i>&nbsp;&nbsp;Warden Terminal&nbsp;
-                <i class="fas fa-external-link-alt text-muted"></i>
-            </a>
-
-
-            <a class="sidebar-subitem" href="https://github.com/pxsocs/warden" target='new_page' class="text-muted">
-                <i class="fas fa-question fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;Report Issue
-                <i class="fas fa-external-link-alt text-muted"></i>
-            </a>
-
-
-            <a class="sidebar-subitem" href="/logout"><i class="fas fa-sign-out-alt fa-lg"></i>&nbsp;&nbsp;
-                Logout</a>
-
-            <a class="sidebar-subitem" href="/donate"><i class="fas fa-donate fa-lg"></i>&nbsp;&nbsp;
-                Support WARden</a>
-
-
-            <a class="sidebar-subitem text-muted" href="/show_log"><i class="fas fa-bug fa-lg"></i>&nbsp;&nbsp;Debug
-                Log</a>
-        </div>
-
-
-
-        <li class="text-center">
-            <div style='color: #DFE0E1; padding-left: 10px; padding-top: 40px;'>
-                <h6>Status</h6>
-                <span class=" btn btn-secondary btn-block" role="button" class="btn btn-light btn-sm">
-                    <span id="tor_span" data-html="true">
-                        <span class="loadanim small">Checking TOR</span>
+                    <span style="padding-right: 20px;">
+                        <span class="btn btn-outline-light btm-sm">
+                            <span class="text-light text-strong text-orange">
+                                <span id="btc_usd">
+                                    <span class="loadanim">loading</span>
+                                </span>&nbsp;$/₿
+                            </span>
+                        </span>
                     </span>
-                </span>
 
-            </div>
-        </li>
+                    <span style="padding-right: 20px;">
+                        {%if current_app.fx['code'] != "USD"%}
+                        <span class="text-white">
+                            <span id="btc_fx">
+                                <span class="loadanim small">loading</span>
+                            </span>&nbsp;{{current_app.fx['symbol']}}/₿
+                        </span>
+                        <span class="btn btn-outline-light btm-sm">
+                            <span id="fx_rate">
+                                <span class="loadanim small">loading</span>
+                            </span>&nbsp;{{current_app.fx['symbol']}}/$
+                        </span>
+                        {%endif%}
+                        <span style="padding-right: 20px;">
 
+                            <span style="padding-right: 20px;">
+                                <span class="dropdown">
+                                    <button id='fiat_change' class="btn
+                                        btn-outline-light btm-sm
+                                        dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                        Fiat values in
+                                        {{current_app.fx['name_plural'].title()}}
+                                        ({{current_app.fx['symbol']}})
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <span id='fx_sel'>
+                                            <li><a class="dropdown-item">Loading....</a></li>
+                                        </span>
+                                    </ul>
+                                </span>
+                            </span>
 
-        <li class="text-center">
-            <div style='color: #8c91a0; padding-left: 10px; padding-top: 40px;'>
-                <h6>Version {{current_app.version}}</h6>
-            </div>
-        </li>
+                            <span style="padding-right: 20px;">
 
-        </ul>
-
-
-        </div>
-
-        <!-- /#sidebar-wrapper -->
-
-        <!-- Main Content -->
-        <div id="page-content-wrapper">
-            <main role="main">
-                <div style='padding-top: 0px; padding-bottom: 200px;'>
-
-                    <div class='container-fluid'>
-                        <div class='row'>
-                            <div id='alertsection' class='col-12'>
-
-                                {% with messages = get_flashed_messages(with_categories=true) %}
-                                {% if messages %}
-                                {% for category, message in messages %}
-                                <div id="messagealert" class="alert alert-{{ category }}">
-                                    {{message}}
-                                </div>
-                                {% endfor %}
-                                {% endif %}
-                                {% endwith %}
 
                             </div>
+
+
+
+                            <a class="btn btn-outline-light btm-sm"
+                                href="/logout">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                                &nbsp;&nbsp;logout
+                                <span class="text-muted">{{current_user.username}}</span>
+                            </a>
+                        </div>
+                    </nav>
+                </header>
+
+
+                <body>
+
+                    <!-- Sidebar -->
+                    <div id="sidebar-wrapper">
+                        <ul class="sidebar-nav small" style="padding-top:
+                            60px;">
+                            <li>
+                                <a data-bs-toggle="collapse"
+                                    href="#collapse_transactions" role="button"
+                                    aria-expanded="true"
+                                    aria-controls="collapse_transactions">
+                                    <i class="fas fa-coins fa-lg"></i>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;Portfolio
+                                    <i class="fas fa-caret-down"></i></a>
+                            </li>
+
+                            <div class="collapse show"
+                                id="collapse_transactions"">
+                                <div class="list-group bg-transparent
+                                    text-white">
+                                    <a class="sidebar-subitem" href="/">
+                                        <i class="fas fa-table fa-lg"></i>&nbsp;&nbsp;Dashboard</a>
+                                    <a class="sidebar-subitem" href="/navchart"><i
+                                            class="fas fa-chart-area fa-lg"></i>&nbsp;&nbsp;NAV
+                                        and Cost Chart</a>
+
+
+                                    <a class="sidebar-subitem" href="/heatmap"
+                                        )>
+                                        <i class="fas fa-fire fa-lg"></i>&nbsp;&nbsp;Monthly
+                                        HeatMap</a>
+
+                                    <a class="sidebar-subitem"
+                                        href="/portfolio_compare"><i
+                                            class="fas fa-check-double fa-lg"></i>&nbsp;&nbsp;Compare
+                                        Performance</a>
+
+
+                                    <a class="sidebar-subitem" href="/volchart"><i
+                                            class="fas fa-cloud-sun-rain fa-lg"></i>&nbsp;&nbsp;Volatility
+                                        Chart</a>
+
+                                    <a class="sidebar-subitem" href="{{
+                                        url_for('warden.allocation_history')
+                                        }}"><i
+                                            class="fas fa-chart-pie fa-lg"></i>&nbsp;&nbsp;Allocation
+                                        History</a>
+
+                                    <a class="sidebar-subitem" href="{{
+                                        url_for('warden.drawdown') }}"><i
+                                            class="fas fa-procedures fa-lg"></i>&nbsp;&nbsp;Drawdowns</a>
+                                </div>
+                            </div>
+
+
+
+                            <li>
+                                <a data-bs-toggle="collapse"
+                                    href="#collapse_trades" role="button"
+                                    aria-expanded="true"
+                                    aria-controls="collapse_trades">
+                                    <i class="fas fa-coins fa-lg"></i>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;Transactions
+                                    <i class="fas fa-caret-down"></i></a>
+                            </li>
+
+                            <div class="collapse show" id="collapse_trades"">
+                                <div class=" list-group bg-transparent
+                                    text-white">
+                                    <a class="sidebar-subitem" href="{{
+                                        url_for('warden.trade_transactions')
+                                        }}"><i
+                                            class="fas fa-list fa-lg"></i>&nbsp;&nbsp;List
+                                        & Edit Trades</a>
+                                    <a class="sidebar-subitem" href="{{
+                                        url_for('warden.newtrade') }}"><i
+                                            class="fas fa-plus-square fa-lg"></i>&nbsp;&nbsp;Include
+                                        New Trade</a>
+
+                                    <a class="sidebar-subitem" href="{{
+                                        url_for('csv_routes.importcsv') }}"><i
+                                            class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;CSV
+                                        Import</a>
+
+                                    <a class="sidebar-subitem" id="downloadcsv"
+                                        href="{{ url_for('csv_routes.exportcsv')
+                                        }}"><i
+                                            class="fas fa-download fa-lg"></i>&nbsp;&nbsp;Download
+                                        transactions</a>
+
+                                    <a class="sidebar-subitem" href="{{
+                                        url_for('csv_routes.csvtemplate') }}"><i
+                                            class="fas fa-book fa-lg"></i>&nbsp;&nbsp;CSV
+                                        file instructions</a>
+
+                                </div>
+                            </div>
+
+
+
+                            <li>
+                                <a data-bs-toggle="collapse"
+                                    href="#collapse_pill" role="button"
+                                    aria-expanded="true"
+                                    aria-controls="collapse_trades">
+                                    <i class="fa-solid fa-pills fa-lg"></i>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;Orange Pill Factory
+                                    <i class="fas fa-caret-down"></i></a>
+                            </li>
+                            <div class="collapse show" id="collapse_pill"">
+                                <div class=" list-group bg-transparent
+                                    text-white">
+                                    <a class="sidebar-subitem"
+                                        href="/orangenomics/portfolio"><i
+                                            class="fa-solid fa-capsules fa-lg"></i>&nbsp;&nbsp;Portfolio
+                                        Simulator</a>
+
+
+                                    <a class="sidebar-subitem"
+                                        href="/hodl_analysis/home">
+                                        <i class="fa-solid fa-hand-fist fa-lg"></i>
+                                        &nbsp;&nbsp;HODL Analysis</a>
+
+
+
+                                    <a class="sidebar-subitem"
+                                        href="/satoshi_quotes"><i
+                                            class="fas fa-quote-left fa-lg"></i>&nbsp;&nbsp;Quotable
+                                        Satoshi</a>
+
+
+                                </div>
+                            </div>
+
+
+
+                            <li>
+                                <a data-bs-toggle="collapse"
+                                    href="#collapse_specter" role="button"
+                                    aria-expanded="true"
+                                    aria-controls="collapse_specter">
+                                    <i class="fas fa-users-cog fa-lg"></i>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;Node Management
+                                    <i class="fas fa-caret-down"></i></a>
+                            </li>
+
+
+                            <div class="collapse show" id="collapse_specter"">
+                                <div class=" list-group bg-transparent
+                                    text-white">
+                                    <a class="sidebar-subitem"
+                                        href="/node_management/monitor"><i
+                                            class="fa-solid fa-share-nodes
+                                            fa-lg"></i>&nbsp;&nbsp;My Nodes</a>
+                                </div>
+                            </div>
+
+
+                            <li>
+                                <a data-bs-toggle="collapse"
+                                    href="#collapse_settings" role="button"
+                                    aria-expanded="true"
+                                    aria-controls="collapse_transactions">
+                                    <i class="fas fa-users-cog fa-lg"></i>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;System
+                                    <i class="fas fa-caret-down"></i></a>
+                            </li>
+
+
+                            <div class="collapse show" id="collapse_settings"">
+                                <div class=" list-group bg-transparent
+                                    text-white">
+
+                                    <a class="sidebar-subitem" href="{{
+                                        url_for('user_routes.account') }}"><i
+                                            class="fas fa-users-cog fa-lg"></i>&nbsp;&nbsp;Manage
+                                        User Account</a>
+
+                                    <a class="sidebar-subitem" href="{{
+                                        url_for('user_routes.tor_services') }}"><i
+                                            class="fas fa-user-secret fa-lg"></i>&nbsp;&nbsp;Tor
+                                        Hidden Services</a>
+
+                                    <a class="sidebar-subitem"
+                                        href="/running_services"><i class="fas
+                                            fa-running fa-lg"></i>&nbsp;&nbsp;Running
+                                        Services</a>
+
+                                    <a class="sidebar-subitem"
+                                        href="/show_broadcast"><i class="fas
+                                            fa-bullhorn fa-lg"></i>&nbsp;&nbsp;Message
+                                        Monitor</a>
+
+                                    <a class="sidebar-subitem"
+                                        href="/config_ini"><i class="fas fa-edit
+                                            fa-lg"></i>&nbsp;&nbsp;Edit
+                                        Config</a>
+
+
+                                    <a class="sidebar-subitem"
+                                        href="https://github.com/pxsocs/warden"
+                                        target='new_page' class="text-muted">
+                                        <i class="fas fa-question fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;Report
+                                        Issue
+                                        <i class="fas fa-external-link-alt
+                                            text-muted"></i>
+                                    </a>
+
+
+                                    <a class="sidebar-subitem" href="/logout"><i
+                                            class="fas fa-sign-out-alt fa-lg"></i>&nbsp;&nbsp;
+                                        Logout</a>
+
+                                    <a class="sidebar-subitem" href="/donate"><i
+                                            class="fas fa-donate fa-lg"></i>&nbsp;&nbsp;
+                                        Support Bitcoin</a>
+
+
+                                    <a class="sidebar-subitem text-muted"
+                                        href="/show_log"><i class="fas fa-bug
+                                            fa-lg"></i>&nbsp;&nbsp;Debug
+                                        Log</a>
+                                </div>
+
+
+
+                                <li class="text-center">
+                                    <div style='color: #DFE0E1; padding-left:
+                                        10px; padding-top: 40px;'>
+                                        <h6>Status</h6>
+                                        <span class=" btn btn-secondary
+                                            btn-block" role="button" class="btn
+                                            btn-light btn-sm">
+                                            <span id="tor_span"
+                                                data-bs-html="true">
+                                                <span class="loadanim small">Checking
+                                                    TOR</span>
+                                            </span>
+                                        </span>
+
+                                    </div>
+                                </li>
+
+
+                                <li class="text-center">
+                                    <div style='color: #8c91a0; padding-left:
+                                        10px; padding-top: 40px;'>
+                                        <h6>Version {{current_app.version}}</h6>
+                                    </div>
+                                </li>
+
+                            </ul>
+
+
                         </div>
 
-                        <div class='row'>
-                            {% block content %}
-                            {% endblock %}
-                        </div>
-                    </div>
-            </main>
-        </div>
+                        <!-- /#sidebar-wrapper -->
+
+                        <!-- Main Content -->
+                        <div id="page-content-wrapper">
+                            <main role="main">
+                                <div style='padding-top: 0px; padding-bottom:
+                                    200px;'>
+
+                                    <div class='container-fluid'>
+                                        <div class='row'>
+                                            <div id='alertsection'
+                                                class='col-12'>
+
+                                                {% with messages =
+                                                get_flashed_messages(with_categories=true)
+                                                %}
+                                                {% if messages %}
+                                                {% for category, message in
+                                                messages %}
+                                                <div id="messagealert"
+                                                    class="alert alert-{{
+                                                    category }}">
+                                                    {{message}}
+                                                </div>
+                                                {% endfor %}
+                                                {% endif %}
+                                                {% endwith %}
+
+                                            </div>
+                                        </div>
+
+                                        <div class='row'>
+                                            {% block content %}
+                                            {% endblock %}
+                                        </div>
+                                    </div>
+                                </main>
+                            </div>
 
 
-        <!-- Footer -->
-        <footer class="site-footer bg-steel small fixed-bottom">
-
-            <div class="row text-white">
-                <div class="col-sm-4 text-left float-left">
-                    <i class="fab fa-github fa-lg text-white"></i>
-                    &nbsp;&nbsp;<a class='text-white' style="text-decoration : none"
-                        href='https://github.com/pxsocs/warden/'>
-                        Open Source code available at GitHub</a>
-                </div>
-
-                <div class="col-sm-4 text-center">
-                    <i class="fab fa-bitcoin fa-lg text-white"></i>
-                    Not Your Keys, Not Your Coins
-                    <i class="fab fa-bitcoin fa-lg text-white"></i>
-                    Si vis pacem, para bellum
-                    <i class="fab fa-bitcoin fa-lg text-white"></i>
-                </div>
-
-                <div class="col-sm-4 text-center float-right">
-                    <a class='text-white' style="text-decoration : none" href="https://twitter.com/alphaazeta"> <i
-                            class="fab fa-twitter fa-lg"></i>
-                        <span class="text-white">@AlphaaZeta&nbsp;</span></a>
-                </div>
-            </div>
+                            <!-- Footer -->
 
 
-        </footer>
+                            <footer class="site-footer bg-steel small
+                                fixed-bottom">
 
-        <!-- END OF WRAPPER -->
+                                <div class="row text-white">
+                                    <div class="col-sm-4 text-start float-left">
+                                        <i class="fab fa-github fa-lg
+                                            text-white"></i>
+                                        &nbsp;&nbsp;<a class='text-white'
+                                            style="text-decoration : none"
+                                            href='https://github.com/pxsocs/warden/'>
+                                            Open Source code available at GitHub</a>
+                                    </div>
+
+                                    <div class="col-sm-4 text-center">
+                                        Not Your Keys, Not Your
+                                        Coins&nbsp;&nbsp;
+                                        <i class="fab fa-bitcoin fa-lg
+                                            text-white"></i>
+                                    </div>
+
+                                    <div class="col-sm-4 text-center
+                                        float-right">
+                                        <span class="text-start float-left"></span>
+                                        <span class="text-end float-end">
+                                            &copy; {{ now.year }}
+
+                                            <span class="text-large"><span
+                                                    class="text-orange">orange</span>nomics<span
+                                                    class="text-orange
+                                                    text-large">.</span></span>
+                                            &nbsp;
+                                            <a class="text-white"
+                                                style="text-decoration: none"
+                                                href="https://twitter.com/alphaazeta">
+                                                <span class="text-muted">@AlphaaZeta&nbsp;&nbsp;&nbsp;</span>
+                                            </a>
+                                        </span>
+                                    </div>
+                                </div>
+
+
+                            </footer>
+
+                            <!-- END OF WRAPPER -->
+
+                            {%block modals%} {%endblock%}
+
+                        </body>
 
 
 
-    </body>
-
-
-    {%block modals%}
-
-    {%endblock%}
-
-    <script src="{{url_for('warden.static', filename='js/warden_layout.js')}}"></script>
-
-</html>
+                    </html>

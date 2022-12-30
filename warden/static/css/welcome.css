@@ -4,11 +4,14 @@
     --primary-color: #3a4052;
 }
 
+body {background-color: #2a2e39!important}
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
+
 
 body {
     font-family: 'Open Sans', sans-serif;
@@ -25,6 +28,10 @@ h1 {
     font-size: 60px;
     line-height: 1.2;
     margin-bottom: 15px;
+}
+
+section {
+  scroll-behavior: smooth;
 }
 
 .showcase {
@@ -106,3 +113,26 @@ h1 {
 .social a {
     margin: 0 5px;
 }
+
+.text-white {
+    color: white;
+}
+
+.next-arrow  {
+    -webkit-animation: next 1.0s infinite normal ease-out;
+    animation: next 1.0s infinite normal ease-out;
+    position: relative;
+    content: "";
+}
+@keyframes next{
+  0%{
+    right: 0px;
+  }
+  50%{
+    right: -8px;
+  }
+  100%{
+    right: 0px;
+  }
+}
+

@@ -1,0 +1,201 @@
+{% extends "warden/warden_layout.html" %}
+{% block content %}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/histogram-bellcurve.js"></script>
+<div class="modal">
+    <!-- Place at bottom of page --></div>
+<div class="container-fluid">
+    <div class="row section-center__full">
+        <div class="col-sm-12">
+            <h4>Cost of sitting on the sidelines</h4>
+            <h5>Most investors believe they can time the markets. But markets move faster than expected.</h5>
+            <h6>The problem is, BTC moves in short, explosive booms and bursts. Missing only a few days can have catastrophic results in the long term.</h6>
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <small id="ticker_small" class="form-text text-right text-muted">Ticker</small>
+                        <input
+                            type="text"
+                            id="ticker"
+                            class="form-control text-right monitor_chg"
+                            value="BTC"
+                            aria-label="Small"
+                            aria-describedby="inputGroup-sizing-sm"
+                        >
+                        <script>
+                        $( function() {
+                            $( "#start_date" ).datepicker();
+                            var now = new Date();
+                            var oneYrAgo = new Date();
+                            oneYrAgo.setYear(now.getFullYear() - 3);
+                            document.getElementById('start_date').valueAsDate = oneYrAgo;
+                        } );
+                        </script>
+                        <small id="start_date_small" class="form-text text-right text-muted">Start Date</small>
+                        <input
+                            type="date"
+                            id="start_date"
+                            class="form-control text-right monitor_chg"
+                            aria-label="Small"
+                            aria-describedby="inputGroup-sizing-sm"
+                        >
+                        <script>
+                        $( function() {
+                            $( "#end_date" ).datepicker();
+                            document.getElementById('end_date').valueAsDate = new Date();
+                        } );
+                        </script>
+                        <small id="end_date_small" class="form-text text-right text-muted">End Date</small>
+                        <input
+                            type="date"
+                            id="end_date"
+                            class="form-control text-right monitor_chg"
+                            aria-label="Small"
+                            aria-describedby="inputGroup-sizing-sm"
+                        >
+                        <small id="frequency_small" class="form-text text-right text-muted">How many days are missed?</small>
+                        <input
+                            type="number"
+                            id="frequency"
+                            class="form-control text-right monitor_chg"
+                            value="3"
+                            aria-label="Small"
+                            aria-describedby="inputGroup-sizing-sm"
+                        >
+                        <small id="period_exclude_small" class="form-text text-right text-muted">Exclude how many of these blocks of days?</small>
+                        <input
+                            type="number"
+                            id="period_exclude"
+                            class="form-control text-right monitor_chg"
+                            value="10"
+                            aria-label="Small"
+                            aria-describedby="inputGroup-sizing-sm"
+                        >
+                        <small id="fx_small" class="form-text text-right text-muted">Prices are based in</small>
+                        <input
+                            type="text"
+                            id="fx"
+                            class="form-control text-right monitor_chg"
+                            value="USD"
+                            aria-label="Small"
+                            aria-describedby="inputGroup-sizing-sm"
+                        >
+                    </div>
+                    <p>
+                        <span id="text_summary" class="text-info small"></span>
+                    </p>
+                    <p>
+                        <span id="text_summary_0" class="text-dark small"></span>
+                    </p>
+                </div>
+                <div class="col-sm-5">
+                    <p>
+                        <span id="error_message" class="text-danger"></span>
+                    </p>
+                    <p>
+                        <span id="text_summary_2" class="text-info small"></span>
+                    </p>
+                    <p>
+                        <span id="warnings" class="text-danger"></span>
+                    </p>
+                    <table class="small table table-striped">
+                        <tbody>
+                            <tr>
+                                <th>Initial Price:</th>
+                                <td class="text-right">
+                                    <span id="ticker_start_value">...</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Final Price:</th>
+                                <td class="text-right">
+                                    <span id="ticker_end_value">...</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Total Return on period:</th>
+                                <td class="text-right">
+                                    <span id="period_tr">...</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Total Return missed
+                                    <span id="missed"></span>
+                                </th>
+                                <td class="text-right">
+                                    <span id="nlargest_tr">...</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Total Return EXCLUDING missed periods</th>
+                                <td class="text-right">
+                                    <span id="exclude_nlargest_tr">...</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Difference (
+                                    <span class="small">Simple Subtraction of returns</span>
+                                    )
+                                </th>
+                                <td class="text-right">
+                                    <span id="difference">...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table class="small table table-striped">
+                        <tbody>
+                            <tr>
+                                <th>Mean Daily Return (including all data)</th>
+                                <td class="text-right">
+                                    <span id="mean_daily_return_period">...</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Mean Return of Grouped Days</th>
+                                <td class="text-right">
+                                    <span id="mean_nperiod_return">...</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Mean Return of Missed Groups</th>
+                                <td class="text-right">
+                                    <span id="nlargest_mean">...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-sm-4">
+                    <div id="bar_chart_returns" style="height: 500px; min-width: 90%; max-width: 95%; margin: 0 auto"></div>
+                </div>
+            </div>
+            <h5 class="text-center">
+                <span id="returns_msg">...</span>
+            </h5>
+            <h5 class="text-center alert-dark">
+                <span id="missed_msg">...</span>
+            </h5>
+            <hr>
+            <h6>Table of Missed Investment Periods</h6>
+            <span id="n_largest">...</span>
+            <div id="histogramchart" style="height: 600px; min-width: 90%; max-width: 95%; margin: 0 auto"></div>
+            <hr>
+            <h6>
+                The source code for this page is available at
+                <a href="https://github.com/pxsocs/cryptoanalytics">GitHub</a>
+            </h6>
+            <h6>
+                Please report bugs and suggestions directly at the
+                <a href="https://github.com/pxsocs/cryptoanalytics">repository</a>
+            </h6>
+        </div>
+    </div>
+</div>
+<script src="{{url_for('static', filename='hodl_analysis/js/hodl.js')}}"></script>
+<script src="{{url_for('static', filename='hodl_analysis/js/highcharts.js')}}"></script>
+{% endblock content %}

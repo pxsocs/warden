@@ -1,15 +1,18 @@
 <link rel="stylesheet" href="{{url_for('warden.static', filename='css/welcome.css')}}">
 <link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/font-awesome/css/all.css')}}">
-<link rel="stylesheet" href="{{url_for('warden.static', filename='dependencies/bootstrap/css/bootstrap.min.css')}}">
-
+<!-- BOOTSTRAP -->
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
+    crossorigin="anonymous"
+>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
 <title>The WARDen | Welcome</title>
 <link rel="icon" href="{{url_for('warden.static', filename='images/favicon-bitcoin.ico')}}" class="invert">
-
-<div id="container" class='bg_image'>
-    <section class="showcase" class='slide_div_out'>
-
+<div id="container" class="bg_image">
+    <section class="showcase" class="slide_div_out">
         <div class="content">
-
             <form class="d-flex flex-column form-container w-100 align-items-center" method="POST" action="">
                 <!-- Important to include the below for added security -->
                 {{ form.hidden_tag() }}
@@ -26,8 +29,7 @@
                         {{ form.username(class="form-control form-control-lg") }}
                         {% endif %}
                     </div>
-
-                    <div class="form-group">
+                    <div class="form-group" style="padding-top: 20px;">
                         {% if form.password.errors %}
                         {{ form.password(class="form-control form-control-lg is-invalid") }}
                         <div class="invalid-feedback">
@@ -39,7 +41,6 @@
                         {{ form.password(class="form-control form-control-lg") }}
                         {% endif %}
                     </div>
-
                     <div class="form-group">
                         {% if form.confirm_password.errors %}
                         {{ form.confirm_password(class="form-control form-control-lg is-invalid") }}
@@ -51,25 +52,23 @@
                         {% else %}
                         {{ form.confirm_password(class="form-control form-control-lg") }}
                         {% endif %}
-
                     </div>
-
-
                 </fieldset>
                 <div class="form-group">
-                    {{ form.submit(class="btn px-4 login-button btn-dark btn-lg")}}
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-lg btn-outline-light")}}
+                    </div>
                 </div>
             </form>
-
-            <div class="border-top pt-3">
-                <small class="text-muted">
-                    Already Have an Account? <a class="ml-2" href="{{ url_for('warden.login')}}">Log In</a>
+            <div class="pt-3">
+                <small class="text-white">
+                    Already Have an Account?
+                    <a class="ml-2" href="{{ url_for('warden.login')}}">Log In</a>
                 </small>
             </div>
-
             </br>
-            <small>
-                <a href="/initial_setup?page=1" class="btn">Back to Welcome Page</a>
+            <small class="text-white">
+                <a href="/initial_setup?page=1" class="btn btn-small btn-outline-light">Back to Welcome Page</a>
             </small>
         </div>
     </section>

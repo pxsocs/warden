@@ -1,36 +1,53 @@
 import requests
-from utils import load_config, fxsymbol, pickle_it
+from backend.utils import fxsymbol, pickle_it
 import pandas as pd
 import os
 import logging
 from datetime import datetime
 from dateutil import parser
-from warden_decorators import MWT
-from parseNumbers import parseNumber
+from backend.decorators import MWT
+from backend.config import load_config
+from backend.parseNumbers import parseNumber
 
 
-@ MWT(timeout=10)
+@MWT(timeout=10)
 def apikey(source, required=True):
-    # Check if a cryptocompare key is stored at home directory
+
+    API_KEY = None
     if source == 'cryptocompare':
-        from utils import pickle_it
+        # Check if a cryptocompare key is stored at home directory
         API_KEY = pickle_it('load', 'cryptocompare_api.pkl')
         if "\n" in API_KEY:
             API_KEY = API_KEY.strip("\n")
         if API_KEY != 'file not found':
             return API_KEY
 
-    # GET API_KEY
-    if load_config().has_option('API', source):
-        API_KEY = load_config()['API'][source]
-    else:
-        API_KEY = None
+    if source == 'alphavantage':
+        # Use a standard API Key - WARNING this
+        # will result in a daily limit of calls
+        # if many users start using this key
+        API_KEY = os.getenv('ALPHAVANTAGE_API_KEY')
+
+    if source == 'fmp':
+        API_KEY = os.getenv('FMP_API_KEY')
+
+    if source == 'twelvedata':
+        API_KEY = os.getenv('TWELVE_DATA_API_KEY')
+
+    # Let's try to load from config.ini
+    if API_KEY is None:
+        try:
+            config = load_config()
+            API_KEY = config['API'][source]
+        except Exception:
+            API_KEY = None
+
     if required and API_KEY is None:
         raise Exception(f'{source} requires an API KEY and none was found.')
     return API_KEY
 
 
-@ MWT(timeout=200)
+@MWT(timeout=200)
 def price_ondate(ticker, date_input):
     df = historical_prices(ticker)
     if df.empty:
@@ -42,21 +59,22 @@ def price_ondate(ticker, date_input):
         idx = df.iloc[df.index.get_loc(dt, method='nearest')]
         return (idx)
     except Exception as e:
-        logging.warning("Error getting price on date " + date_input +
-                        " for " + ticker + ". Error " + str(e))
+        logging.warning("Error getting price on date " + date_input + " for " +
+                        ticker + ". Error " + str(e))
         return (None)
 
 
 # The below is a priority list for some usually accessed tickers
 mapping = {
+    'OIL': ['fmp', 'twelvedata', 'alphavantage_global'],
+    'QQQ': ['twelvedata', 'fmp', 'yahoo'],
     'BTC': ['cryptocompare', 'alphavantage_currency'],
-    'GBTC': ['twelvedata', 'fmp', 'alphavantage_global'],
+    'GBTC': ['twelvedata', 'fmp', 'alphavantage_global', 'yahoo'],
     'ETH': ['cryptocompare', 'alphavantage_currency'],
-    'MSTR': ['alphavantage_global', 'twelvedata', 'fmp'],
+    'MSTR': ['alphavantage_global', 'twelvedata', 'fmp', 'yahoo'],
 }
 
 
-@ MWT(timeout=200)
 def historical_prices(ticker, fx='USD', source=None):
     '''
     RETURNS a DF with
@@ -70,22 +88,23 @@ def historical_prices(ticker, fx='USD', source=None):
     '''
 
     ticker = ticker.replace(' ', '')
+    ticker = ticker.upper()
 
     if source and type(source) != list:
-        raise TypeError("source has to be a list of strings - can be one string inside a list")
+        raise TypeError(
+            "source has to be a list of strings - can be one string inside a list"
+        )
 
     try:
         source_list = mapping[ticker]
     except KeyError:
         source_list = [
-            'cryptocompare',
-            'twelvedata',
-            'alphavantage_currency',
-            'alphavantage_global',
-            'fmp'
+            'twelvedata', 'fmp', 'cryptocompare', 'yahoo',
+            'alphavantage_currency', 'alphavantage_global'
         ]
 
     from pricing_engine.alphavantage import historical as aa_historical
+    from pricing_engine.yfinance import historical as yahoo_historical
     from pricing_engine.cryptocompare import historical as cc_historical
     from pricing_engine.fmp import historical as fmp_historical
     from pricing_engine.twelvedata import historical as td_historical
@@ -96,8 +115,8 @@ def historical_prices(ticker, fx='USD', source=None):
         # Try to load file if exists
         filename = (ticker + "_" + fx + ".price")
         # Check if file was updated today
-        from warden_modules import home_path
-        file_check = os.path.join(home_path(), 'warden/' + filename)
+        from backend.config import home_dir
+        file_check = os.path.join(home_dir, '.warden/' + filename)
         # Try to read from file and check how recent it is
         try:
             today = datetime.now().date()
@@ -108,10 +127,14 @@ def historical_prices(ticker, fx='USD', source=None):
         except Exception:
             pass
 
+        if src == 'yahoo':
+            results = yahoo_historical(ticker)
+
         if src == 'alphavantage_currency':
             results = aa_historical(ticker, function='DIGITAL_CURRENCY_DAILY')
         if src == 'alphavantage_global':
-            results = aa_historical(ticker, function='TIME_SERIES_DAILY_ADJUSTED')
+            results = aa_historical(ticker,
+                                    function='TIME_SERIES_DAILY_ADJUSTED')
         if src == 'alphavantage_fx':
             results = aa_historical(ticker, function='FX_DAILY')
         if src == 'cryptocompare':
@@ -120,6 +143,10 @@ def historical_prices(ticker, fx='USD', source=None):
             results = fmp_historical(ticker)
         if src == 'twelvedata':
             results = td_historical(ticker)
+        # convert index to datetime
+        results.index = pd.to_datetime(results.index)
+        # remove duplicates
+        results = results.loc[~results.index.duplicated(keep='first')]
         # Check if data is valid
         if not results.empty:
             # Include fx column and convert to currency if needed
@@ -133,43 +160,41 @@ def historical_prices(ticker, fx='USD', source=None):
                 df_fx['fx_close'] = pd.to_numeric(df_fx.fx_close,
                                                   errors='coerce')
                 df_fx['fx_close'] = 1 / df_fx['fx_close']
-
                 # Merge the two dfs:
-                results.index = pd.to_datetime(results.index)
-                results = results.loc[~results.index.duplicated(keep='first')]
                 merge_df = pd.merge(results, df_fx, on='date', how='inner')
                 merge_df['close'] = merge_df['close'].astype(float)
                 merge_df['close_converted'] = merge_df['close'] * merge_df[
                     'fx_close']
-
                 results = merge_df
 
             else:
                 results['fx_close'] = 1
+                results['source'] = src
                 results['close_converted'] = pd.to_numeric(results.close,
                                                            errors='coerce')
 
             results.index = results.index.astype('datetime64[ns]')
+            # sort results by index
+            results = results.sort_index(ascending=True)
+
             # Save this file to be used during the same day instead of calling API
             pickle_it(action='save', filename=filename, data=results)
             # save metadata as well
-            metadata = {
-                'source': src,
-                'last_update': datetime.utcnow()
-            }
+            metadata = {'source': src, 'last_update': datetime.utcnow()}
             filemeta = (ticker + "_" + fx + ".meta")
             pickle_it(action='save', filename=filemeta, data=metadata)
-
             return (results)
         else:
-            logging.info(f"Source {src} does not return any data for {ticker}. Trying other sources.")
+            logging.info(
+                f"Source {src} does not return any data for {ticker}. Trying other sources."
+            )
     if results.empty:
-        logging.warning(f"Could not retrieve a df for {ticker} from any source")
-
+        logging.warning(
+            f"Could not retrieve a df for {ticker} from any source")
     return (results)
 
 
-@ MWT(timeout=5)
+@MWT(timeout=5)
 def realtime_price(ticker, fx=None, source=None, parsed=True):
     '''
     Gets realtime price from first provider available and returns
@@ -184,8 +209,7 @@ def realtime_price(ticker, fx=None, source=None, parsed=True):
         }
     '''
     if fx is None:
-        config = load_config()
-        fx = config['PORTFOLIO']['base_fx']
+        fx = 'USD'
 
     if fx == 'USD':
         fxrate = 1
@@ -196,29 +220,32 @@ def realtime_price(ticker, fx=None, source=None, parsed=True):
 
     ticker = ticker.replace(' ', '')
     if source and type(source) != list:
-        raise TypeError("source has to be a list of strings - can be one string inside a list")
+        raise TypeError(
+            "source has to be a list of strings - can be one string inside a list"
+        )
 
     try:
         source_list = mapping[ticker]
     except KeyError:
         source_list = [
-            'cryptocompare',
-            'alphavantage_currency',
-            'alphavantage_global',
-            'twelvedata',
-            'fmp'
+            'cryptocompare', 'alphavantage_currency', 'alphavantage_global',
+            'twelvedata', 'fmp'
         ]
 
     from pricing_engine.alphavantage import realtime as aa_realtime
     from pricing_engine.cryptocompare import realtime as cc_realtime
     from pricing_engine.fmp import realtime as fmp_realtime
     from pricing_engine.twelvedata import realtime as td_realtime
+    from pricing_engine.yfinance import realtime as yf_realtime
 
     results = None
     # Gets from each source
     for src in source_list:
         if src == 'alphavantage_currency':
-            results = aa_realtime(ticker, 'USD', 'CURRENCY_EXCHANGE_RATE', parsed=parsed)
+            results = aa_realtime(ticker,
+                                  'USD',
+                                  'CURRENCY_EXCHANGE_RATE',
+                                  parsed=parsed)
         if src == 'alphavantage_global':
             results = aa_realtime(ticker, 'USD', 'GLOBAL_QUOTE', parsed=parsed)
         if src == 'cryptocompare':
@@ -227,6 +254,9 @@ def realtime_price(ticker, fx=None, source=None, parsed=True):
             results = fmp_realtime(ticker, parsed=parsed)
         if src == 'twelvedata':
             results = td_realtime(ticker, parsed=parsed)
+        if src == 'yahoo':
+            results = yf_realtime(ticker, parsed=parsed)
+
         # Check if data is valid
         if results is not None:
             if parsed and 'price' in results:
@@ -234,23 +264,85 @@ def realtime_price(ticker, fx=None, source=None, parsed=True):
                     if isinstance(results['time'], str):
                         results['time'] = parser.parse(results['time'])
                     results['price'] = parseNumber(results['price'])
-                    results['price'] = (
-                        results['price'] / fxrate)
+                    results['price'] = (results['price'] / fxrate)
                     return (results)
     return (results)
 
 
-@ MWT(timeout=200)
+@MWT(timeout=200)
 def GBTC_premium(price):
     # Calculates the current GBTC premium in percentage points
-    # to BTC (see https://grayscale.co/bitcoin-trust/)
-    SHARES = 0.00094643  # as of 3/15/2021
+    # to BTC (see https://grayscale.com/products/grayscale-bitcoin-trust/)
+    SHARES = 0.00091347  # as of 12/10/2022
     fairvalue = realtime_price("BTC")['price'] * SHARES
     premium = (price / fairvalue) - 1
     return fairvalue, premium
 
 
-@ MWT(timeout=200)
+def get_ticker_info(ticker, src, exactmatch=True):
+    if src == 'twelvedata':
+        # Result of this info from source:
+        # [{
+        #     'symbol': 'GBTC',
+        #     'name': 'Grayscale Bitcoin Trust (BTC)',
+        #     'provider': '12Data',
+        #     'notes': 'OTC',
+        #     'fx': 'USD'
+        # }]
+        from pricing_engine.twelvedata import asset_list
+        data = asset_list(ticker)
+    elif src == 'alphavantage':
+        # [{
+        #     'symbol': 'GBTC',
+        #     'name': 'Grayscale Investments LLC',
+        #     'provider': 'aa_stock',
+        #     'notes': 'ETF United States',
+        #     'fx': 'USD'
+        # }]
+        from pricing_engine.alphavantage import asset_list
+        data = asset_list(ticker)
+    elif src == 'cryptocompare':
+        # [{
+        #     'symbol': 'GBTC',
+        #     'name': 'GigTricks (GBTC)',
+        #     'provider': 'cc_digital',
+        #     'fx': 'USD',
+        #     'notes': 'Digital Currency'
+        # }]
+        from pricing_engine.cryptocompare import asset_list
+        data = asset_list(ticker)
+    elif src == 'fmp':
+        # data = [{
+        #     'symbol': 'SPBC',
+        #     'name': 'Simplify U.S. Equity PLUS GBTC ETF',
+        #     'provider': 'fp_stock',
+        #     'notes': 'NASDAQ',
+        #     'fx': 'USD'
+        # }]
+        from pricing_engine.fmp import asset_list
+        data = asset_list(ticker)
+
+    elif src == 'yahoo':
+        # data = [{
+        #     'symbol': 'SPBC',
+        #     'name': 'Simplify U.S. Equity PLUS GBTC ETF',
+        #     'provider': 'fp_stock',
+        #     'notes': 'NASDAQ',
+        #     'fx': 'USD'
+        # }]
+        from pricing_engine.yfinance import asset_list
+        data = asset_list(ticker)
+
+    # Keep only the results that have the same ticker as inputed ticker
+    if exactmatch is True:
+        for element in data:
+            if element['symbol'] != ticker:
+                data.remove(element)
+
+    return data
+
+
+@MWT(timeout=200)
 def fx_rate():
     config = load_config()
     fx = config['PORTFOLIO']['base_fx']
@@ -281,7 +373,7 @@ def fx_rate():
     return (rate)
 
 
-@ MWT(timeout=200)
+@MWT(timeout=200)
 def fx_price_ondate(base, cross, date):
     # Gets price conversion on date between 2 currencies
     # on a specific date
