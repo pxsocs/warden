@@ -871,7 +871,6 @@ def drawdown():
 # number of decimal places + a divisor
 
 
-@jinja2.contextfilter
 @warden.app_template_filter()
 def jformat(context, n, places, divisor=1):
     if n is None:
@@ -896,7 +895,6 @@ def jformat(context, n, places, divisor=1):
 
 
 # Jinja filter - epoch to time string
-@jinja2.contextfilter
 @warden.app_template_filter()
 def epoch(context, epoch):
     time_r = datetime.fromtimestamp(epoch).strftime("%m-%d-%Y (%H:%M)")
@@ -904,7 +902,6 @@ def epoch(context, epoch):
 
 
 # Jinja filter - fx details
-@jinja2.contextfilter
 @warden.app_template_filter()
 def fxsymbol(context, fx, output='symbol'):
     # Gets an FX 3 letter symbol and returns the HTML symbol
@@ -928,14 +925,12 @@ def fxsymbol(context, fx, output='symbol'):
     return (out)
 
 
-@jinja2.contextfilter
 @warden.app_template_filter()
 def jencode(context, url):
     return urllib.parse.quote_plus(url)
 
 
 # Jinja filter - time to time_ago
-@jinja2.contextfilter
 @warden.app_template_filter()
 def time_ago(context, time=False):
     if type(time) is str:

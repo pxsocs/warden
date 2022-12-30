@@ -4,7 +4,7 @@ from flask_login import current_user
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Optional, Length
 from backend.warden_modules import fx_list
 from wtforms import StringField, SubmitField, SelectField, PasswordField
-from wtforms.fields.html5 import DateField
+from wtforms.fields import DateField
 from models.models import User
 from flask_wtf.file import FileField, FileAllowed
 from werkzeug.security import check_password_hash
