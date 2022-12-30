@@ -22,9 +22,13 @@ This app was built with a couple of goals:
 
 # INSTALLATION
 
+This will clone the repository, create a new virtual environment, install dependencies and start the application.
+
 ```bash
 git clone https://github.com/pxsocs/warden
 cd warden
+python3 -m venv .env
+source .env/bin/activate
 python3 -m pip install -r requirements.txt
 ```
 
