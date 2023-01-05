@@ -581,14 +581,13 @@ function timeDifference(current, previous, just_now_precision_seconds = 50) {
 }
 
 
-function send_message(message, bg = 'info') {
+function send_message(message, bg = 'info', message_element = '#alertsection') {
     if (message == 'clear') {
         $(message_element).html("");
         $(message_element).hide("medium");
         return
     }
     var uniqid = Date.now();
-    message_element = '#message_alert_area';
     new_html = `
     <div class="col">
         <div id='${uniqid}' class="alert alert-${bg} alert-dismissible" role="alert" data-alert="alert">

@@ -231,7 +231,7 @@ def historical(ticker,
                         'high (USD)': 'high',
                         'low (USD)': 'low'
                     })
-                df_save = df[['close', 'open', 'high', 'low']]
+                df_save = df[['close', 'open', 'high', 'low']].copy()
                 df_save.index.names = ['date']
                 df_save['source'] = 'Alphavantage Digital Currency'
                 df_save['url'] = globalURL
@@ -256,7 +256,7 @@ def historical(ticker,
                         '2. high': 'high',
                         '3. low': 'low'
                     })
-                df_save = df[['close', 'open', 'high', 'low']]
+                df_save = df[['close', 'open', 'high', 'low']].copy()
                 df_save.index.names = ['date']
                 df_save['source'] = 'Alphavantage Time Series'
                 df_save['url'] = globalURL

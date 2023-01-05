@@ -15,7 +15,9 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from pathlib import Path
-from connections.connections import internet_connected, get_local_host_name
+from connections.connections import (internet_connected, get_local_host_name,
+                                     runningInDocker,
+                                     determine_docker_host_ip_address)
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.events import EVENT_JOB_ERROR
 from backend.ansi_management import (warning, success, error, info,
@@ -158,6 +160,16 @@ def init_app(app):
     # Create an empty dict to store warden metadata
     # --------------------------------------------
     app.warden_status = {'username': None}
+
+    # Check if running inside Docker container
+    # --------------------------------------------
+    app.runningInDocker = runningInDocker()
+    if runningInDocker() is True:
+        print(
+            success(
+                f"✅ Running inside docker container {emoji.emojize(':whale:')} Feeling some James Bartley vibes..."
+            ))
+        print("")
 
     # Load config.ini into app
     # --------------------------------------------
@@ -596,11 +608,17 @@ def local_network_string(app):
     from connections.connections import get_local_ip
     host = app.settings['SERVER'].get('host')
     port = str(app.settings['SERVER'].getint('port'))
-    if host == '0.0.0.0':
+    if app.runningInDocker is True:
         return (f"""
-    Or through your network at address:
-    {yellow('http://')}{yellow(get_local_ip())}{yellow(f':{port}/')}
-            """)
+        Or through your network at address:
+        {yellow('http://')}{yellow(determine_docker_host_ip_address())}{yellow(f':{port}/')}
+                """)
+    else:
+        if host == '0.0.0.0':
+            return (f"""
+        Or through your network at address:
+        {yellow('http://')}{yellow(get_local_ip())}{yellow(f':{port}/')}
+                """)
 
 
 def main(debug, reloader):
@@ -686,12 +704,20 @@ def main(debug, reloader):
     try:
         import webbrowser
         if debug is False:
-            webbrowser.open('http://localhost:' + str(port) + '/')
+            pass
+            # webbrowser.open('http://localhost:' + str(port) + '/')
     except Exception:
         pass
 
+    # Check if running in docker and change hostname to docker's IP address
+    if app.runningInDocker is True:
+        host_IP = determine_docker_host_ip_address()
+    else:
+        host_IP = app.settings['SERVER'].get('host')
+
+    # Launch the Flask Webserver
     app.run(debug=debug,
             threaded=True,
-            host=app.settings['SERVER'].get('host'),
+            host=host_IP,
             port=port,
             use_reloader=reloader)

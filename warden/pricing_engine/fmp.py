@@ -122,7 +122,7 @@ def historical(ticker, parsed=True):
                     'volume': 'volume'
                 })
             df.set_index('date', inplace=True)
-            df_save = df[['close', 'open', 'high', 'low', 'volume']]
+            df_save = df[['close', 'open', 'high', 'low', 'volume']].copy()
             df_save['source'] = 'fmp'
             df_save['url'] = globalURL
         except Exception:

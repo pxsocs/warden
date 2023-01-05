@@ -1,4 +1,5 @@
 import os
+import io
 import json
 import pickle
 import time
@@ -290,3 +291,12 @@ def join_all(threads, timeout):
         num = len(still_running)
         names = [t.name for t in still_running]
         raise RuntimeError('Timeout on {0} threads: {1}'.format(num, names))
+
+
+# Downloads DF into Excel file - returns the file name
+def download_pd_excel(df, sheet_name='WARden_export_data'):
+    from backend.config import home_dir
+    filename = safe_filename(sheet_name) + '.xlsx'
+    filename = os.path.join(home_dir, filename)
+    df.to_excel(filename, sheet_name=sheet_name)
+    return (filename)

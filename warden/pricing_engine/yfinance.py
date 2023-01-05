@@ -75,7 +75,7 @@ def historical(ticker,
                 'High': 'high',
                 'Low': 'low'
             })
-            df_save = df[['close', 'open', 'high', 'low']]
+            df_save = df[['close', 'open', 'high', 'low']].copy()
             df_save.index.names = ['date']
             df_save['source'] = 'Yahoo Finance'
             df_save['url'] = 'https://www.yahoo.com'

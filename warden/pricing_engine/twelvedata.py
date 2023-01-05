@@ -122,7 +122,7 @@ def historical(ticker, parsed=True):
             df = pd.DataFrame.from_records(data['values'])
             df = df.rename(columns={'datetime': 'date'})
             df.set_index('date', inplace=True)
-            df_save = df[['close', 'open', 'high', 'low', 'volume']]
+            df_save = df[['close', 'open', 'high', 'low', 'volume']].copy()
             df_save['source'] = 'twelvedata'
             df_save['url'] = globalURL
         except Exception:

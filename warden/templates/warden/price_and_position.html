@@ -1,43 +1,41 @@
 {% extends "warden/warden_layout.html" %}
 {% block content %}
-
 <!--  High Charts -->
 <script src="https://code.highcharts.com/stock/highstock.js"></script>
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <script src="{{url_for('warden.static', filename='js/highcharts.js')}}"></script>
-
+<script src="{{url_for('warden.static', filename='js/price_and_position.js')}}"></script>
 <div class="row">
-    <div id="alerts" class="col-sm-12">
-    </div>
+    <div id="alerts" class="col-sm-12"></div>
 </div>
-
-
 <div class="row">
     <div class="col-sm-6">
         <h5>Price Data</h5>
-
         <div id="pricechart" style="height: 300px;">
             <span class="loadanim">&nbsp;Loading Price Chart...</span>
         </div>
-
-        <span class='lead small'>Realtime Data for {{ticker}} in {{fx}}</span>
+        <span class="lead small">Realtime Data for {{ticker}} in {{fx}}</span>
         <ul class="list-group text-small">
             <small>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Realtime Price
-                    <span class="align-right">{{fx | fxsymbol(output='symbol_native')}}
-                        {{realtime_data['price'] | jformat(2)}}</span>
+                    <span class="align-right">
+                        {{fx | fxsymbol(output='symbol_native')}}
+                        {{realtime_data['price'] | jformat(2)}}
+                    </span>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Last Refresh
                     <span class="align-right">
-                        {{realtime_data['time']}} {{realtime_data['timezone']}}</span>
+                        {{realtime_data['time']}} {{realtime_data['timezone']}}
+                    </span>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Source
                     <span class="align-right">
-                        {{realtime_data['source'].capitalize()}}</span>
+                        {{realtime_data['source'].capitalize()}}
+                    </span>
                 </li>
                 {%if ticker == 'GBTC'%}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -55,8 +53,7 @@
                 {%endif%}
             </small>
         </ul>
-
-        <span class='lead small'>Historical Data for {{ticker}} in {{fx}}</span>
+        <span class="lead small">Historical Data for {{ticker}} in {{fx}}</span>
         <ul class="list-group text-small">
             <small>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -74,20 +71,35 @@
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Source
                     <span class="align-right">
-                        {{historical_meta['source'].capitalize()}}</span>
+                        {{historical_meta['source'].capitalize()}}
+                    </span>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Download time
                     <span class="align-right">
                         {{historical_meta['last_update'].strftime('%d-%b-%Y %H:%M:%S')}}
-                        {{realtime_data['timezone']}}</span>
+                        {{realtime_data['timezone']}}
+                    </span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Download {{ticker}} Historical Price Data
+                    <span class="align-right">
+                        <a
+                            href="/price_and_position?ticker={{ticker}}&fx={{fx}}&df=historical_data"
+                            class="btn btn-outline-success"
+                            tabindex="-1"
+                            role="button"
+                            aria-disabled="true"
+                            id="download_BTC"
+                        >
+                            <i class="fa-regular fa-file-excel fa-lg"></i>
+                        </a>
+                    </span>
                 </li>
             </small>
         </ul>
     </div>
-
     <div class="col-sm-6">
-
         <h5>Portfolio Position Data</h5>
         {%if not positions.empty%}
         <div id="positionchart" style="height: 500px;">
@@ -110,27 +122,34 @@
                 </li>
             </small>
         </ul>
-
         {%else%}
-        <div class='alert text-info' role='alert'>
+        <div class="alert text-info" role="alert">
             No Trades found for {{ticker}} in portfolio
         </div>
         {%endif%}
-
     </div>
 </div>
-
 <script>
     $(document).ready(function () {
         var price_data = {{price_chart | tojson | safe}};
         var price_data_usd = {{price_chart_usd | tojson | safe}};
         var ticker = {{ticker | tojson | safe}};
-        
+
         var fx = {{fx | tojson | safe}};
         var position_chart = {{position_chart | tojson | safe}};
-            
+
         priceChart(price_data, price_data_usd, ticker, fx);
         positionChart(position_chart, ticker, fx);
+
+        $("#download_BTC").click(function () {
+
+            $("#download_BTC").html("wait...")
+            $("#download_BTC").prop('disabled', true);
+            setTimeout(function () {
+                $("#download_BTC").html("<i class='fa-regular fa-file-excel fa-lg'></i>")
+                $("#download_BTC").prop('disabled', false);
+            }, 10000);
+        });
 
     });
 
@@ -330,5 +349,4 @@
 
     };
 </script>
-
 {% endblock content %}

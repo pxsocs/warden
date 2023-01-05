@@ -10,13 +10,16 @@ if __name__ == '__main__':
 
     # Check for system arguments
     # --------------------------------
-    debug = True if "debug" in sys.argv else False
+    # debug = True if "debug" in sys.argv else False
+    # Force debug = true for development
+    debug = True
     print(yellow(f"[i] DEBUG MODE: {str(debug).upper()}"))
     reloader = True if "reloader" in sys.argv else False
     print(yellow(f"[i] RELOADER MODE: {str(reloader).upper()}"))
 
     # Create App and Start Flask Server
     # --------------------------------
+
     app = main(debug=debug, reloader=reloader)
 
     # Run after exiting Flask Server

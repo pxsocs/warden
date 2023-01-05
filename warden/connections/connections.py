@@ -438,11 +438,19 @@ def internet_connected(host="8.8.8.8", port=53, timeout=3):
 
 
 def determine_docker_host_ip_address():
-    cmd = "ip route show"
     import subprocess
-    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-    return str(output).split(' ')[2]
+    # Run the "ip addr show" command using subprocess
+    output = subprocess.run(["ip", "addr", "show"], capture_output=True)
+    # Decode the output to a string
+    output_str = output.stdout.decode("utf-8")
+    # Split the output into lines
+    output_lines = output_str.split("\n")
+    # Find the line that starts with "inet" and contains "docker0"
+    for line in output_lines:
+        if "inet" in line and "docker0" in line:
+            # Split the line into fields and return the second field (the IP address)
+            fields = line.split()
+            return fields[1]
 
 
 def runningInDocker():

@@ -132,7 +132,7 @@ def historical(ticker, fx='USD', parsed=True):
             df = df.sort_values('date')
             df.set_index('date', inplace=True)
             df = df[df['close'] != 0]
-            df_save = df[['close', 'open', 'high', 'low']]
+            df_save = df[['close', 'open', 'high', 'low']].copy()
             df_save['source'] = 'cryptocompare'
             df_save['url'] = globalURL
             # If the dataframe only has zeros as close, return an empty df

@@ -2,7 +2,7 @@ import logging
 from flask.helpers import get_flashed_messages
 from backend.decorators import MWT
 from flask import (Blueprint, redirect, render_template, abort, flash, session,
-                   request, current_app, url_for)
+                   request, current_app, url_for, send_file)
 from flask_login import login_user, logout_user, current_user, login_required
 from backend.config import home_dir, update_config
 from backend.warden_modules import (warden_metadata, positions, generatenav,
@@ -435,9 +435,12 @@ def portfolio_compare():
 @login_required
 def price_and_position():
     # Gets price and position data for a specific ticker
-    ticker = request.args.get("ticker")
-    fx = request.args.get("fx")
-    if fx is None:
+    if request.method == 'GET':
+        ticker = request.args.get("ticker")
+        fx = request.args.get("fx")
+        df_args = request.args.get("df")
+
+    if fx is None or fx == '':
         fx = fx_rate()['base']
 
     # Gets Price and market data first
@@ -492,6 +495,17 @@ def price_and_position():
     else:
         GBTC_premium = GBTC_fairvalue = None
 
+    if df_args is not None:
+        from backend.utils import download_pd_excel
+        try:
+            df_args = eval(df_args)
+            if not isinstance(df_args, pd.DataFrame):
+                flash("Error: DF Not found", "danger")
+            filename = download_pd_excel(df_args, f'{ticker}_historical_data')
+            return send_file(filename, as_attachment=True)
+        except Exception as e:
+            flash("Error: " + str(e), 'danger')
+
     return render_template("warden/price_and_position.html",
                            title="Ticker Price and Positions",
                            current_app=current_app,
@@ -510,8 +524,6 @@ def price_and_position():
 
 
 # Allocation History
-
-
 @warden.route("/allocation_history", methods=["GET"])
 @login_required
 def allocation_history():

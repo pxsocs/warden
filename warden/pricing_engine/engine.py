@@ -146,7 +146,7 @@ def historical_prices(ticker, fx='USD', source=None):
         # convert index to datetime
         results.index = pd.to_datetime(results.index)
         # remove duplicates
-        results = results.loc[~results.index.duplicated(keep='first')]
+        results = results.loc[~results.index.duplicated(keep='first')].copy()
         # Check if data is valid
         if not results.empty:
             # Include fx column and convert to currency if needed
@@ -165,7 +165,7 @@ def historical_prices(ticker, fx='USD', source=None):
                 merge_df['close'] = merge_df['close'].astype(float)
                 merge_df['close_converted'] = merge_df['close'] * merge_df[
                     'fx_close']
-                results = merge_df
+                results = merge_df.copy()
 
             else:
                 results['fx_close'] = 1

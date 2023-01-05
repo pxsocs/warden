@@ -115,7 +115,8 @@ def node_actions(action=None, url=None, name=None, public=True):
         node = load_Node(url=url)
         if node is None:
             node = Nodes()
-            node.user_id = current_user.username
+            node.user_id = current_user.username if current_user.username is not None else 0
+
         node.url = url_parser(url)
         node.name = name
         node.is_public = public
